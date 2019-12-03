@@ -4,17 +4,18 @@ using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Models;
 
-namespace TelegramFootballBot.Models.Processors
+namespace TelegramFootballBot.Controllers
 {
-    public class MessageProcessor
+    public class MessageController
     {
         private const string PLAYERS_SET_CALLBACK_PREFIX = "PlayersSetDetermination";
 
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
 
-        public MessageProcessor()
+        public MessageController()
         {
             _bot = new Bot();
             _client = _bot.GetBotClient();            

@@ -3,13 +3,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Models.Processors;
+using TelegramFootballBot.Controllers;
 
 namespace TelegramFootballBot.Models.Commands
 {
     public class RegisterCommand : Command
     {
-        public override string Name => @"/register";
+        public override string Name => "/register";
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
@@ -31,7 +31,7 @@ namespace TelegramFootballBot.Models.Commands
             {
                 existPlayer.Name = userName;
                 existPlayer.IsActive = true;
-                Task.Run(async () => { await FileProcessor.UpdatePlayers(Bot.Players); }).Wait();
+                Task.Run(async () => { await FileController.UpdatePlayers(Bot.Players); }).Wait();
                 // TODO: Update excel
                 return $"Вы уже были зарегистрированы{Environment.NewLine}Имя изменено на {userName}";
             }

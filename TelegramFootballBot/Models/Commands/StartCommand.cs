@@ -7,7 +7,7 @@ namespace TelegramFootballBot.Models.Commands
 {
     public class StartCommand : Command
     {
-        public override string Name => @"/start";
+        public override string Name => "/start";
         
         public override async Task Execute(Message message, TelegramBotClient client)
         {

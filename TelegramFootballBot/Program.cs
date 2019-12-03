@@ -1,6 +1,5 @@
 ﻿using System;
-using TelegramFootballBot.Models;
-using TelegramFootballBot.Models.Processors;
+using TelegramFootballBot.Controllers;
 
 namespace TelegramFootballBot
 {
@@ -8,7 +7,7 @@ namespace TelegramFootballBot
     {
         static void Main(string[] args)
         {
-            var messageProcessor = new MessageProcessor();
+            var messageProcessor = new MessageController();
             var scheduler = new Scheduler(messageProcessor);
             messageProcessor.StartPlayersSetDetermination();
             messageProcessor.Run();

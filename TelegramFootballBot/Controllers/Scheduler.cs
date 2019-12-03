@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Timers;
 
-namespace TelegramFootballBot.Models.Processors
+namespace TelegramFootballBot.Controllers
 {
     public class Scheduler
     {
         private readonly Timer timer;
-        private readonly MessageProcessor messageProcessor;
+        private readonly MessageController MessageController;
 
-        public Scheduler(MessageProcessor messageProcessor)
+        public Scheduler(MessageController MessageController)
         {
-            this.messageProcessor = messageProcessor;
+            this.MessageController = MessageController;
             timer = new Timer(60 * 1000);
         }
 
@@ -23,7 +23,7 @@ namespace TelegramFootballBot.Models.Processors
         private void OnDistributionDateHasCome(object sender, ElapsedEventArgs e)
         {
             if (DistributionTimeHasCome(e.SignalTime))
-                messageProcessor.StartPlayersSetDetermination();
+                MessageController.StartPlayersSetDetermination();
         }
 
         private bool DistributionTimeHasCome(DateTime dateTime)

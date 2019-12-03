@@ -3,10 +3,11 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using TelegramFootballBot.Models;
 
-namespace TelegramFootballBot.Models.Processors
+namespace TelegramFootballBot.Controllers
 {
-    public static class FileProcessor
+    public static class FileController
     {
         private const string FILE_NAME = "Players.xml";
         /// <summary>
