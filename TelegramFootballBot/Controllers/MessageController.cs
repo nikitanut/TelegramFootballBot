@@ -94,17 +94,21 @@ namespace TelegramFootballBot.Controllers
             var callbackData = e.CallbackQuery.Data;
             if (string.IsNullOrEmpty(callbackData))
                 return;
-
+           
             if (!callbackData.Contains(Constants.CALLBACK_DATA_SEPARATOR))
                 throw new ArgumentException($"Prefix was not provided for callback data: {callbackData}");
 
+            var userId = e.CallbackQuery.From.Id;
             var callbackDataArr = callbackData.Split(Constants.CALLBACK_DATA_SEPARATOR, 2);
+
             if (callbackDataArr[0] == PLAYERS_SET_CALLBACK_PREFIX)
             {
+                var sheetController = new SheetController();
+
                 switch (callbackDataArr[1].ToUpper())
                 {
-                    case "ДА":  break;
-                    case "НЕТ": break;
+                    case "ДА": await sheetController.UpdateApproveCell(userId, "1"); break;
+                    case "НЕТ": await sheetController.UpdateApproveCell(userId, "0"); break;
                     default:
                         break;
                 }
