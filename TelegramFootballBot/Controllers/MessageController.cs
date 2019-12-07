@@ -15,11 +15,13 @@ namespace TelegramFootballBot.Controllers
 
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
+        private readonly SheetController _sheetController;
 
         public MessageController()
         {
             _bot = new Bot();
-            _client = _bot.GetBotClient();            
+            _client = _bot.GetBotClient();
+            _sheetController = new SheetController();
         }
 
         public void Run()
@@ -104,7 +106,6 @@ namespace TelegramFootballBot.Controllers
 
             if (callbackDataArr[0] == PLAYERS_SET_CALLBACK_PREFIX)
             {
-                var sheetController = new SheetController();
                 string newCellValue = null;
 
                 switch (callbackDataArr[1].ToUpper())
@@ -118,7 +119,7 @@ namespace TelegramFootballBot.Controllers
                 if (newCellValue != null)
                 {
                     ClearInlineKeyboard(e.CallbackQuery.Message.Chat.Id, e.CallbackQuery.Message.MessageId);
-                    await sheetController.UpdateApproveCell(userId, newCellValue);
+                    await _sheetController.UpdateApproveCell(userId, newCellValue);
                 }
             }
         }
