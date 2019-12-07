@@ -5,7 +5,7 @@ namespace TelegramFootballBot.Helpers
     public static class MarkupHelper
     {
         /// <summary>
-        /// Gets custom ReplyKeyboardMarkup with buttons
+        /// Gets custom InlineKeyboardMarkup with buttons
         /// </summary>
         /// <param name="buttonsTexts">Array of buttons texts</param>
         public static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, params string [] buttonsTexts)

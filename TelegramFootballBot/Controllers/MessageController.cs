@@ -3,6 +3,7 @@ using System.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
 
@@ -104,15 +105,27 @@ namespace TelegramFootballBot.Controllers
             if (callbackDataArr[0] == PLAYERS_SET_CALLBACK_PREFIX)
             {
                 var sheetController = new SheetController();
+                string newCellValue = null;
 
                 switch (callbackDataArr[1].ToUpper())
                 {
-                    case "ДА": await sheetController.UpdateApproveCell(userId, "1"); break;
-                    case "НЕТ": await sheetController.UpdateApproveCell(userId, "0"); break;
+                    case "ДА": newCellValue = "1"; break;
+                    case "НЕТ": newCellValue = "0"; break;
                     default:
-                        break;
+                        throw new ArgumentOutOfRangeException($"{PLAYERS_SET_CALLBACK_PREFIX}{Constants.CALLBACK_DATA_SEPARATOR}{callbackDataArr[1]}");
+                }
+
+                if (newCellValue != null)
+                {
+                    ClearInlineKeyboard(e.CallbackQuery.Message.Chat.Id, e.CallbackQuery.Message.MessageId);
+                    await sheetController.UpdateApproveCell(userId, newCellValue);
                 }
             }
+        }
+
+        private async void ClearInlineKeyboard(ChatId chatId, int messageId)
+        {
+            await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] });
         }
     }
 }
