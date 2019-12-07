@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
@@ -67,11 +69,13 @@ namespace TelegramFootballBot.Controllers
             var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
             var markup = MarkupHelper.GetKeyBoardMarkup(PLAYERS_SET_CALLBACK_PREFIX, "Да", "Нет");
 
-            foreach (var player in Bot.Players.Where(p => p.IsActive))
-            {
-                // The API will not allow bulk notifications to more than ~30 users per second
-                await _client.SendTextMessageAsync(player.ChatId, message, replyMarkup: markup);
-            }
+            var playersToNotify = Bot.Players.Where(p => p.IsActive);
+            var requests = new List<Task<Message>>(playersToNotify.Count());
+
+            foreach (var player in playersToNotify)
+                requests.Add(_client.SendTextMessageAsync(player.ChatId, message, replyMarkup: markup));
+            
+            await Task.WhenAll(requests);
         }
 
         private int GetDaysLeftBeforeGame()
