@@ -122,8 +122,45 @@ namespace TelegramFootballBot.Controllers
 
                 if (newCellValue != null)
                 {
-                    ClearInlineKeyboard(e.CallbackQuery.Message.Chat.Id, e.CallbackQuery.Message.MessageId);
-                    await _sheetController.UpdateApproveCell(userId, newCellValue);
+                    var chatId = e.CallbackQuery.Message.Chat.Id;
+                    var messageId = e.CallbackQuery.Message.MessageId;
+                    ClearInlineKeyboard(chatId, messageId);
+
+                    try
+                    {
+                        await _sheetController.UpdateApproveCell(userId, newCellValue);
+                        var totalPlayers = await _sheetController.GetTotalApprovedPlayers();
+                        var player = Bot.Players.FirstOrDefault(p => p.Id == userId);
+
+                        if (player == null)
+                            throw new UserNotFoundException();
+
+                        var totalPlayersMessage = $"Идут {totalPlayers} человек";
+                        var needToCreateMessage = false;
+
+                        if (player.TotalPlayersMessageId != 0)
+                        {
+                            // If user deleted message create new
+                            try { await _client.EditMessageTextAsync(chatId, player.TotalPlayersMessageId, totalPlayersMessage); }
+                            catch { needToCreateMessage = true; }
+                        }
+                        else needToCreateMessage = true;
+
+                        if (needToCreateMessage)
+                        {
+                            var messageSent = await _client.SendTextMessageAsync(chatId, totalPlayersMessage);
+                            player.TotalPlayersMessageId = messageSent.MessageId;
+                            await Bot.UpdatePlayers();
+                        }
+                    }
+                    catch (UserNotFoundException)
+                    {
+                        await _client.SendTextMessageAsync(chatId, "Пользователь не найден. Введите команду /register *Фамилия* *Имя*.");
+                    }
+                    catch (TotalsRowNotFoundExeption)
+                    {
+                        await _client.SendTextMessageAsync(chatId, "Не найдена строка \"Всего\" в excel-файле.");
+                    }
                 }
             }
         }

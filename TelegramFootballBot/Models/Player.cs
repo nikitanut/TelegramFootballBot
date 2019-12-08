@@ -6,7 +6,8 @@
         public string Name { get; set; }      
         public long ChatId { get; set; }
         public bool IsActive { get; set; }
-
+        public int TotalPlayersMessageId { get; set; }
+       
         // For serialization
         private Player() { }
 
@@ -16,6 +17,7 @@
             Name = name;
             ChatId = chatid;
             IsActive = true;
+            TotalPlayersMessageId = 0;
         }
     }
 }

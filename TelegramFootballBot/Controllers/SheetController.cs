@@ -60,7 +60,7 @@ namespace TelegramFootballBot.Controllers
         {
             var player = Bot.Players.FirstOrDefault(p => p.Id == userId);
             if (player == null)
-                throw new ArgumentException("User not found");
+                throw new UserNotFoundException();
 
             var sheet = await GetSheet();
             var userRaw = GetUserRowNumber(player.Name, sheet);
@@ -98,6 +98,19 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
+        public async Task<int> GetTotalApprovedPlayers()
+        {
+            var sheet = await GetSheet();
+            var startRowsToIgnore = GetStartRows(sheet.Values);
+
+            return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Sum(p =>
+            {
+                if (p.Count < 2) return 0;
+                double.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out double approveValue);
+                return (int)approveValue;
+            });
+        }
+
         private int GetUserRowNumber(string playerName, ValueRange sheet)
         {
             if (playerName == null)
@@ -121,8 +134,10 @@ namespace TelegramFootballBot.Controllers
             if (playerExists)
                 throw new ArgumentException($"Player {playerName} already exists.");
 
-            var startRowsToIgnore = values.TakeWhile(v => v.Count == 0 || string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()));
+            var startRowsToIgnore = GetStartRows(values);
             var totalsRow = values.FirstOrDefault(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase) == true); // "Всего" row
+            if (totalsRow == null)
+                throw new TotalsRowNotFoundExeption();
 
             var players = GetOrderedPlayers(values, startRowsToIgnore, playerName);
 
@@ -132,9 +147,7 @@ namespace TelegramFootballBot.Controllers
 
             var newValues = new List<IList<object>>(startRowsToIgnore);
             newValues.AddRange(players);
-
-            if (totalsRow != null)
-                newValues.Add(totalsRow);
+            newValues.Add(totalsRow);
 
             // TODO: Repair totals row (becomes last but one, formula moves up)
 
@@ -142,7 +155,7 @@ namespace TelegramFootballBot.Controllers
             return newPlayerRowNumber;
         }
 
-        private IList<IList<object>> GetOrderedPlayers(IEnumerable<IList<object>> values, IEnumerable<IList<object>> startRowsToIgnore, string newPlayerName)
+        private IList<IList<object>> GetOrderedPlayers(IEnumerable<IList<object>> values, IEnumerable<IList<object>> startRowsToIgnore, string newPlayerName = null)
         {
             var players = values
                 .Skip(startRowsToIgnore.Count())
@@ -150,8 +163,11 @@ namespace TelegramFootballBot.Controllers
                 .TakeWhile(v => !v[(int)NAME_COLUMN].ToString().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase))
                 .ToList();
 
-            var newPlayerRow = new List<object> { newPlayerName };
-            players.Add(newPlayerRow);
+            if (newPlayerName != null)
+            {
+                var newPlayerRow = new List<object> { newPlayerName };
+                players.Add(newPlayerRow);
+            }
 
             return players.OrderBy(v => v[(int)NAME_COLUMN]).ToList();
         }
@@ -182,6 +198,11 @@ namespace TelegramFootballBot.Controllers
                 Range = range,
                 Values = new List<IList<object>>() { new List<object>(values) }
             };
+        }
+
+        private IEnumerable<IList<object>> GetStartRows(IList<IList<object>> values)
+        {
+            return values.TakeWhile(v => v.Count == 0 || string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()));
         }
     }
 }
