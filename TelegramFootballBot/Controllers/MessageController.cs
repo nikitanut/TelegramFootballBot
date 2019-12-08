@@ -23,7 +23,7 @@ namespace TelegramFootballBot.Controllers
         {
             _bot = new Bot();
             _client = _bot.GetBotClient();
-            _sheetController = new SheetController();
+            _sheetController = SheetController.GetInstance();
         }
 
         public void Run()

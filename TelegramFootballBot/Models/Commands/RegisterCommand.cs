@@ -13,34 +13,32 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
-            var text = ProcessMessage(message.From.Id, message.Text, message.Chat.Id);
-            await client.SendTextMessageAsync(message.Chat.Id, text);
-        }
-
-        private string ProcessMessage(int userId, string messageText, long chatId)
-        {
-            var userName = messageText.Length > Name.Length 
-                ? messageText.Substring(Name.Length).Trim()
+            var userName = message.Text.Length > Name.Length 
+                ? message.Text.Substring(Name.Length).Trim()
                 : string.Empty;
 
             if (userName == string.Empty)
-                return $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*";
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*");
+                return;
+            }
 
-            var existPlayer = Bot.Players.FirstOrDefault(p => p.Id == userId);
+            var existPlayer = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id);
             if (existPlayer != null)
             {
                 existPlayer.Name = userName;
                 existPlayer.IsActive = true;
-                Task.Run(async () => { await FileController.UpdatePlayers(Bot.Players); }).Wait();
-                // TODO: Update excel
-                return $"Вы уже были зарегистрированы{Environment.NewLine}Имя изменено на {userName}";
+                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован");
+                await Bot.UpdatePlayers();
+                await SheetController.GetInstance().UpsertPlayer(userName);
             }
-
-            var player = new Player(userId, userName, chatId);
-            // TODO: Update excel
-            var updateResult = Task.Run(async () => await Bot.AddNewPlayer(player)).Result;
-
-            return updateResult ? $"Игрок {userName} зарегистрирован" : $"Не удалось зарегистрировать игрока {userName}";
+            else
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован");
+                var player = new Player(message.From.Id, userName, message.Chat.Id);                
+                await Bot.AddNewPlayer(player);
+                await SheetController.GetInstance().UpsertPlayer(userName);
+            }
         }
     }
 }

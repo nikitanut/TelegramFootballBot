@@ -34,6 +34,11 @@ namespace TelegramFootballBot.Models
             return isSerialized;
         }
 
+        public static async Task<bool> UpdatePlayers()
+        {
+            return await FileController.UpdatePlayers(Players);
+        }
+
         private static void InitializeCommands()
         {
             Commands = new List<Command>();

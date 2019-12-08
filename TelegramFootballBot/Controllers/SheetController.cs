@@ -15,6 +15,8 @@ namespace TelegramFootballBot.Controllers
 {
     public class SheetController
     {
+        private static SheetController _sheetController;
+
         private enum Column { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z }
 
         private const Column NAME_COLUMN = Column.A;
@@ -25,9 +27,16 @@ namespace TelegramFootballBot.Controllers
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };        
         private readonly SheetsService _sheetsService;
 
-        public SheetController()
+        private SheetController()
         {
             _sheetsService = GetSheetsService();
+        }
+
+        public static SheetController GetInstance()
+        {
+            if (_sheetController == null)
+                _sheetController = new SheetController();
+            return _sheetController;
         }
 
         private SheetsService GetSheetsService()
@@ -60,11 +69,8 @@ namespace TelegramFootballBot.Controllers
                 userRaw = await CreateNewPlayerRow(sheet.Values, sheet.Range, player.Name);
 
             var range = $"{SHEET_NAME}!{APPROVE_COLUMN}{userRaw}";
-
-            var dataValueRange = new ValueRange();
-            dataValueRange.Range = range;
-            dataValueRange.Values = new List<IList<object>>() { new List<object>() { cellValue } };
-            
+            var dataValueRange = GetValueRange(range, cellValue);
+                        
             var request = _sheetsService.Spreadsheets.Values.Update(dataValueRange, AppSettings.GoogleDocSheetId, range);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
@@ -72,6 +78,24 @@ namespace TelegramFootballBot.Controllers
             var response = await request.ExecuteAsync();
 
             return JsonConvert.SerializeObject(response);
+        }
+
+        public async Task UpsertPlayer(string playerName)
+        {
+            var sheet = await GetSheet();
+            var userRaw = GetUserRowNumber(playerName, sheet);
+
+            if (userRaw == -1)
+            {
+                userRaw = await CreateNewPlayerRow(sheet.Values, sheet.Range, playerName);
+                var range = $"{SHEET_NAME}!{NAME_COLUMN}{userRaw}";
+                var dataValueRange = GetValueRange(range, playerName);
+
+                var request = _sheetsService.Spreadsheets.Values.Update(dataValueRange, AppSettings.GoogleDocSheetId, range);
+                request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+
+                var response = await request.ExecuteAsync();
+            }
         }
 
         private int GetUserRowNumber(string playerName, ValueRange sheet)
@@ -149,6 +173,15 @@ namespace TelegramFootballBot.Controllers
 
             var request = _sheetsService.Spreadsheets.Values.BatchUpdate(data, AppSettings.GoogleDocSheetId);
             return await request.ExecuteAsync();
+        }
+
+        private ValueRange GetValueRange(string range, params object [] values)
+        {
+            return new ValueRange()
+            {
+                Range = range,
+                Values = new List<IList<object>>() { new List<object>(values) }
+            };
         }
     }
 }
