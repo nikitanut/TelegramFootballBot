@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -19,7 +21,8 @@ namespace TelegramFootballBot.Models.Commands
 
             if (userName == string.Empty)
             {
-                await client.SendTextMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*");
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                await client.SendTextMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*", cancellationToken: cancellationToken);
                 return;
             }
 
@@ -28,16 +31,18 @@ namespace TelegramFootballBot.Models.Commands
             {
                 existPlayer.Name = userName;
                 existPlayer.IsActive = true;
-                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован");
-                await Bot.UpdatePlayers();
-                await SheetController.GetInstance().UpsertPlayer(userName);
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован", cancellationToken: cancellationToken);
+                await Bot.UpdatePlayersAsync();
+                await SheetController.GetInstance().UpsertPlayerAsync(userName);
             }
             else
             {
-                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован");
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован", cancellationToken: cancellationToken);
                 var player = new Player(message.From.Id, userName, message.Chat.Id);                
-                await Bot.AddNewPlayer(player);
-                await SheetController.GetInstance().UpsertPlayer(userName);
+                await Bot.AddNewPlayerAsync(player);
+                await SheetController.GetInstance().UpsertPlayerAsync(userName);
             }
         }
     }

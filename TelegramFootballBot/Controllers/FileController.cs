@@ -10,32 +10,32 @@ namespace TelegramFootballBot.Controllers
     public static class FileController
     {
         private const string FILE_NAME = "Players.xml";
+
         /// <summary>
         /// Saves list of known players to file
         /// </summary>
         /// <param name="players">List of known players</param>
         /// <returns>Is serialization successfull</returns>
-        public static async Task<bool> UpdatePlayers(List<Player> players)
+        public static async Task<bool> UpdatePlayersAsync(List<Player> players)
         {
             try
-            {
+            {                
                 using (var sw = new StreamWriter(FILE_NAME))
                 {
-                    
                     var serializer = new XmlSerializer(typeof(List<Player>));
                     await Task.Run(() => { serializer.Serialize(sw, players); });
                     await sw.FlushAsync();
                     return true;
                 }
             }
-            catch (SerializationException ex)
+            catch (SerializationException)
             {
                 // TODO log
                 return false;
             }
         }
 
-        public static async Task<List<Player>> GetPlayers()
+        public static async Task<List<Player>> GetPlayersAsync()
         {
             try
             {
@@ -50,7 +50,7 @@ namespace TelegramFootballBot.Controllers
                 // TODO log
                 throw;
             }
-            catch (SerializationException ex)
+            catch (SerializationException)
             {
                 // TODO log
                 throw;

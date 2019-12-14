@@ -19,24 +19,24 @@ namespace TelegramFootballBot.Models
 
             InitializeCommands();
 
-            Players = Task.Run(async () => await FileController.GetPlayers()).Result;
+            Players = Task.Run(async () => await FileController.GetPlayersAsync()).Result;
             botClient = new TelegramBotClient(AppSettings.BotToken);
 
             return botClient;
         }
 
-        public static async Task<bool> AddNewPlayer(Player player)
+        public static async Task<bool> AddNewPlayerAsync(Player player)
         {
             if (player == null) return false;
 
             Players.Add(player);
-            var isSerialized = await FileController.UpdatePlayers(Players);
+            var isSerialized = await FileController.UpdatePlayersAsync(Players);
             return isSerialized;
         }
 
-        public static async Task<bool> UpdatePlayers()
+        public static async Task<bool> UpdatePlayersAsync()
         {
-            return await FileController.UpdatePlayers(Players);
+            return await FileController.UpdatePlayersAsync(Players);
         }
 
         private static void InitializeCommands()

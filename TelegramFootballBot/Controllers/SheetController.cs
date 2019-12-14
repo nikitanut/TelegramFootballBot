@@ -7,7 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
 using ValueRange = Google.Apis.Sheets.v4.Data.ValueRange;
 
@@ -56,17 +58,17 @@ namespace TelegramFootballBot.Controllers
             });
         }
 
-        public async Task<string> UpdateApproveCell(int userId, string cellValue)
+        public async Task<string> UpdateApproveCellAsync(int userId, string cellValue)
         {
             var player = Bot.Players.FirstOrDefault(p => p.Id == userId);
             if (player == null)
                 throw new UserNotFoundException();
 
-            var sheet = await GetSheet();
+            var sheet = await GetSheetAsync();
             var userRaw = GetUserRowNumber(player.Name, sheet);
 
             if (userRaw == -1)
-                userRaw = await CreateNewPlayerRow(sheet.Values, sheet.Range, player.Name);
+                userRaw = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, player.Name);
 
             var range = $"{SHEET_NAME}!{APPROVE_COLUMN}{userRaw}";
             var dataValueRange = GetValueRange(range, cellValue);
@@ -74,33 +76,35 @@ namespace TelegramFootballBot.Controllers
             var request = _sheetsService.Spreadsheets.Values.Update(dataValueRange, AppSettings.GoogleDocSheetId, range);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
-            // TODO: Cancellation Token
-            var response = await request.ExecuteAsync();
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            var response = await request.ExecuteAsync(cancellationToken);
 
             return JsonConvert.SerializeObject(response);
         }
 
-        public async Task UpsertPlayer(string playerName)
+        public async Task UpsertPlayerAsync(string playerName)
         {
-            var sheet = await GetSheet();
+            var sheet = await GetSheetAsync();
             var userRaw = GetUserRowNumber(playerName, sheet);
 
             if (userRaw == -1)
             {
-                userRaw = await CreateNewPlayerRow(sheet.Values, sheet.Range, playerName);
+                userRaw = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
                 var range = $"{SHEET_NAME}!{NAME_COLUMN}{userRaw}";
                 var dataValueRange = GetValueRange(range, playerName);
 
                 var request = _sheetsService.Spreadsheets.Values.Update(dataValueRange, AppSettings.GoogleDocSheetId, range);
                 request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
-                var response = await request.ExecuteAsync();
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                var response = await request.ExecuteAsync(cancellationToken);
             }
         }
 
-        public async Task<int> GetTotalApprovedPlayers()
+        public async Task<int> GetTotalApprovedPlayersAsync()
         {
-            var sheet = await GetSheet();
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            var sheet = await GetSheetAsync();
             var startRowsToIgnore = GetStartRows(sheet.Values);
 
             return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Sum(p =>
@@ -121,14 +125,15 @@ namespace TelegramFootballBot.Controllers
             return userRowIndex != -1 ? userRowIndex + 1 : -1;
         }
 
-        private async Task<ValueRange> GetSheet()
+        private async Task<ValueRange> GetSheetAsync()
         {
             var range = SHEET_NAME;
             var request = _sheetsService.Spreadsheets.Values.Get(AppSettings.GoogleDocSheetId, range);
-            return await request.ExecuteAsync();
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            return await request.ExecuteAsync(cancellationToken);
         }
 
-        private async Task<int> CreateNewPlayerRow(IList<IList<object>> values, string range, string playerName)
+        private async Task<int> CreateNewPlayerRowAsync(IList<IList<object>> values, string range, string playerName)
         {
             var playerExists = values.Any(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Equals(playerName, StringComparison.InvariantCultureIgnoreCase) == true);
             if (playerExists)
@@ -150,8 +155,7 @@ namespace TelegramFootballBot.Controllers
             newValues.Add(totalsRow);
 
             // TODO: Repair totals row (becomes last but one, formula moves up)
-
-            await UpdateSheet(newValues, range);
+            await UpdateSheetAsync(newValues, range);
             return newPlayerRowNumber;
         }
 
@@ -172,7 +176,7 @@ namespace TelegramFootballBot.Controllers
             return players.OrderBy(v => v[(int)NAME_COLUMN]).ToList();
         }
 
-        private async Task<BatchUpdateValuesResponse> UpdateSheet(IList<IList<object>> values, string range)
+        private async Task<BatchUpdateValuesResponse> UpdateSheetAsync(IList<IList<object>> values, string range)
         {
             var data = new BatchUpdateValuesRequest()
             {
@@ -188,7 +192,8 @@ namespace TelegramFootballBot.Controllers
             };
 
             var request = _sheetsService.Spreadsheets.Values.BatchUpdate(data, AppSettings.GoogleDocSheetId);
-            return await request.ExecuteAsync();
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            return await request.ExecuteAsync(cancellationToken);
         }
 
         private ValueRange GetValueRange(string range, params object [] values)

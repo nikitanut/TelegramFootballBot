@@ -1,7 +1,9 @@
 ﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -15,12 +17,13 @@ namespace TelegramFootballBot.Models.Commands
             var currentPlayer = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id);
             if (currentPlayer == null)
             {
-                await client.SendTextMessageAsync(chatId, "Введите /register *Фамилия* *Имя*");
+                var cancellationTokenRegister = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                await client.SendTextMessageAsync(chatId, "Введите /register *Фамилия* *Имя*", cancellationToken: cancellationTokenRegister);
             }
 
             // TODO: setActive on /start
-
-            await client.SendTextMessageAsync(chatId, "Идёшь на футбол?");
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            await client.SendTextMessageAsync(chatId, "Идёшь на футбол?", cancellationToken: cancellationToken);
         }
     }
 }

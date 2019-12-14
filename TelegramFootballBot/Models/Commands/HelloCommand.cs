@@ -1,6 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -11,7 +13,8 @@ namespace TelegramFootballBot.Models.Commands
         public override async Task Execute(Message message, TelegramBotClient client)
         {
             var chatId = message.Chat.Id;
-            await client.SendTextMessageAsync(chatId, "Hi");
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            await client.SendTextMessageAsync(chatId, "Hi", cancellationToken: cancellationToken);
         }
     }
 }
