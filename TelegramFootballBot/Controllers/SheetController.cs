@@ -60,10 +60,7 @@ namespace TelegramFootballBot.Controllers
 
         public async Task<string> UpdateApproveCellAsync(int userId, string cellValue)
         {
-            var player = Bot.Players.FirstOrDefault(p => p.Id == userId);
-            if (player == null)
-                throw new UserNotFoundException();
-
+            var player = Bot.GetPlayer(userId);
             var sheet = await GetSheetAsync();
             var userRaw = GetUserRowNumber(player.Name, sheet);
 

@@ -7,7 +7,8 @@
         public long ChatId { get; set; }
         public bool IsActive { get; set; }
         public int TotalPlayersMessageId { get; set; }
-       
+        public bool IsGoingToPlay { get; set; }
+
         // For serialization
         private Player() { }
 

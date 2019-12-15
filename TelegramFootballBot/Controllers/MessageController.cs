@@ -75,7 +75,7 @@ namespace TelegramFootballBot.Controllers
         {
             var gameDate = DateTime.Now.AddDays(daysLeftBeforeGame);
             var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
-            var markup = MarkupHelper.GetKeyBoardMarkup(PLAYERS_SET_CALLBACK_PREFIX, "Да", "Нет");
+            var markup = MarkupHelper.GetKeyBoardMarkup(PLAYERS_SET_CALLBACK_PREFIX, Constants.YES_ANSWER, Constants.NO_ANSWER);
 
             var playersToNotify = Bot.Players.Where(p => p.IsActive);
             var requests = new List<Task<Message>>(playersToNotify.Count());
@@ -83,7 +83,8 @@ namespace TelegramFootballBot.Controllers
 
             foreach (var player in playersToNotify)
             {
-                var request = _client.SendTextMessageAsync(player.ChatId, message, replyMarkup: markup, cancellationToken: new CancellationTokenSource(5000).Token);
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                var request = _client.SendTextMessageAsync(player.ChatId, message, replyMarkup: markup, cancellationToken: cancellationToken);
                 requests.Add(request);
                 playersRequestsIds.Add(request.Id, player);
             }
@@ -100,18 +101,42 @@ namespace TelegramFootballBot.Controllers
         }
         
         public async void StartUpdateTotalPlayersMessagesAsync()
-        {
-            var cts = new CancellationTokenSource(5000);
+        {           
             var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
 
-            var playersToShowMessage = Bot.Players.Where(p => p.TotalPlayersMessageId != 0);
+            var playersToShowMessage = Bot.Players.Where(p => p.IsActive && p.IsGoingToPlay && p.TotalPlayersMessageId != 0);
             var requests = new List<Task<Message>>(playersToShowMessage.Count());
+            var playersRequestsIds = new Dictionary<int, Player>(requests.Capacity);
 
             foreach (var player in playersToShowMessage)
-                requests.Add(_client.EditMessageTextAsync(player.ChatId, player.TotalPlayersMessageId, $"Идут {totalPlayers} человек", cancellationToken: cts.Token));
-            
-            // try/catch?
-            await Task.WhenAll(requests);
+            {
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                var request = _client.EditMessageTextAsync(player.ChatId, player.TotalPlayersMessageId, $"Идут {totalPlayers} человек", cancellationToken: cancellationToken);
+                requests.Add(request);
+                playersRequestsIds.Add(request.Id, player);
+            }
+
+            while (requests.Count > 0)
+            {
+                var response = await Task.WhenAny(requests);
+                requests.Remove(response);
+
+                if (response.IsFaulted) { }
+                if (response.IsCanceled) { }
+                // TODO: Set TotalPlayersMessageId Log
+            }
+        }
+
+        public async void ClearGameAttrs()
+        {
+            var playersToUpdate = Bot.Players.Where(p => p.IsGoingToPlay || p.TotalPlayersMessageId != 0);
+            foreach (var player in playersToUpdate)
+            {
+                player.IsGoingToPlay = false;
+                player.TotalPlayersMessageId = 0;
+            }
+
+            await FileController.UpdatePlayersAsync(Bot.Players);
         }
 
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
@@ -168,10 +193,10 @@ namespace TelegramFootballBot.Controllers
         {
             string newCellValue = null;
 
-            switch (userAnswer.ToUpper())
+            switch (userAnswer)
             {
-                case "ДА": newCellValue = "1"; break;
-                case "НЕТ": newCellValue = "0"; break;
+                case Constants.YES_ANSWER: newCellValue = "1"; break;
+                case Constants.NO_ANSWER: newCellValue = "0"; break;
                 default:
                     throw new ArgumentOutOfRangeException($"{PLAYERS_SET_CALLBACK_PREFIX}{Constants.CALLBACK_DATA_SEPARATOR}{userAnswer}");
             }
@@ -180,12 +205,19 @@ namespace TelegramFootballBot.Controllers
             {
                 ClearInlineKeyboardAsync(chatId, messageId);
                 await _sheetController.UpdateApproveCellAsync(userId, newCellValue);
+
+                var player = Bot.GetPlayer(userId);
+                var isGoingToPlay = userAnswer == Constants.YES_ANSWER;
+                if (player.IsGoingToPlay != isGoingToPlay)
+                {
+                    player.IsGoingToPlay = isGoingToPlay;
+                    await FileController.UpdatePlayersAsync(Bot.Players);
+                }
+                
+                if (!isGoingToPlay)
+                    return;
+
                 var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
-                var player = Bot.Players.FirstOrDefault(p => p.Id == userId);
-
-                if (player == null)
-                    throw new UserNotFoundException();
-
                 var totalPlayersMessage = $"Идут {totalPlayers} человек";
                 var needToCreateMessage = false;
 

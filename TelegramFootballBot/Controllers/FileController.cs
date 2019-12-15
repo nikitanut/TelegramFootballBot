@@ -18,6 +18,8 @@ namespace TelegramFootballBot.Controllers
         /// <returns>Is serialization successfull</returns>
         public static async Task<bool> UpdatePlayersAsync(List<Player> players)
         {
+            // TODO: MultiAccess
+
             try
             {                
                 using (var sw = new StreamWriter(FILE_NAME))

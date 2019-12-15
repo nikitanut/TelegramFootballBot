@@ -30,12 +30,14 @@ namespace TelegramFootballBot.Controllers
 
             if (NeedToUpdateTotalPlayers(e.SignalTime))
                 MessageController.StartUpdateTotalPlayersMessagesAsync();
+
+            if (GameStarted(e.SignalTime))
+                MessageController.ClearGameAttrs();
         }
 
         private bool DistributionTimeHasCome(DateTime dateTime)
         {
             var dayOfWeek = dateTime.DayOfWeek != 0 ? (int)dateTime.DayOfWeek : 7;
-
             return dayOfWeek == AppSettings.DistributionTime.Days
                 && dateTime.TimeOfDay.Hours == AppSettings.DistributionTime.Hours
                 && dateTime.TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
@@ -44,6 +46,15 @@ namespace TelegramFootballBot.Controllers
         private bool NeedToUpdateTotalPlayers(DateTime dateTime)
         {
             return dateTime > GetDistributionDate() && dateTime < GetGameDate();
+        }
+
+        private bool GameStarted(DateTime dateTime)
+        {
+            var gameDate = GetGameDate();
+            return dateTime.Year == gameDate.Year 
+                && dateTime.Month == gameDate.Month 
+                && dateTime.Hour == gameDate.Hour 
+                && dateTime.Minute == gameDate.Minute;
         }
 
         private int GetDaysLeftBeforeGame()

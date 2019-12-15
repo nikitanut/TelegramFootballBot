@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using TelegramFootballBot.Controllers;
@@ -37,6 +38,14 @@ namespace TelegramFootballBot.Models
         public static async Task<bool> UpdatePlayersAsync()
         {
             return await FileController.UpdatePlayersAsync(Players);
+        }
+
+        public static Player GetPlayer(int userId)
+        {
+            var player = Players.FirstOrDefault(p => p.Id == userId);
+            if (player == null)
+                throw new UserNotFoundException();
+            return player;
         }
 
         private static void InitializeCommands()
