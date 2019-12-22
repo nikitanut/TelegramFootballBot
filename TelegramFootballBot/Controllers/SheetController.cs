@@ -85,17 +85,7 @@ namespace TelegramFootballBot.Controllers
             var userRaw = GetUserRowNumber(playerName, sheet);
 
             if (userRaw == -1)
-            {
-                userRaw = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
-                var range = $"{SHEET_NAME}!{NAME_COLUMN}{userRaw}";
-                var dataValueRange = GetValueRange(range, playerName);
-
-                var request = _sheetsService.Spreadsheets.Values.Update(dataValueRange, AppSettings.GoogleDocSheetId, range);
-                request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                var response = await request.ExecuteAsync(cancellationToken);
-            }
+                await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
         }
 
         public async Task<int> GetTotalApprovedPlayersAsync()
@@ -124,7 +114,7 @@ namespace TelegramFootballBot.Controllers
 
         private async Task<ValueRange> GetSheetAsync()
         {
-            var range = SHEET_NAME;
+            var range = $"{SHEET_NAME}!{NAME_COLUMN}:{APPROVE_COLUMN}";
             var request = _sheetsService.Spreadsheets.Values.Get(AppSettings.GoogleDocSheetId, range);
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             return await request.ExecuteAsync(cancellationToken);
@@ -132,28 +122,63 @@ namespace TelegramFootballBot.Controllers
 
         private async Task<int> CreateNewPlayerRowAsync(IList<IList<object>> values, string range, string playerName)
         {
-            var playerExists = values.Any(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Equals(playerName, StringComparison.InvariantCultureIgnoreCase) == true);
+            var playerExists = values.Any(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Trim().Equals(playerName, StringComparison.InvariantCultureIgnoreCase) == true);
             if (playerExists)
                 throw new ArgumentException($"Player {playerName} already exists.");
 
             var startRowsToIgnore = GetStartRows(values);
-            var totalsRow = values.FirstOrDefault(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase) == true); // "Всего" row
+            var totalsRow = values.FirstOrDefault(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Trim().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase) == true); // "Всего" row
             if (totalsRow == null)
                 throw new TotalsRowNotFoundExeption();
 
             var players = GetOrderedPlayers(values, startRowsToIgnore, playerName);
 
-            var newPlayerRowNumber = startRowsToIgnore.Count() 
-                + players.IndexOf(players.First(p => p[(int)NAME_COLUMN].ToString() == playerName)) 
+            var newPlayerRowNumber = startRowsToIgnore.Count()
+                + players.IndexOf(players.First(p => p[(int)NAME_COLUMN].ToString() == playerName))
                 + 1;
 
             var newValues = new List<IList<object>>(startRowsToIgnore);
             newValues.AddRange(players);
+
+            var firstPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + 1}";
+            var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + players.Count}";
+            totalsRow[(int)APPROVE_COLUMN] = $"=SUM({firstPlayerCell}:{lastPlayerCell})";
             newValues.Add(totalsRow);
 
-            // TODO: Repair totals row (becomes last but one, formula moves up)
             await UpdateSheetAsync(newValues, range);
+            await UpdateLastRowStyle(newValues.IndexOf(totalsRow));
+
             return newPlayerRowNumber;
+        }
+
+        private async Task UpdateLastRowStyle(int totalsRowIndex)
+        {
+            var copyStyleToTotalsRowRequest = new CopyPasteRequest()
+            {
+                Source = new GridRange() { StartRowIndex = totalsRowIndex - 1, StartColumnIndex = (int)NAME_COLUMN },
+                Destination = new GridRange() { StartRowIndex = totalsRowIndex, StartColumnIndex = (int)NAME_COLUMN },
+                PasteType = "PASTE_FORMAT"
+            };
+
+            var copyStyleToLastPlayerRowRequest = new CopyPasteRequest()
+            {
+                Source = new GridRange() { StartRowIndex = totalsRowIndex - 2, EndRowIndex = totalsRowIndex - 1, StartColumnIndex = (int)NAME_COLUMN },
+                Destination = new GridRange() { StartRowIndex = totalsRowIndex - 1, EndRowIndex = totalsRowIndex, StartColumnIndex = (int)NAME_COLUMN },
+                PasteType = "PASTE_FORMAT"
+            };
+
+            var cutPasteStyleRequest = new BatchUpdateSpreadsheetRequest()
+            {
+                Requests = new List<Request>
+                {
+                    new Request() { CopyPaste = copyStyleToTotalsRowRequest },
+                    new Request() { CopyPaste = copyStyleToLastPlayerRowRequest }
+                }
+            };
+
+            var updateRequest = _sheetsService.Spreadsheets.BatchUpdate(cutPasteStyleRequest, AppSettings.GoogleDocSheetId);
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            await updateRequest.ExecuteAsync(cancellationToken);
         }
 
         private IList<IList<object>> GetOrderedPlayers(IEnumerable<IList<object>> values, IEnumerable<IList<object>> startRowsToIgnore, string newPlayerName = null)
@@ -161,12 +186,12 @@ namespace TelegramFootballBot.Controllers
             var players = values
                 .Skip(startRowsToIgnore.Count())
                 .Where(v => v.Count > 0 && !string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()))
-                .TakeWhile(v => !v[(int)NAME_COLUMN].ToString().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase))
+                .TakeWhile(v => !v[(int)NAME_COLUMN].ToString().Trim().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase))
                 .ToList();
 
             if (newPlayerName != null)
             {
-                var newPlayerRow = new List<object> { newPlayerName };
+                var newPlayerRow = new List<object> { newPlayerName, string.Empty };
                 players.Add(newPlayerRow);
             }
 
