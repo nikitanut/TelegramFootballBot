@@ -15,14 +15,14 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
-            var userName = message.Text.Length > Name.Length 
+            var userName = message.Text.Length > Name.Length
                 ? message.Text.Substring(Name.Length).Trim()
                 : string.Empty;
 
             if (userName == string.Empty)
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await client.SendTextMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*", cancellationToken: cancellationToken);
+                var emptyUserNameCancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                await client.SendTextMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*", cancellationToken: emptyUserNameCancellationToken);
                 return;
             }
 
@@ -31,19 +31,20 @@ namespace TelegramFootballBot.Models.Commands
             {
                 existPlayer.Name = userName;
                 existPlayer.IsActive = true;
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован", cancellationToken: cancellationToken);
-                await Bot.UpdatePlayersAsync();
-                await SheetController.GetInstance().UpsertPlayerAsync(userName);
             }
+
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован", cancellationToken: cancellationToken);
+
+            if (existPlayer != null)
+                await Bot.UpdatePlayersAsync();
             else
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован", cancellationToken: cancellationToken);
-                var player = new Player(message.From.Id, userName, message.Chat.Id);                
+                var player = new Player(message.From.Id, userName, message.Chat.Id);
                 await Bot.AddNewPlayerAsync(player);
-                await SheetController.GetInstance().UpsertPlayerAsync(userName);
             }
+
+            await SheetController.GetInstance().UpsertPlayerAsync(userName);
         }
     }
 }
