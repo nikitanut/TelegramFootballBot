@@ -50,10 +50,13 @@ namespace TelegramFootballBot.Models
 
         private static void InitializeCommands()
         {
-            Commands = new List<Command>();
-            Commands.Add(new StartCommand());
-            Commands.Add(new HelloCommand());
-            Commands.Add(new RegisterCommand());
+            Commands = new List<Command>
+            {
+                new StartCommand(),
+                new HelloCommand(),
+                new RegisterCommand(),
+                new UnregisterCommand()
+            };
         }
     }
 }

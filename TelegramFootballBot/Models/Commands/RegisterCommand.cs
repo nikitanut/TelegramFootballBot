@@ -27,14 +27,18 @@ namespace TelegramFootballBot.Models.Commands
             }
 
             var existPlayer = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id);
-            if (existPlayer != null)
+            string messageForUser;
+
+            if (existPlayer == null || !existPlayer.IsActive)
             {
                 existPlayer.Name = userName;
                 existPlayer.IsActive = true;
+                messageForUser = "Регистрация прошла успешно";
             }
+            else messageForUser = "Вы уже зарегистрированы";
 
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-            await client.SendTextMessageAsync(message.Chat.Id, $"Игрок {userName} зарегистрирован", cancellationToken: cancellationToken);
+            await client.SendTextMessageAsync(message.Chat.Id, messageForUser, cancellationToken: cancellationToken);
 
             if (existPlayer != null)
                 await Bot.UpdatePlayersAsync();
