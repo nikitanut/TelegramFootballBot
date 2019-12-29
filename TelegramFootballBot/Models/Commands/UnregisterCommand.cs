@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -24,8 +23,7 @@ namespace TelegramFootballBot.Models.Commands
                 ? "Рассылка отменена"
                 : "Вы не были зарегистрированы";
 
-            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-            await client.SendTextMessageAsync(message.Chat.Id, messageForUser, cancellationToken: cancellationToken);                          
+            await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);                          
         }
     }
 }

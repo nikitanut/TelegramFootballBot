@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -21,8 +20,7 @@ namespace TelegramFootballBot.Models.Commands
 
             if (userName == string.Empty)
             {
-                var emptyUserNameCancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await client.SendTextMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*", cancellationToken: emptyUserNameCancellationToken);
+                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*");
                 return;
             }
 
@@ -37,8 +35,7 @@ namespace TelegramFootballBot.Models.Commands
             }
             else messageForUser = "Вы уже зарегистрированы";
 
-            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-            await client.SendTextMessageAsync(message.Chat.Id, messageForUser, cancellationToken: cancellationToken);
+            await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
 
             if (existPlayer != null)
                 await Bot.UpdatePlayersAsync();

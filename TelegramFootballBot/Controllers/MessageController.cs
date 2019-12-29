@@ -14,8 +14,6 @@ namespace TelegramFootballBot.Controllers
 {
     public class MessageController
     {
-        private const string PLAYERS_SET_CALLBACK_PREFIX = "PlayersSetDetermination";
-
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
         private readonly SheetController _sheetController;
@@ -65,7 +63,11 @@ namespace TelegramFootballBot.Controllers
             {
                 if (command.Contains(message))
                 {
-                    await command.Execute(message, _client);
+                    try { await command.Execute(message, _client); }
+                    catch (Exception)
+                    {
+
+                    }
                     break;
                 }
             }
@@ -75,7 +77,7 @@ namespace TelegramFootballBot.Controllers
         {
             var gameDate = DateTime.Now.AddDays(daysLeftBeforeGame);
             var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
-            var markup = MarkupHelper.GetKeyBoardMarkup(PLAYERS_SET_CALLBACK_PREFIX, Constants.YES_ANSWER, Constants.NO_ANSWER);
+            var markup = MarkupHelper.GetKeyBoardMarkup(Constants.PLAYERS_SET_CALLBACK_PREFIX, Constants.YES_ANSWER, Constants.NO_ANSWER);
 
             var playersToNotify = Bot.Players.Where(p => p.IsActive);
             var requests = new List<Task<Message>>(playersToNotify.Count());
@@ -83,8 +85,7 @@ namespace TelegramFootballBot.Controllers
 
             foreach (var player in playersToNotify)
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                var request = _client.SendTextMessageAsync(player.ChatId, message, replyMarkup: markup, cancellationToken: cancellationToken);
+                var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message, markup);
                 requests.Add(request);
                 playersRequestsIds.Add(request.Id, player);
             }
@@ -158,30 +159,26 @@ namespace TelegramFootballBot.Controllers
 
                 switch (callbackDataArr[0])
                 {
-                    case PLAYERS_SET_CALLBACK_PREFIX:
+                    case Constants.PLAYERS_SET_CALLBACK_PREFIX:
                         await DetermineIfUserIsReadyToPlayAsync(chatId, messageId, userId, callbackDataArr[1]);
                         break;
                 }
             }
             catch (UserNotFoundException)
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await _client.SendTextMessageAsync(chatId, "Пользователь не найден. Введите команду /register *Фамилия* *Имя*.", cancellationToken: cancellationToken);
+                await _client.SendTextMessageWithTokenAsync(chatId, "Пользователь не найден. Введите команду /register *Фамилия* *Имя*.");
             }
             catch (TotalsRowNotFoundExeption)
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await _client.SendTextMessageAsync(chatId, "Не найдена строка \"Всего\" в excel-файле.", cancellationToken: cancellationToken);
+                await _client.SendTextMessageWithTokenAsync(chatId, "Не найдена строка \"Всего\" в excel-файле.");
             }
             catch (OperationCanceledException)
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await _client.SendTextMessageAsync(chatId, "Не удалось обработать запрос.", cancellationToken: cancellationToken);
+                await _client.SendTextMessageWithTokenAsync(chatId, "Не удалось обработать запрос.");
             }
             catch (ArgumentOutOfRangeException)
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await _client.SendTextMessageAsync(chatId, "Непредвиденный вариант ответа.", cancellationToken: cancellationToken);
+                await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденный вариант ответа.");
             }
             catch (Exception)
             {
@@ -198,7 +195,7 @@ namespace TelegramFootballBot.Controllers
                 case Constants.YES_ANSWER: newCellValue = "1"; break;
                 case Constants.NO_ANSWER: newCellValue = "0"; break;
                 default:
-                    throw new ArgumentOutOfRangeException($"{PLAYERS_SET_CALLBACK_PREFIX}{Constants.CALLBACK_DATA_SEPARATOR}{userAnswer}");
+                    throw new ArgumentOutOfRangeException($"{Constants.PLAYERS_SET_CALLBACK_PREFIX}{Constants.CALLBACK_DATA_SEPARATOR}{userAnswer}");
             }
 
             if (newCellValue != null)
@@ -235,8 +232,7 @@ namespace TelegramFootballBot.Controllers
 
                 if (needToCreateMessage)
                 {
-                    var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                    var messageSent = await _client.SendTextMessageAsync(chatId, totalPlayersMessage, cancellationToken: cancellationToken);
+                    var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, totalPlayersMessage);
                     player.TotalPlayersMessageId = messageSent.MessageId;
                     await Bot.UpdatePlayersAsync();
                 }
