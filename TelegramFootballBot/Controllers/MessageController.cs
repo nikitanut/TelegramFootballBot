@@ -75,20 +75,9 @@ namespace TelegramFootballBot.Controllers
                 playersRequestsIds.Add(request.Id, player);
             }
 
-            while (requests.Count > 0)
-            {
-                var response = await Task.WhenAny(requests);
-                requests.Remove(response);
-
-                if (response.IsFaulted || response.IsCanceled)
-                {
-                    // TODO: Log
-                    var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
-                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при рассылке для игрока {playerName}: {response.Exception.Message}");
-                }
-            }           
+            await ProcessRequests(requests, playersRequestsIds);
         }
-        
+
         public async void StartUpdateTotalPlayersMessagesAsync()
         {           
             var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
@@ -105,6 +94,11 @@ namespace TelegramFootballBot.Controllers
                 playersRequestsIds.Add(request.Id, player);
             }
 
+            await ProcessRequests(requests, playersRequestsIds);
+        }
+
+        private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
+        {
             while (requests.Count > 0)
             {
                 var response = await Task.WhenAny(requests);
@@ -114,7 +108,8 @@ namespace TelegramFootballBot.Controllers
                 {
                     // TODO: Log
                     var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
-                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщения для игрока {playerName}: {response.Exception.Message}");
+                    var errorMessage = response.IsFaulted ? response.Exception.Message : $"Тайм-аут {Constants.ASYNC_OPERATION_TIMEOUT} мс";
+                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при рассылке для игрока {playerName}: {errorMessage}");
                 }
             }
         }
