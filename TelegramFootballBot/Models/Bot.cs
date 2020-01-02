@@ -19,9 +19,8 @@ namespace TelegramFootballBot.Models
                 return botClient;
 
             InitializeCommands();
-
-            Players = Task.Run(async () => await FileController.GetPlayersAsync()).Result;
             botClient = new TelegramBotClient(AppSettings.BotToken);
+            Players = Task.Run(async () => await FileController.GetPlayersAsync()).Result;
 
             return botClient;
         }

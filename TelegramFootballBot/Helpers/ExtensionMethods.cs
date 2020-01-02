@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -12,6 +13,32 @@ namespace TelegramFootballBot.Helpers
         {
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             return await client.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cancellationToken);
+        }
+
+        public static async Task<Message> SendTextMessageToBotOwnerAsync(this TelegramBotClient client, string text)
+        {
+            try
+            {
+                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                return await client.SendTextMessageAsync(AppSettings.BotOwnerChatId, text, cancellationToken: cancellationToken);
+            }
+            catch
+            {
+                // TODO: Log
+                return new Message();
+            }
+        }
+
+        public static async Task<Message> SendErrorMessageToUser(this TelegramBotClient client, ChatId chatId, string playerName)
+        {
+            try
+            {
+                return await client.SendTextMessageWithTokenAsync(chatId, $"Неизвестная ошибка");
+            }
+            catch (Exception ex)
+            {
+                return await client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+            }
         }
     }
 }

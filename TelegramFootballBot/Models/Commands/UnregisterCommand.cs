@@ -23,7 +23,8 @@ namespace TelegramFootballBot.Models.Commands
                 ? "Рассылка отменена"
                 : "Вы не были зарегистрированы";
 
-            await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);                          
+            await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
+            await client.SendTextMessageToBotOwnerAsync($"{activePlayer.Name} отписался от рассылки");
         }
     }
 }

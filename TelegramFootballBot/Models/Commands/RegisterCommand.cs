@@ -46,6 +46,7 @@ namespace TelegramFootballBot.Models.Commands
             }
 
             await SheetController.GetInstance().UpsertPlayerAsync(userName);
+            await client.SendTextMessageToBotOwnerAsync($"{userName} зарегистрировался");
         }
     }
 }

@@ -40,35 +40,20 @@ namespace TelegramFootballBot.Controllers
 
         private async void OnMessageRecievedAsync(object sender, MessageEventArgs e)
         {
-            try { ProcessMessageAsync(e.Message); }
-            catch (Exception)
-            {                
-                var chatId = e.Message.Chat.Id;
-                try
-                {
-                    var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                    await _client.SendTextMessageAsync(chatId, $"Неизвестная ошибка", parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown, cancellationToken: cancellationToken);
-                }
-                catch { }
-                finally
-                {
-                    // TODO: log
-                }
-            }
-        }
-
-        private async void ProcessMessageAsync(Message message)
-        {
             foreach (var command in Bot.Commands)
             {
-                if (command.Contains(message))
+                if (command.Contains(e.Message))
                 {
-                    try { await command.Execute(message, _client); }
-                    catch (Exception)
+                    try
                     {
-
+                        await command.Execute(e.Message, _client);
+                        break;
                     }
-                    break;
+                    catch (Exception ex)
+                    {
+                        await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.Message.From.Id)?.Name}: {ex.Message}");
+                        await _client.SendErrorMessageToUser(e.Message.Chat.Id, Bot.GetPlayer(e.Message.From.Id)?.Name);
+                    }
                 }
             }
         }
@@ -95,9 +80,12 @@ namespace TelegramFootballBot.Controllers
                 var response = await Task.WhenAny(requests);
                 requests.Remove(response);
 
-                if (response.IsFaulted) { }
-                if (response.IsCanceled) { }
-                // TODO: Log
+                if (response.IsFaulted || response.IsCanceled)
+                {
+                    // TODO: Log
+                    var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
+                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при рассылке для игрока {playerName}: {response.Exception.Message}");
+                }
             }           
         }
         
@@ -122,9 +110,12 @@ namespace TelegramFootballBot.Controllers
                 var response = await Task.WhenAny(requests);
                 requests.Remove(response);
 
-                if (response.IsFaulted) { }
-                if (response.IsCanceled) { }
-                // TODO: Set TotalPlayersMessageId Log
+                if (response.IsFaulted || response.IsCanceled)
+                {
+                    // TODO: Log
+                    var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
+                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщения для игрока {playerName}: {response.Exception.Message}");
+                }
             }
         }
 
@@ -171,18 +162,23 @@ namespace TelegramFootballBot.Controllers
             catch (TotalsRowNotFoundExeption)
             {
                 await _client.SendTextMessageWithTokenAsync(chatId, "Не найдена строка \"Всего\" в excel-файле.");
+                await _client.SendTextMessageToBotOwnerAsync("Не найдена строка \"Всего\" в excel-файле.");
             }
             catch (OperationCanceledException)
             {
                 await _client.SendTextMessageWithTokenAsync(chatId, "Не удалось обработать запрос.");
+                await _client.SendTextMessageToBotOwnerAsync($"Операция обработки ответа отменена для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id)?.Name}");
             }
             catch (ArgumentOutOfRangeException)
             {
                 await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденный вариант ответа.");
+                await _client.SendTextMessageToBotOwnerAsync($"Непредвиденный вариант ответа для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id)?.Name}");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO
+                // TODO: Log
+                await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденная ошибка.");
+                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id)?.Name}: {ex.Message}");
             }
         }
 
