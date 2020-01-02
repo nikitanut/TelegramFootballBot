@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using TelegramFootballBot.Controllers;
 using TelegramFootballBot.Models.Commands;
@@ -20,23 +19,23 @@ namespace TelegramFootballBot.Models
 
             InitializeCommands();
             botClient = new TelegramBotClient(AppSettings.BotToken);
-            Players = Task.Run(async () => await FileController.GetPlayersAsync()).Result;
+            Players = FileController.GetPlayersAsync();
 
             return botClient;
         }
 
-        public static async Task<bool> AddNewPlayerAsync(Player player)
+        public static void AddNewPlayer(Player player)
         {
-            if (player == null) return false;
+            if (player == null)
+                return;
 
             Players.Add(player);
-            var isSerialized = await FileController.UpdatePlayersAsync(Players);
-            return isSerialized;
+            FileController.UpdatePlayersAsync(Players);
         }
 
-        public static async Task<bool> UpdatePlayersAsync()
+        public static void UpdatePlayers()
         {
-            return await FileController.UpdatePlayersAsync(Players);
+            FileController.UpdatePlayersAsync(Players);
         }
 
         public static Player GetPlayer(int userId)

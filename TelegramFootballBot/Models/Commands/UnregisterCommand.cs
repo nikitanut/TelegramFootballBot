@@ -16,7 +16,7 @@ namespace TelegramFootballBot.Models.Commands
             if (activePlayer != null)
             {
                 activePlayer.IsActive = false;
-                await Bot.UpdatePlayersAsync();  
+                Bot.UpdatePlayers();  
             }
 
             var messageForUser = activePlayer != null

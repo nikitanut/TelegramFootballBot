@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -14,12 +15,14 @@ namespace TelegramFootballBot.Controllers
 {
     public class MessageController
     {
+        private readonly ILogger _logger;
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
         private readonly SheetController _sheetController;
 
         public MessageController()
         {
+            _logger = new LoggerConfiguration().WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
             _bot = new Bot();
             _client = _bot.GetBotClient();
             _sheetController = SheetController.GetInstance();
@@ -47,12 +50,14 @@ namespace TelegramFootballBot.Controllers
                     try
                     {
                         await command.Execute(e.Message, _client);
+                        _logger.Information($"Command {e.Message.Text} processed for user {Bot.GetPlayer(e.Message.From.Id).Name}");
                         break;
                     }
                     catch (Exception ex)
                     {
-                        await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.Message.From.Id)?.Name}: {ex.Message}");
-                        await _client.SendErrorMessageToUser(e.Message.Chat.Id, Bot.GetPlayer(e.Message.From.Id)?.Name);
+                        _logger.Error(ex, $"Error on processing {e.Message.Text} command for user {Bot.GetPlayer(e.Message.From.Id).Name}");
+                        await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.Message.From.Id).Name}: {ex.Message}");
+                        await _client.SendErrorMessageToUser(e.Message.Chat.Id, Bot.GetPlayer(e.Message.From.Id).Name);
                     }
                 }
             }
@@ -79,22 +84,29 @@ namespace TelegramFootballBot.Controllers
         }
 
         public async void StartUpdateTotalPlayersMessagesAsync()
-        {           
-            var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
-
-            var playersToShowMessage = Bot.Players.Where(p => p.IsActive && p.IsGoingToPlay && p.TotalPlayersMessageId != 0);
-            var requests = new List<Task<Message>>(playersToShowMessage.Count());
-            var playersRequestsIds = new Dictionary<int, Player>(requests.Capacity);
-
-            foreach (var player in playersToShowMessage)
+        {
+            try
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                var request = _client.EditMessageTextAsync(player.ChatId, player.TotalPlayersMessageId, $"Идут {totalPlayers} человек", cancellationToken: cancellationToken);
-                requests.Add(request);
-                playersRequestsIds.Add(request.Id, player);
-            }
+                var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
 
-            await ProcessRequests(requests, playersRequestsIds);
+                var playersToShowMessage = Bot.Players.Where(p => p.IsActive && p.IsGoingToPlay && p.TotalPlayersMessageId != 0);
+                var requests = new List<Task<Message>>(playersToShowMessage.Count());
+                var playersRequestsIds = new Dictionary<int, Player>(requests.Capacity);
+                
+                foreach (var player in playersToShowMessage)
+                {
+                    var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.TotalPlayersMessageId, $"Идут {totalPlayers} человек");
+                    requests.Add(request);
+                    playersRequestsIds.Add(request.Id, player);
+                }
+
+                await ProcessRequests(requests, playersRequestsIds);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on updating total players messages");
+                await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщения с количеством игроков: {ex.Message}");
+            }
         }
 
         private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
@@ -105,16 +117,16 @@ namespace TelegramFootballBot.Controllers
                 requests.Remove(response);
 
                 if (response.IsFaulted || response.IsCanceled)
-                {
-                    // TODO: Log
+                {                    
                     var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
                     var errorMessage = response.IsFaulted ? response.Exception.Message : $"Тайм-аут {Constants.ASYNC_OPERATION_TIMEOUT} мс";
-                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при рассылке для игрока {playerName}: {errorMessage}");
+                    _logger.Error($"Error for user {playerName}: {errorMessage}");
+                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при рассылке для игрока {playerName}: {errorMessage}");                    
                 }
             }
         }
 
-        public async void ClearGameAttrs()
+        public void ClearGameAttrs()
         {
             var playersToUpdate = Bot.Players.Where(p => p.IsGoingToPlay || p.TotalPlayersMessageId != 0);
             foreach (var player in playersToUpdate)
@@ -123,11 +135,11 @@ namespace TelegramFootballBot.Controllers
                 player.TotalPlayersMessageId = 0;
             }
 
-            await FileController.UpdatePlayersAsync(Bot.Players);
+            FileController.UpdatePlayersAsync(Bot.Players);
         }
 
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
-        {
+        {            
             var chatId = e.CallbackQuery.Message.Chat.Id;
             
             try
@@ -152,28 +164,32 @@ namespace TelegramFootballBot.Controllers
             }
             catch (UserNotFoundException)
             {
+                _logger.Information($"User with id {e.CallbackQuery.From.Id} not found. Name: {e.CallbackQuery.From.FirstName} {e.CallbackQuery.From.LastName}");
                 await _client.SendTextMessageWithTokenAsync(chatId, "Пользователь не найден. Введите команду /register *Фамилия* *Имя*.");
             }
             catch (TotalsRowNotFoundExeption)
             {
-                await _client.SendTextMessageWithTokenAsync(chatId, "Не найдена строка \"Всего\" в excel-файле.");
+                _logger.Error("\"Всего\" row not found in excel-file");
+                await _client.SendTextMessageWithTokenAsync(chatId, "Не найдена строка \"Всего\" в excel-файле. Пользователь - ");
                 await _client.SendTextMessageToBotOwnerAsync("Не найдена строка \"Всего\" в excel-файле.");
             }
             catch (OperationCanceledException)
             {
+                _logger.Error($"Operation {e.CallbackQuery.Data} cancelled for user {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}.");
                 await _client.SendTextMessageWithTokenAsync(chatId, "Не удалось обработать запрос.");
-                await _client.SendTextMessageToBotOwnerAsync($"Операция обработки ответа отменена для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id)?.Name}");
+                await _client.SendTextMessageToBotOwnerAsync($"Операция обработки ответа отменена для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}");
             }
-            catch (ArgumentOutOfRangeException)
+            catch (ArgumentOutOfRangeException ex)
             {
+                _logger.Error($"Unexpected response for user {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}: {ex.ParamName}");
                 await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденный вариант ответа.");
-                await _client.SendTextMessageToBotOwnerAsync($"Непредвиденный вариант ответа для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id)?.Name}");
+                await _client.SendTextMessageToBotOwnerAsync($"Непредвиденный вариант ответа для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}");
             }
             catch (Exception ex)
             {
-                // TODO: Log
+                _logger.Error(ex, "Unexpected error");
                 await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденная ошибка.");
-                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id)?.Name}: {ex.Message}");
+                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}: {ex.Message}");
             }
         }
 
@@ -199,7 +215,7 @@ namespace TelegramFootballBot.Controllers
                 if (player.IsGoingToPlay != isGoingToPlay)
                 {
                     player.IsGoingToPlay = isGoingToPlay;
-                    await FileController.UpdatePlayersAsync(Bot.Players);
+                    FileController.UpdatePlayersAsync(Bot.Players);
                 }
                 
                 if (!isGoingToPlay)
@@ -225,7 +241,7 @@ namespace TelegramFootballBot.Controllers
                 {
                     var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, totalPlayersMessage);
                     player.TotalPlayersMessageId = messageSent.MessageId;
-                    await Bot.UpdatePlayersAsync();
+                    Bot.UpdatePlayers();
                 }
             }
         }

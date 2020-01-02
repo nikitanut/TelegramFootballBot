@@ -38,11 +38,11 @@ namespace TelegramFootballBot.Models.Commands
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
 
             if (existPlayer != null)
-                await Bot.UpdatePlayersAsync();
+                Bot.UpdatePlayers();
             else
             {
                 var player = new Player(message.From.Id, userName, message.Chat.Id);
-                await Bot.AddNewPlayerAsync(player);
+                Bot.AddNewPlayer(player);
             }
 
             await SheetController.GetInstance().UpsertPlayerAsync(userName);

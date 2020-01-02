@@ -6,11 +6,11 @@ namespace TelegramFootballBot.Controllers
     public class Scheduler
     {
         private readonly Timer timer;
-        private readonly MessageController MessageController;
+        private readonly MessageController _messageController;
 
-        public Scheduler(MessageController MessageController)
+        public Scheduler(MessageController messageController)
         {
-            this.MessageController = MessageController;
+            _messageController = messageController;
             timer = new Timer(60 * 1000);
         }
 
@@ -23,16 +23,13 @@ namespace TelegramFootballBot.Controllers
         private void OnDistributionDateHasCome(object sender, ElapsedEventArgs e)
         {
             if (DistributionTimeHasCome(e.SignalTime))
-            {
-                var daysLeftBeforeGame = GetDaysLeftBeforeGame();
-                MessageController.StartPlayersSetDeterminationAsync(daysLeftBeforeGame);
-            }
+                _messageController.StartPlayersSetDeterminationAsync(GetDaysLeftBeforeGame());
 
             if (NeedToUpdateTotalPlayers(e.SignalTime))
-                MessageController.StartUpdateTotalPlayersMessagesAsync();
+                _messageController.StartUpdateTotalPlayersMessagesAsync();
 
             if (GameStarted(e.SignalTime))
-                MessageController.ClearGameAttrs();
+                _messageController.ClearGameAttrs();
         }
 
         private bool DistributionTimeHasCome(DateTime dateTime)

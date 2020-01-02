@@ -7,10 +7,10 @@ namespace TelegramFootballBot
     {
         static void Main(string[] args)
         {
-            var messageProcessor = new MessageController();
-            var scheduler = new Scheduler(messageProcessor);
-            messageProcessor.StartPlayersSetDeterminationAsync(3);
-            messageProcessor.Run();
+            var messageController = new MessageController();
+            var scheduler = new Scheduler(messageController);
+            messageController.StartPlayersSetDeterminationAsync(3);
+            messageController.Run();
             //scheduler.Run();
 
             Console.ReadLine();

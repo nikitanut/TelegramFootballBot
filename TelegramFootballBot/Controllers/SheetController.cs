@@ -90,7 +90,6 @@ namespace TelegramFootballBot.Controllers
 
         public async Task<int> GetTotalApprovedPlayersAsync()
         {
-            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             var sheet = await GetSheetAsync();
             var startRowsToIgnore = GetStartRows(sheet.Values);
 

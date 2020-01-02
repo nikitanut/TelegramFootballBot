@@ -15,6 +15,12 @@ namespace TelegramFootballBot.Helpers
             return await client.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cancellationToken);
         }
 
+        public static async Task<Message> EditMessageTextWithTokenAsync(this TelegramBotClient client, ChatId chatId, int messageId, string text)
+        {
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            return await client.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cancellationToken);
+        }
+
         public static async Task<Message> SendTextMessageToBotOwnerAsync(this TelegramBotClient client, string text)
         {
             try
