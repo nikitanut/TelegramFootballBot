@@ -29,7 +29,7 @@ namespace TelegramFootballBot.Controllers
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
             if (DistributionTimeHasCome(e.SignalTime))
-                _messageController.StartPlayersSetDeterminationAsync(GetDaysLeftBeforeGame());
+                _messageController.StartPlayersSetDeterminationAsync();
 
             if (NeedToUpdateTotalPlayers(e.SignalTime))
                 _messageController.StartUpdateTotalPlayersMessagesAsync();
@@ -92,7 +92,7 @@ namespace TelegramFootballBot.Controllers
             return daysLeft;
         }
 
-        private DateTime GetGameDate()
+        public static DateTime GetGameDate()
         {
             var gameDate = DateTime.Now;
             var dayOfWeek = gameDate.DayOfWeek != 0 ? (int)gameDate.DayOfWeek : 7;

@@ -47,7 +47,8 @@ namespace TelegramFootballBot.Models
             Commands = new List<Command>
             {
                 new RegisterCommand(),
-                new UnregisterCommand()
+                new UnregisterCommand(),
+                new GoCommand()
             };
         }
     }
