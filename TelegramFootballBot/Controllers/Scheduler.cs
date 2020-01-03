@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Serilog;
+using System;
+using System.IO;
+using System.Runtime.Serialization;
 using System.Timers;
 using TelegramFootballBot.Models;
 
@@ -8,11 +11,13 @@ namespace TelegramFootballBot.Controllers
     {
         private readonly Timer _timer;
         private readonly MessageController _messageController;
+        private readonly ILogger _logger;
 
-        public Scheduler(MessageController messageController)
+        public Scheduler(MessageController messageController, ILogger logger)
         {
-            _messageController = messageController;
             _timer = new Timer(60 * 1000);
+            _messageController = messageController;
+            _logger = logger;
         }
 
         public void Run()
@@ -32,9 +37,20 @@ namespace TelegramFootballBot.Controllers
             if (GameStarted(e.SignalTime))
                 _messageController.ClearGameAttrs();
 
-            // TODO: try, catch, log
-            if (e.SignalTime.Minute == 0) 
-                FileController.UpdatePlayers(Bot.Players);
+            if (e.SignalTime.Minute == 0)
+            {
+                try { FileController.UpdatePlayers(Bot.Players); }
+                catch (FileNotFoundException)
+                {
+                    _logger.Error("Players file not found");
+                    _messageController.SendTextMessageToBotOwnerAsync("Файл с игроками не найден");
+                }
+                catch (SerializationException ex)
+                {
+                    _logger.Error(ex, "Serialization error");
+                    _messageController.SendTextMessageToBotOwnerAsync("Ошибка сериализации");
+                }
+            }
         }
 
         private bool DistributionTimeHasCome(DateTime dateTime)

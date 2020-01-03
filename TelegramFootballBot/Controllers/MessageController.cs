@@ -20,9 +20,9 @@ namespace TelegramFootballBot.Controllers
         private readonly TelegramBotClient _client;
         private readonly SheetController _sheetController;
 
-        public MessageController()
+        public MessageController(ILogger logger)
         {
-            _logger = new LoggerConfiguration().WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
+            _logger = logger;
             _bot = new Bot();
             _client = _bot.GetBotClient();
             _sheetController = SheetController.GetInstance();
@@ -107,6 +107,11 @@ namespace TelegramFootballBot.Controllers
                 _logger.Error(ex, $"Error on updating total players messages");
                 await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщения с количеством игроков: {ex.Message}");
             }
+        }
+
+        public async void SendTextMessageToBotOwnerAsync(string text)
+        {
+            await _client.SendTextMessageToBotOwnerAsync(text);
         }
 
         private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
