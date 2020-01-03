@@ -65,7 +65,7 @@ namespace TelegramFootballBot.Controllers
 
         public async void StartPlayersSetDeterminationAsync()
         {
-            var message = $"Идёшь на футбол {Scheduler.GetGameDate().ToString("dd.MM")}?";
+            var message = $"Идёшь на футбол {Scheduler.GetGameDate(DateTime.Now).ToString("dd.MM")}?";
             var markup = MarkupHelper.GetKeyBoardMarkup(Constants.PLAYERS_SET_CALLBACK_PREFIX, Constants.YES_ANSWER, Constants.NO_ANSWER);
 
             var playersToNotify = Bot.Players.Where(p => p.IsActive);
@@ -130,7 +130,7 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        public void ClearGameAttrs()
+        public async void ClearGameAttrs()
         {
             var playersToUpdate = Bot.Players.Where(p => p.IsGoingToPlay || p.TotalPlayersMessageId != 0);
             foreach (var player in playersToUpdate)
@@ -138,6 +138,8 @@ namespace TelegramFootballBot.Controllers
                 player.IsGoingToPlay = false;
                 player.TotalPlayersMessageId = 0;
             }
+
+            await _sheetController.ClearApproveCellsAsync();
         }
 
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)

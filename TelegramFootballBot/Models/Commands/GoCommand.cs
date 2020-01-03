@@ -21,7 +21,7 @@ namespace TelegramFootballBot.Models.Commands
                 return;
             }
 
-            var text = $"Идёшь на футбол {Scheduler.GetGameDate().ToString("dd.MM")}?";
+            var text = $"Идёшь на футбол {Scheduler.GetGameDate(DateTime.Now).ToString("dd.MM")}?";
             var markup = MarkupHelper.GetKeyBoardMarkup(Constants.PLAYERS_SET_CALLBACK_PREFIX, Constants.YES_ANSWER, Constants.NO_ANSWER);
             await client.SendTextMessageWithTokenAsync(player.ChatId, text, markup);
         }

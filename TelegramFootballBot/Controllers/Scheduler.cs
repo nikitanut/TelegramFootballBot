@@ -35,7 +35,14 @@ namespace TelegramFootballBot.Controllers
                 _messageController.StartUpdateTotalPlayersMessagesAsync();
 
             if (GameStarted(e.SignalTime))
-                _messageController.ClearGameAttrs();
+            {
+                try { _messageController.ClearGameAttrs(); }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Excel-file updating error");
+                    _messageController.SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
+                }
+            }
 
             if (e.SignalTime.Minute == 0)
             {
@@ -53,26 +60,26 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        private bool DistributionTimeHasCome(DateTime dateTime)
+        private bool DistributionTimeHasCome(DateTime startDate)
         {
-            var dayOfWeek = dateTime.DayOfWeek != 0 ? (int)dateTime.DayOfWeek : 7;
+            var dayOfWeek = startDate.DayOfWeek != 0 ? (int)startDate.DayOfWeek : 7;
             return dayOfWeek == AppSettings.DistributionTime.Days
-                && dateTime.TimeOfDay.Hours == AppSettings.DistributionTime.Hours
-                && dateTime.TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
+                && startDate.TimeOfDay.Hours == AppSettings.DistributionTime.Hours
+                && startDate.TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
         }
 
-        private bool NeedToUpdateTotalPlayers(DateTime dateTime)
+        private bool NeedToUpdateTotalPlayers(DateTime startDate)
         {
-            return dateTime > GetDistributionDate() && dateTime < GetGameDate();
+            return startDate > GetDistributionDate() && startDate < GetGameDate(startDate);
         }
 
-        private bool GameStarted(DateTime dateTime)
+        private bool GameStarted(DateTime startDate)
         {
-            var gameDate = GetGameDate();
-            return dateTime.Year == gameDate.Year 
-                && dateTime.Month == gameDate.Month 
-                && dateTime.Hour == gameDate.Hour 
-                && dateTime.Minute == gameDate.Minute;
+            var gameDate = GetGameDate(startDate);
+            return startDate.Year == gameDate.Year 
+                && startDate.Month == gameDate.Month 
+                && startDate.Hour == gameDate.Hour 
+                && startDate.Minute == gameDate.Minute;
         }
 
         private int GetDaysLeftBeforeGame()
@@ -92,9 +99,9 @@ namespace TelegramFootballBot.Controllers
             return daysLeft;
         }
 
-        public static DateTime GetGameDate()
+        public static DateTime GetGameDate(DateTime startDate)
         {
-            var gameDate = DateTime.Now;
+            var gameDate = startDate.Date;
             var dayOfWeek = gameDate.DayOfWeek != 0 ? (int)gameDate.DayOfWeek : 7;
 
             while (AppSettings.GameDay.Days != dayOfWeek)
@@ -104,7 +111,7 @@ namespace TelegramFootballBot.Controllers
             }
 
             gameDate = gameDate.AddHours(AppSettings.GameDay.Hours).AddMinutes(AppSettings.GameDay.Minutes);
-            return gameDate;
+            return gameDate > DateTime.Now ? gameDate : gameDate.AddDays(1);
         }
 
         private DateTime GetDistributionDate()

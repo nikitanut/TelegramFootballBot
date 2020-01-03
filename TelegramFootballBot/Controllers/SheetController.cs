@@ -100,6 +100,24 @@ namespace TelegramFootballBot.Controllers
             });
         }
 
+        public async Task ClearApproveCellsAsync()
+        {
+            var sheet = await GetSheetAsync();
+            var values = sheet.Values;
+            var startRowsToIgnore = GetStartRows(values);
+
+            var players = GetOrderedPlayers(values, startRowsToIgnore);
+            
+            var newValues = new List<IList<object>>();
+            foreach (var player in players)
+                newValues.Add(new List<object>() { string.Empty });
+
+            var firstPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + 1}";
+            var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + players.Count}";
+
+            await UpdateSheetAsync(newValues, $"{firstPlayerCell}:{lastPlayerCell}");
+        }
+
         private int GetUserRowNumber(string playerName, ValueRange sheet)
         {
             if (playerName == null)
