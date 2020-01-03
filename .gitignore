@@ -263,3 +263,4 @@ __pycache__/
 # App files
 AppSettings.cs
 /TelegramFootballBot/credentials.json
+/TelegramFootballBot/appsettings.json
