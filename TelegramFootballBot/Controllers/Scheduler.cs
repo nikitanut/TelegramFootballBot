@@ -1,26 +1,27 @@
 ﻿using System;
 using System.Timers;
+using TelegramFootballBot.Models;
 
 namespace TelegramFootballBot.Controllers
 {
     public class Scheduler
     {
-        private readonly Timer timer;
+        private readonly Timer _timer;
         private readonly MessageController _messageController;
 
         public Scheduler(MessageController messageController)
         {
             _messageController = messageController;
-            timer = new Timer(60 * 1000);
+            _timer = new Timer(60 * 1000);
         }
 
         public void Run()
         {
-            timer.Elapsed += OnDistributionDateHasCome;
-            timer.Start();
+            _timer.Elapsed += OnTimerElapsed;
+            _timer.Start();
         }
 
-        private void OnDistributionDateHasCome(object sender, ElapsedEventArgs e)
+        private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
             if (DistributionTimeHasCome(e.SignalTime))
                 _messageController.StartPlayersSetDeterminationAsync(GetDaysLeftBeforeGame());
@@ -30,6 +31,10 @@ namespace TelegramFootballBot.Controllers
 
             if (GameStarted(e.SignalTime))
                 _messageController.ClearGameAttrs();
+
+            // TODO: try, catch, log
+            if (e.SignalTime.Minute == 0) 
+                FileController.UpdatePlayers(Bot.Players);
         }
 
         private bool DistributionTimeHasCome(DateTime dateTime)

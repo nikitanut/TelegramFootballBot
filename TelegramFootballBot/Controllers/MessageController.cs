@@ -134,8 +134,6 @@ namespace TelegramFootballBot.Controllers
                 player.IsGoingToPlay = false;
                 player.TotalPlayersMessageId = 0;
             }
-
-            FileController.UpdatePlayersAsync(Bot.Players);
         }
 
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
@@ -205,44 +203,35 @@ namespace TelegramFootballBot.Controllers
                     throw new ArgumentOutOfRangeException($"{Constants.PLAYERS_SET_CALLBACK_PREFIX}{Constants.CALLBACK_DATA_SEPARATOR}{userAnswer}");
             }
 
-            if (newCellValue != null)
+            ClearInlineKeyboardAsync(chatId, messageId);
+
+            var player = Bot.GetPlayer(userId);
+            await _sheetController.UpdateApproveCellAsync(player.Name, newCellValue);
+            
+            player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;                
+            if (!player.IsGoingToPlay)
+                return;
+
+            var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
+            var totalPlayersMessage = $"Идут {totalPlayers} человек";
+            var needToCreateMessage = false;
+
+            if (player.TotalPlayersMessageId != 0)
             {
-                ClearInlineKeyboardAsync(chatId, messageId);
-                await _sheetController.UpdateApproveCellAsync(userId, newCellValue);
-
-                var player = Bot.GetPlayer(userId);
-                var isGoingToPlay = userAnswer == Constants.YES_ANSWER;
-                if (player.IsGoingToPlay != isGoingToPlay)
+                // If user deleted message create new
+                try
                 {
-                    player.IsGoingToPlay = isGoingToPlay;
-                    FileController.UpdatePlayersAsync(Bot.Players);
+                    var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+                    await _client.EditMessageTextAsync(chatId, player.TotalPlayersMessageId, totalPlayersMessage, cancellationToken: cancellationToken);
                 }
-                
-                if (!isGoingToPlay)
-                    return;
+                catch { needToCreateMessage = true; }
+            }
+            else needToCreateMessage = true;
 
-                var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
-                var totalPlayersMessage = $"Идут {totalPlayers} человек";
-                var needToCreateMessage = false;
-
-                if (player.TotalPlayersMessageId != 0)
-                {
-                    // If user deleted message create new
-                    try
-                    {
-                        var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                        await _client.EditMessageTextAsync(chatId, player.TotalPlayersMessageId, totalPlayersMessage, cancellationToken: cancellationToken);
-                    }
-                    catch { needToCreateMessage = true; }
-                }
-                else needToCreateMessage = true;
-
-                if (needToCreateMessage)
-                {
-                    var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, totalPlayersMessage);
-                    player.TotalPlayersMessageId = messageSent.MessageId;
-                    Bot.UpdatePlayers();
-                }
+            if (needToCreateMessage)
+            {
+                var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, totalPlayersMessage);
+                player.TotalPlayersMessageId = messageSent.MessageId;
             }
         }
 

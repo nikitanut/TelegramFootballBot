@@ -13,19 +13,17 @@ namespace TelegramFootballBot.Controllers
         /// Saves list of known players to file
         /// </summary>
         /// <param name="players">List of known players</param>
-        public static void UpdatePlayersAsync(List<Player> players)
+        public static void UpdatePlayers(IEnumerable<Player> players)
         {
-            // TODO: MultiAccess
-
             using (var sw = new StreamWriter(FILE_NAME))
             {
                 var serializer = new XmlSerializer(typeof(List<Player>));
-                serializer.Serialize(sw, players);
+                serializer.Serialize(sw, new List<Player>(players));
                 sw.Flush();
             }
         }
 
-        public static List<Player> GetPlayersAsync()
+        public static List<Player> GetPlayers()
         {
             using (var sr = new StreamReader(FILE_NAME))
             {

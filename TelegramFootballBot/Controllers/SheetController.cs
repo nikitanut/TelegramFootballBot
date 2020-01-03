@@ -58,14 +58,13 @@ namespace TelegramFootballBot.Controllers
             });
         }
 
-        public async Task<string> UpdateApproveCellAsync(int userId, string cellValue)
-        {
-            var player = Bot.GetPlayer(userId);
+        public async Task<string> UpdateApproveCellAsync(string playerName, string cellValue)
+        {            
             var sheet = await GetSheetAsync();
-            var userRaw = GetUserRowNumber(player.Name, sheet);
+            var userRaw = GetUserRowNumber(playerName, sheet);
 
             if (userRaw == -1)
-                userRaw = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, player.Name);
+                userRaw = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
 
             var range = $"{SHEET_NAME}!{APPROVE_COLUMN}{userRaw}";
             var dataValueRange = GetValueRange(range, cellValue);

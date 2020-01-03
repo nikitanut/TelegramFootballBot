@@ -8,20 +8,23 @@ namespace TelegramFootballBot.Models
 {
     public class Bot
     {
-        private TelegramBotClient botClient;
-        public static List<Command> Commands { get; set; }
-        public static List<Player> Players { get; set; }
+        private TelegramBotClient _botClient;
+        private static List<Player> _players;
+
+        public static List<Command> Commands { get; private set; }
+        public static IReadOnlyCollection<Player> Players { get; private set; }
 
         public TelegramBotClient GetBotClient()
         {
-            if (botClient != null)
-                return botClient;
+            if (_botClient != null)
+                return _botClient;
 
             InitializeCommands();
-            botClient = new TelegramBotClient(AppSettings.BotToken);
-            Players = FileController.GetPlayersAsync();
+            _botClient = new TelegramBotClient(AppSettings.BotToken);
+            _players = FileController.GetPlayers();
+            Players = _players;
 
-            return botClient;
+            return _botClient;
         }
 
         public static void AddNewPlayer(Player player)
@@ -29,21 +32,14 @@ namespace TelegramFootballBot.Models
             if (player == null)
                 return;
 
-            Players.Add(player);
-            FileController.UpdatePlayersAsync(Players);
+            _players.Add(player);
+            Players = _players;
         }
-
-        public static void UpdatePlayers()
-        {
-            FileController.UpdatePlayersAsync(Players);
-        }
-
+        
         public static Player GetPlayer(int userId)
         {
             var player = Players.FirstOrDefault(p => p.Id == userId);
-            if (player == null)
-                throw new UserNotFoundException();
-            return player;
+            return player ?? throw new UserNotFoundException();
         }
 
         private static void InitializeCommands()

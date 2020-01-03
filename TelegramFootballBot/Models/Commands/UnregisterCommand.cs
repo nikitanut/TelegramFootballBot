@@ -14,10 +14,7 @@ namespace TelegramFootballBot.Models.Commands
         {
             var activePlayer = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id && p.IsActive);
             if (activePlayer != null)
-            {
                 activePlayer.IsActive = false;
-                Bot.UpdatePlayers();  
-            }
 
             var messageForUser = activePlayer != null
                 ? "Рассылка отменена"
