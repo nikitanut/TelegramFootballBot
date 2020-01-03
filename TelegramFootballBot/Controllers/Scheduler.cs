@@ -111,7 +111,7 @@ namespace TelegramFootballBot.Controllers
             }
 
             gameDate = gameDate.AddHours(AppSettings.GameDay.Hours).AddMinutes(AppSettings.GameDay.Minutes);
-            return gameDate > DateTime.Now ? gameDate : gameDate.AddDays(1);
+            return gameDate > DateTime.Now ? gameDate : gameDate.AddDays(7);
         }
 
         private DateTime GetDistributionDate()

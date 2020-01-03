@@ -28,6 +28,11 @@ namespace TelegramFootballBot.Controllers
 
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };        
         private readonly SheetsService _sheetsService;
+        private readonly Dictionary<int, string> _monthNames = new Dictionary<int, string>()
+        {
+            { 1, "января" }, { 2, "февраля" }, { 3, "марта" }, { 4, "апреля" }, { 5, "мая" }, { 6, "июня" },
+            { 7, "июля" }, { 8, "августа" }, { 9, "сентября" }, { 10, "октября" }, { 11, "ноября" }, { 12, "декабря" }
+        };
 
         private SheetController()
         {
@@ -90,7 +95,7 @@ namespace TelegramFootballBot.Controllers
         public async Task<int> GetTotalApprovedPlayersAsync()
         {
             var sheet = await GetSheetAsync();
-            var startRowsToIgnore = GetStartRows(sheet.Values);
+            var startRowsToIgnore = GetStartRows(sheet.Values).Count();
 
             return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Sum(p =>
             {
@@ -104,18 +109,22 @@ namespace TelegramFootballBot.Controllers
         {
             var sheet = await GetSheetAsync();
             var values = sheet.Values;
-            var startRowsToIgnore = GetStartRows(values);
+            var startRowsToIgnore = GetStartRows(values).Count();
 
             var players = GetOrderedPlayers(values, startRowsToIgnore);
             
             var newValues = new List<IList<object>>();
+
+            var dateOfNextGame = Scheduler.GetGameDate(DateTime.Now);
+            newValues.Add(new List<object>() { $"{dateOfNextGame.Day} {_monthNames[dateOfNextGame.Month]}" });
+
             foreach (var player in players)
                 newValues.Add(new List<object>() { string.Empty });
 
-            var firstPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + 1}";
-            var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + players.Count}";
+            var dateOfGameCell = $"{APPROVE_COLUMN}{startRowsToIgnore}";
+            var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore + players.Count}";
 
-            await UpdateSheetAsync(newValues, $"{firstPlayerCell}:{lastPlayerCell}");
+            await UpdateSheetAsync(newValues, $"{dateOfGameCell}:{lastPlayerCell}");
         }
 
         private int GetUserRowNumber(string playerName, ValueRange sheet)
@@ -147,7 +156,7 @@ namespace TelegramFootballBot.Controllers
             if (totalsRow == null)
                 throw new TotalsRowNotFoundExeption();
 
-            var players = GetOrderedPlayers(values, startRowsToIgnore, playerName);
+            var players = GetOrderedPlayers(values, startRowsToIgnore.Count(), playerName);
 
             var newPlayerRowNumber = startRowsToIgnore.Count()
                 + players.IndexOf(players.First(p => p[(int)NAME_COLUMN].ToString() == playerName))
@@ -197,10 +206,10 @@ namespace TelegramFootballBot.Controllers
             await updateRequest.ExecuteAsync(cancellationToken);
         }
 
-        private IList<IList<object>> GetOrderedPlayers(IEnumerable<IList<object>> values, IEnumerable<IList<object>> startRowsToIgnore, string newPlayerName = null)
+        private IList<IList<object>> GetOrderedPlayers(IEnumerable<IList<object>> values, int startRowsToIgnore, string newPlayerName = null)
         {
             var players = values
-                .Skip(startRowsToIgnore.Count())
+                .Skip(startRowsToIgnore)
                 .Where(v => v.Count > 0 && !string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()))
                 .TakeWhile(v => !v[(int)NAME_COLUMN].ToString().Trim().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase))
                 .ToList();
