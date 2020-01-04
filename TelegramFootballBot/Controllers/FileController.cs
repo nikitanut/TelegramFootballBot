@@ -23,6 +23,10 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets list of players from file
+        /// </summary>
+        /// <returns>List of players</returns>
         public static List<Player> GetPlayers()
         {
             using (var sr = new StreamReader(FILE_NAME))

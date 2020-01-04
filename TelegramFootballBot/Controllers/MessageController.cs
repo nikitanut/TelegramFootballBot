@@ -63,7 +63,7 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        public async void StartPlayersSetDeterminationAsync()
+        public async Task StartPlayersSetDeterminationAsync()
         {
             var message = $"Идёшь на футбол {Scheduler.GetGameDate(DateTime.Now).ToString("dd.MM")}?";
             var markup = MarkupHelper.GetKeyBoardMarkup(Constants.PLAYERS_SET_CALLBACK_PREFIX, Constants.YES_ANSWER, Constants.NO_ANSWER);
@@ -82,7 +82,7 @@ namespace TelegramFootballBot.Controllers
             await ProcessRequests(requests, playersRequestsIds);
         }
 
-        public async void StartUpdateTotalPlayersMessagesAsync()
+        public async Task UpdateTotalPlayersMessagesAsync()
         {
             try
             {
@@ -130,7 +130,7 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        public async void ClearGameAttrs()
+        public async Task ClearGameAttrsAsync()
         {
             var playersToUpdate = Bot.Players.Where(p => p.IsGoingToPlay || p.TotalPlayersMessageId != 0);
             foreach (var player in playersToUpdate)
@@ -139,13 +139,16 @@ namespace TelegramFootballBot.Controllers
                 player.TotalPlayersMessageId = 0;
             }
 
-            await _sheetController.ClearApproveCellsAsync();
+            try { await _sheetController.ClearApproveCellsAsync(); }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Excel-file updating error");
+                SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
+            }            
         }
 
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
         {            
-            var chatId = e.CallbackQuery.Message.Chat.Id;
-            
             try
             {
                 var callbackData = e.CallbackQuery.Data;
@@ -162,62 +165,37 @@ namespace TelegramFootballBot.Controllers
                 switch (callbackDataArr[0])
                 {
                     case Constants.PLAYERS_SET_CALLBACK_PREFIX:
-                        await DetermineIfUserIsReadyToPlayAsync(chatId, messageId, userId, callbackDataArr[1]);
+                        await DetermineIfUserIsReadyToPlayAsync(e.CallbackQuery.Message.Chat.Id, messageId, userId, callbackDataArr[1]);
                         break;
                 }
             }
-            catch (UserNotFoundException)
-            {
-                _logger.Information($"User with id {e.CallbackQuery.From.Id} not found. Name: {e.CallbackQuery.From.FirstName} {e.CallbackQuery.From.LastName}");
-                await _client.SendTextMessageWithTokenAsync(chatId, "Пользователь не найден. Введите команду /register *Фамилия* *Имя*.");
-            }
-            catch (TotalsRowNotFoundExeption)
-            {
-                _logger.Error("\"Всего\" row not found in excel-file");
-                await _client.SendTextMessageWithTokenAsync(chatId, "Не найдена строка \"Всего\" в excel-файле. Пользователь - ");
-                await _client.SendTextMessageToBotOwnerAsync("Не найдена строка \"Всего\" в excel-файле.");
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.Error($"Operation {e.CallbackQuery.Data} cancelled for user {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}.");
-                await _client.SendTextMessageWithTokenAsync(chatId, "Не удалось обработать запрос.");
-                await _client.SendTextMessageToBotOwnerAsync($"Операция обработки ответа отменена для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}");
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                _logger.Error($"Unexpected response for user {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}: {ex.ParamName}");
-                await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденный вариант ответа.");
-                await _client.SendTextMessageToBotOwnerAsync($"Непредвиденный вариант ответа для пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}");
-            }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Unexpected error");
-                await _client.SendTextMessageWithTokenAsync(chatId, "Непредвиденная ошибка.");
-                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {Bot.GetPlayer(e.CallbackQuery.From.Id).Name}: {ex.Message}");
+                await ProcessCallbackError(e.CallbackQuery, ex);
             }
         }
 
-        private async Task DetermineIfUserIsReadyToPlayAsync(long chatId, int messageId, int userId, string userAnswer)
+        private async Task DetermineIfUserIsReadyToPlayAsync(ChatId chatId, int messageId, int userId, string userAnswer)
         {
-            string newCellValue = null;
+            ClearInlineKeyboardAsync(chatId, messageId);
 
+            var newCellValue = string.Empty;
             switch (userAnswer)
             {
                 case Constants.YES_ANSWER: newCellValue = "1"; break;
                 case Constants.NO_ANSWER: newCellValue = "0"; break;
-                default:
-                    throw new ArgumentOutOfRangeException($"{Constants.PLAYERS_SET_CALLBACK_PREFIX}{Constants.CALLBACK_DATA_SEPARATOR}{userAnswer}");
+                default: throw new ArgumentOutOfRangeException($"userAnswer: {userAnswer}");
             }
 
-            ClearInlineKeyboardAsync(chatId, messageId);
-
             var player = Bot.GetPlayer(userId);
-            await _sheetController.UpdateApproveCellAsync(player.Name, newCellValue);
-            
-            player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;                
-            if (!player.IsGoingToPlay)
-                return;
+            player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
 
+            await _sheetController.UpdateApproveCellAsync(player.Name, newCellValue);
+            await SendTotalPlayersMessageAsync(chatId, player);
+        }
+
+        private async Task SendTotalPlayersMessageAsync(ChatId chatId, Player player)
+        {
             var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
             var totalPlayersMessage = $"Идут {totalPlayers} человек";
             var needToCreateMessage = false;
@@ -245,6 +223,56 @@ namespace TelegramFootballBot.Controllers
         {
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: cancellationToken);
+        }
+
+        private async Task NotifyAboutError(ChatId chatId, string messageForUser, string messageForBotOwner)
+        {
+            await _client.SendTextMessageWithTokenAsync(chatId, messageForUser);
+            await _client.SendTextMessageToBotOwnerAsync(messageForBotOwner);
+        }
+
+        private async Task ProcessCallbackError(CallbackQuery callbackQuery, Exception ex)
+        {
+            var messageForUser = string.Empty;
+            var messageForBotOwner = string.Empty;
+            var userId = callbackQuery.From.Id;
+            
+            if (ex is UserNotFoundException)
+            {
+                _logger.Error($"User with id {userId} not found. Name: {callbackQuery.From.FirstName} {callbackQuery.From.LastName}");
+                messageForUser = "Вы не зарегистрированы. Введите команду /register *Фамилия* *Имя*.";
+                messageForBotOwner = $"Пользователь {callbackQuery.From.FirstName} {callbackQuery.From.LastName} не найден";
+            }
+
+            if (ex is TotalsRowNotFoundExeption)
+            {
+                _logger.Error("\"Всего\" row not found in excel-file");
+                messageForUser = "Не найдена строка \"Всего\" в excel-файле.";
+                messageForBotOwner = $"Не найдена строка \"Всего\" в excel-файле. Пользователь - {Bot.GetPlayer(userId).Name}";
+            }
+
+            if (ex is OperationCanceledException)
+            {
+                _logger.Error($"Operation {callbackQuery.Data} cancelled for user {Bot.GetPlayer(userId).Name}.");
+                messageForUser = "Не удалось обработать запрос.";
+                messageForBotOwner = $"Операция обработки ответа отменена для пользователя {Bot.GetPlayer(userId).Name}";
+            }
+
+            if (ex is ArgumentOutOfRangeException)
+            {
+                _logger.Error($"Unexpected response for user {Bot.GetPlayer(userId).Name}: {((ArgumentOutOfRangeException)ex).ParamName}");
+                messageForUser = "Непредвиденный вариант ответа.";
+                messageForBotOwner = $"Непредвиденный вариант ответа для пользователя {Bot.GetPlayer(userId).Name}";
+            }
+
+            if (messageForUser == string.Empty)
+            {
+                _logger.Error(ex, "Unexpected error");
+                messageForUser = "Непредвиденная ошибка.";
+                messageForBotOwner = $"Ошибка у пользователя {Bot.GetPlayer(userId).Name}: {ex.Message}";
+            }
+            
+            await NotifyAboutError(callbackQuery.Message.Chat.Id, messageForUser, messageForBotOwner);
         }
     }
 }

@@ -108,14 +108,11 @@ namespace TelegramFootballBot.Controllers
         public async Task ClearApproveCellsAsync()
         {
             var sheet = await GetSheetAsync();
-            var values = sheet.Values;
-            var startRowsToIgnore = GetStartRows(values).Count();
-
-            var players = GetOrderedPlayers(values, startRowsToIgnore);
-            
-            var newValues = new List<IList<object>>();
+            var startRowsToIgnore = GetStartRows(sheet.Values).Count();
+            var players = GetOrderedPlayers(sheet.Values, startRowsToIgnore);
 
             var dateOfNextGame = Scheduler.GetGameDate(DateTime.Now);
+            var newValues = new List<IList<object>>();
             newValues.Add(new List<object>() { $"{dateOfNextGame.Day} {_monthNames[dateOfNextGame.Month]}" });
 
             foreach (var player in players)
@@ -147,17 +144,16 @@ namespace TelegramFootballBot.Controllers
 
         private async Task<int> CreateNewPlayerRowAsync(IList<IList<object>> values, string range, string playerName)
         {
-            var playerExists = values.Any(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Trim().Equals(playerName, StringComparison.InvariantCultureIgnoreCase) == true);
+            var playerExists = values.Any(v => CellEqualsValue(v, (int)NAME_COLUMN, playerName));
             if (playerExists)
                 throw new ArgumentException($"Player {playerName} already exists.");
 
             var startRowsToIgnore = GetStartRows(values);
-            var totalsRow = values.FirstOrDefault(v => v.Count > 0 && v[(int)NAME_COLUMN]?.ToString().Trim().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase) == true); // "Всего" row
+            var totalsRow = values.FirstOrDefault(v => CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL));
             if (totalsRow == null)
                 throw new TotalsRowNotFoundExeption();
 
             var players = GetOrderedPlayers(values, startRowsToIgnore.Count(), playerName);
-
             var newPlayerRowNumber = startRowsToIgnore.Count()
                 + players.IndexOf(players.First(p => p[(int)NAME_COLUMN].ToString() == playerName))
                 + 1;
@@ -174,6 +170,12 @@ namespace TelegramFootballBot.Controllers
             await UpdateLastRowStyle(newValues.IndexOf(totalsRow));
 
             return newPlayerRowNumber;
+        }
+
+        private bool CellEqualsValue(IList<object> row, int columnIndex, string value)
+        {
+           return row.Count > columnIndex 
+               && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
         }
 
         private async Task UpdateLastRowStyle(int totalsRowIndex)
@@ -211,14 +213,11 @@ namespace TelegramFootballBot.Controllers
             var players = values
                 .Skip(startRowsToIgnore)
                 .Where(v => v.Count > 0 && !string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()))
-                .TakeWhile(v => !v[(int)NAME_COLUMN].ToString().Trim().Equals(TOTAL_LABEL, StringComparison.InvariantCultureIgnoreCase))
+                .TakeWhile(v => !CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL))
                 .ToList();
 
             if (newPlayerName != null)
-            {
-                var newPlayerRow = new List<object> { newPlayerName, string.Empty };
-                players.Add(newPlayerRow);
-            }
+                players.Add(new List<object> { newPlayerName, string.Empty });
 
             return players.OrderBy(v => v[(int)NAME_COLUMN]).ToList();
         }
