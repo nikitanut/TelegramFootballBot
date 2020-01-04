@@ -99,7 +99,7 @@ namespace TelegramFootballBot.Controllers
 
             return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Sum(p =>
             {
-                if (p.Count < 2) return 0;
+                if (p.Count < (int)APPROVE_COLUMN + 1) return 0;
                 double.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out double approveValue);
                 return (int)approveValue;
             });
@@ -122,6 +122,21 @@ namespace TelegramFootballBot.Controllers
             var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore + players.Count}";
 
             await UpdateSheetAsync(newValues, $"{dateOfGameCell}:{lastPlayerCell}");
+        }
+
+        public async Task<List<string>> GetReadyPlayersAsync()
+        {
+            var sheet = await GetSheetAsync();
+            var startRowsToIgnore = GetStartRows(sheet.Values).Count();
+
+            return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Where(p =>
+            {
+                if (p.Count < (int)APPROVE_COLUMN + 1) return false;
+                int.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out int approveValue);
+                return approveValue > 0;
+            })
+            .Select(p => p[(int)NAME_COLUMN].ToString())
+            .ToList();
         }
 
         private int GetUserRowNumber(string playerName, ValueRange sheet)
