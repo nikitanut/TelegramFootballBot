@@ -19,6 +19,7 @@ namespace TelegramFootballBot.Controllers
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
         private readonly SheetController _sheetController;
+        private int _totalApprovedPlayers = 0;
 
         public MessageController(ILogger logger)
         {
@@ -87,7 +88,10 @@ namespace TelegramFootballBot.Controllers
             try
             {
                 var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
+                if (totalPlayers == _totalApprovedPlayers)
+                    return;
 
+                _totalApprovedPlayers = totalPlayers;
                 var playersToShowMessage = Bot.Players.Where(p => p.IsActive && p.IsGoingToPlay && p.TotalPlayersMessageId != 0);
                 var requests = new List<Task<Message>>(playersToShowMessage.Count());
                 var playersRequestsIds = new Dictionary<int, Player>(requests.Capacity);
@@ -197,7 +201,7 @@ namespace TelegramFootballBot.Controllers
         private async Task SendTotalPlayersMessageAsync(ChatId chatId, Player player)
         {
             var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
-            var totalPlayersMessage = $"Идут {totalPlayers} человек";
+            var totalPlayersMessage = $"Всего отметилось: {totalPlayers}";
             var needToCreateMessage = false;
 
             if (player.TotalPlayersMessageId != 0)

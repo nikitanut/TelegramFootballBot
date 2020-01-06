@@ -96,10 +96,15 @@ namespace TelegramFootballBot.Controllers
         {
             var sheet = await GetSheetAsync();
             var startRowsToIgnore = GetStartRows(sheet.Values).Count();
+            var players = GetOrderedPlayers(sheet.Values, startRowsToIgnore);
+            return GetTotalApprovedPlayers(players);
+        }
 
-            return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Sum(p =>
+        private int GetTotalApprovedPlayers(IList<IList<object>> players)
+        {
+            return players.Sum(p =>
             {
-                if (p.Count < (int)APPROVE_COLUMN + 1) return 0;
+                if (p.Count <= (int)APPROVE_COLUMN) return 0;
                 double.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out double approveValue);
                 return (int)approveValue;
             });
@@ -124,19 +129,34 @@ namespace TelegramFootballBot.Controllers
             await UpdateSheetAsync(newValues, $"{dateOfGameCell}:{lastPlayerCell}");
         }
 
-        public async Task<List<string>> GetReadyPlayersAsync()
+        public async Task<string> GetApprovedPlayersMessageAsync()
         {
             var sheet = await GetSheetAsync();
             var startRowsToIgnore = GetStartRows(sheet.Values).Count();
+            var players = GetOrderedPlayers(sheet.Values, startRowsToIgnore);
+            return GetApprovedPlayersString(players);            
+        }
 
-            return GetOrderedPlayers(sheet.Values, startRowsToIgnore).Where(p =>
+        private string GetApprovedPlayersString(IList<IList<object>> players)
+        {
+            var totalApprovedPlayers = $"Всего отметилось: {GetTotalApprovedPlayers(players)}";
+            var playersNames = players.Where(p =>
             {
-                if (p.Count < (int)APPROVE_COLUMN + 1) return false;
+                if (p.Count <= (int)APPROVE_COLUMN) return false;
                 int.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out int approveValue);
                 return approveValue > 0;
             })
-            .Select(p => p[(int)NAME_COLUMN].ToString())
-            .ToList();
+            .Select(p =>
+            {
+                int.TryParse(p[(int)APPROVE_COLUMN].ToString(), out int countByPlayer);
+                var playerName = p[(int)NAME_COLUMN].ToString();
+                return countByPlayer == 1 ? playerName : playerName + " x" + countByPlayer;
+            });
+
+            return totalApprovedPlayers
+                + Environment.NewLine
+                + Environment.NewLine
+                + string.Join(Environment.NewLine, playersNames);
         }
 
         private int GetUserRowNumber(string playerName, ValueRange sheet)

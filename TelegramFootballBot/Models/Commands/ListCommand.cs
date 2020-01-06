@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
@@ -13,12 +12,8 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
-            var readyPlayers = await SheetController.GetInstance().GetReadyPlayersAsync();
-            var text = readyPlayers.Count > 0
-                ? string.Join(Environment.NewLine, readyPlayers)
-                : "Никто не отметился";
-
-            await client.SendTextMessageWithTokenAsync(message.Chat.Id, text);
+            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
+            await client.SendTextMessageWithTokenAsync(message.Chat.Id, approvedPlayersMessage);
         }
     }
 }
