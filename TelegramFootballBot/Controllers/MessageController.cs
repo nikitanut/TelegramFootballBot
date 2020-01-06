@@ -162,16 +162,9 @@ namespace TelegramFootballBot.Controllers
                 if (!callbackData.Contains(Constants.CALLBACK_DATA_SEPARATOR))
                     throw new ArgumentException($"Prefix was not provided for callback data: {callbackData}");
 
-                var userId = e.CallbackQuery.From.Id;
-                var messageId = e.CallbackQuery.Message.MessageId;
                 var callbackDataArr = callbackData.Split(Constants.CALLBACK_DATA_SEPARATOR, 2);
-
-                switch (callbackDataArr[0])
-                {
-                    case Constants.PLAYERS_SET_CALLBACK_PREFIX:
-                        await DetermineIfUserIsReadyToPlayAsync(e.CallbackQuery.Message.Chat.Id, messageId, userId, callbackDataArr[1]);
-                        break;
-                }
+                if (callbackDataArr[0].Contains(Constants.PLAYERS_SET_CALLBACK_PREFIX))
+                    await DetermineIfUserIsReadyToPlayAsync(e.CallbackQuery.Message.Chat.Id, e.CallbackQuery.Message.MessageId, e.CallbackQuery.From.Id, callbackData);
             }
             catch (Exception ex)
             {
@@ -179,11 +172,23 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        private async Task DetermineIfUserIsReadyToPlayAsync(ChatId chatId, int messageId, int userId, string userAnswer)
+        private async Task DetermineIfUserIsReadyToPlayAsync(ChatId chatId, int messageId, int userId, string callbackData)
         {
             ClearInlineKeyboardAsync(chatId, messageId);
 
+            var callbackDataArr = callbackData.Split(Constants.CALLBACK_DATA_SEPARATOR, 2);
+            if (!callbackDataArr[0].Contains(Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR))
+                throw new ArgumentException($"Players set separator was not provided for callback data: {callbackDataArr[0]}");
+
+            var prefixArr = callbackDataArr[0].Split(Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR, 2);
+            DateTime.TryParse(prefixArr[1], out DateTime gameDate);
+
+            if (IsButtonPressedAfterGame(gameDate))
+                return;
+
+            var userAnswer = callbackDataArr[1];
             var newCellValue = string.Empty;
+
             switch (userAnswer)
             {
                 case Constants.YES_ANSWER: newCellValue = "1"; break;
@@ -198,28 +203,16 @@ namespace TelegramFootballBot.Controllers
             await SendApprovedPlayersMessageAsync(chatId, player);
         }
 
+        private bool IsButtonPressedAfterGame(DateTime gameDate)
+        {
+            return gameDate.Date < Scheduler.GetGameDate(DateTime.Now).Date;
+        }
+
         private async Task SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
         {
             var approvedPlayersMessage = await _sheetController.GetApprovedPlayersMessageAsync();
-            var needToCreateMessage = false;
-
-            if (player.ApprovedPlayersMessageId != 0)
-            {
-                // If user deleted message create new
-                try
-                {
-                    var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                    await _client.EditMessageTextAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage, cancellationToken: cancellationToken);
-                }
-                catch { needToCreateMessage = true; }
-            }
-            else needToCreateMessage = true;
-
-            if (needToCreateMessage)
-            {
-                var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage);
-                player.ApprovedPlayersMessageId = messageSent.MessageId;
-            }
+            var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage);
+            player.ApprovedPlayersMessageId = messageSent.MessageId;
         }
 
         private async void ClearInlineKeyboardAsync(ChatId chatId, int messageId)
