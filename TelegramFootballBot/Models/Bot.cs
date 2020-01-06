@@ -48,8 +48,7 @@ namespace TelegramFootballBot.Models
             {
                 new RegisterCommand(),
                 new UnregisterCommand(),
-                new GoCommand(),
-                new ListCommand()
+                new GoCommand()
             };
         }
     }

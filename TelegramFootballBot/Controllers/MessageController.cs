@@ -19,7 +19,7 @@ namespace TelegramFootballBot.Controllers
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
         private readonly SheetController _sheetController;
-        private int _totalApprovedPlayers = 0;
+        private string _approvedPlayersMessage = null;
 
         public MessageController(ILogger logger)
         {
@@ -87,18 +87,18 @@ namespace TelegramFootballBot.Controllers
         {
             try
             {
-                var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
-                if (totalPlayers == _totalApprovedPlayers)
+                var approvedPlayersMessage = await _sheetController.GetApprovedPlayersMessageAsync();
+                if (approvedPlayersMessage == _approvedPlayersMessage)
                     return;
 
-                _totalApprovedPlayers = totalPlayers;
-                var playersToShowMessage = Bot.Players.Where(p => p.IsActive && p.IsGoingToPlay && p.TotalPlayersMessageId != 0);
+                _approvedPlayersMessage = approvedPlayersMessage;
+                var playersToShowMessage = Bot.Players.Where(p => p.IsActive && p.IsGoingToPlay && p.ApprovedPlayersMessageId != 0);
                 var requests = new List<Task<Message>>(playersToShowMessage.Count());
                 var playersRequestsIds = new Dictionary<int, Player>(requests.Capacity);
                 
                 foreach (var player in playersToShowMessage)
                 {
-                    var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.TotalPlayersMessageId, $"Идут {totalPlayers} человек");
+                    var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
                     requests.Add(request);
                     playersRequestsIds.Add(request.Id, player);
                 }
@@ -108,7 +108,7 @@ namespace TelegramFootballBot.Controllers
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on updating total players messages");
-                await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщения с количеством игроков: {ex.Message}");
+                await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
             }
         }
 
@@ -136,11 +136,11 @@ namespace TelegramFootballBot.Controllers
 
         public async Task ClearGameAttrsAsync()
         {
-            var playersToUpdate = Bot.Players.Where(p => p.IsGoingToPlay || p.TotalPlayersMessageId != 0);
+            var playersToUpdate = Bot.Players.Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
             foreach (var player in playersToUpdate)
             {
                 player.IsGoingToPlay = false;
-                player.TotalPlayersMessageId = 0;
+                player.ApprovedPlayersMessageId = 0;
             }
 
             try { await _sheetController.ClearApproveCellsAsync(); }
@@ -195,22 +195,21 @@ namespace TelegramFootballBot.Controllers
             player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
 
             await _sheetController.UpdateApproveCellAsync(player.Name, newCellValue);
-            await SendTotalPlayersMessageAsync(chatId, player);
+            await SendApprovedPlayersMessageAsync(chatId, player);
         }
 
-        private async Task SendTotalPlayersMessageAsync(ChatId chatId, Player player)
+        private async Task SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
         {
-            var totalPlayers = await _sheetController.GetTotalApprovedPlayersAsync();
-            var totalPlayersMessage = $"Всего отметилось: {totalPlayers}";
+            var approvedPlayersMessage = await _sheetController.GetApprovedPlayersMessageAsync();
             var needToCreateMessage = false;
 
-            if (player.TotalPlayersMessageId != 0)
+            if (player.ApprovedPlayersMessageId != 0)
             {
                 // If user deleted message create new
                 try
                 {
                     var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                    await _client.EditMessageTextAsync(chatId, player.TotalPlayersMessageId, totalPlayersMessage, cancellationToken: cancellationToken);
+                    await _client.EditMessageTextAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage, cancellationToken: cancellationToken);
                 }
                 catch { needToCreateMessage = true; }
             }
@@ -218,8 +217,8 @@ namespace TelegramFootballBot.Controllers
 
             if (needToCreateMessage)
             {
-                var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, totalPlayersMessage);
-                player.TotalPlayersMessageId = messageSent.MessageId;
+                var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage);
+                player.ApprovedPlayersMessageId = messageSent.MessageId;
             }
         }
 
