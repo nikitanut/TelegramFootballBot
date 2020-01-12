@@ -65,29 +65,22 @@ namespace TelegramFootballBot.Controllers
 
         public async Task StartPlayersSetDeterminationAsync()
         {
-            try
+            var gameDate = Scheduler.GetGameDate(DateTime.Now);
+            var callbackPrefix = Constants.PLAYERS_SET_CALLBACK_PREFIX + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR + gameDate.ToString("dd.MM.yyyy");
+            var markup = MarkupHelper.GetKeyBoardMarkup(callbackPrefix, Constants.YES_ANSWER, Constants.NO_ANSWER);
+
+            var requests = new List<Task<Message>>();
+            var playersRequestsIds = new Dictionary<int, Player>();
+
+            foreach (var player in Bot.GetActivePlayers())
             {
-                var gameDate = Scheduler.GetGameDate(DateTime.Now);
-                var callbackPrefix = Constants.PLAYERS_SET_CALLBACK_PREFIX + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR + gameDate.ToString("dd.MM.yyyy");
-                var markup = MarkupHelper.GetKeyBoardMarkup(callbackPrefix, Constants.YES_ANSWER, Constants.NO_ANSWER);
-
-                var requests = new List<Task<Message>>();
-                var playersRequestsIds = new Dictionary<int, Player>();
-
-                foreach (var player in Bot.GetActivePlayers())
-                {
-                    var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
-                    var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message, markup);
-                    requests.Add(request);
-                    playersRequestsIds.Add(request.Id, player);
-                }
-
-                await ProcessRequests(requests, playersRequestsIds);
+                var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
+                var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message, markup);
+                requests.Add(request);
+                playersRequestsIds.Add(request.Id, player);
             }
-            catch (Exception ex)
-            {
 
-            }
+            await ProcessRequests(requests, playersRequestsIds);
         }
         
         public async Task UpdateTotalPlayersMessagesAsync()
