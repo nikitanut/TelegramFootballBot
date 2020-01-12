@@ -66,15 +66,13 @@ namespace TelegramFootballBot.Controllers
         public async Task<string> UpdateApproveCellAsync(string playerName, string cellValue)
         {            
             var sheet = await GetSheetAsync();
-            var userRaw = GetUserRowNumber(playerName, sheet);
+            var userRow = GetUserRowNumber(playerName, sheet);
 
-            if (userRaw == -1)
-                userRaw = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
+            if (userRow == -1)
+                userRow = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
 
-            var range = $"{SHEET_NAME}!{APPROVE_COLUMN}{userRaw}";
-            var dataValueRange = GetValueRange(range, cellValue);
-                        
-            var request = _sheetsService.Spreadsheets.Values.Update(dataValueRange, AppSettings.GoogleDocSheetId, range);
+            var range = $"{SHEET_NAME}!{APPROVE_COLUMN}{userRow}";
+            var request = _sheetsService.Spreadsheets.Values.Update(GetValueRange(range, cellValue), AppSettings.GoogleDocSheetId, range);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
@@ -183,28 +181,41 @@ namespace TelegramFootballBot.Controllers
             if (playerExists)
                 throw new ArgumentException($"Player {playerName} already exists.");
 
-            var startRowsToIgnore = GetStartRows(values);
-            var totalsRow = values.FirstOrDefault(v => CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL));
-            if (totalsRow == null)
-                throw new TotalsRowNotFoundExeption();
-
-            var players = GetOrderedPlayers(values, startRowsToIgnore.Count(), playerName);
-            var newPlayerRowNumber = startRowsToIgnore.Count()
+            var startRowsToIgnoreCount = GetStartRows(values).Count();
+            var players = GetOrderedPlayers(values, startRowsToIgnoreCount, playerName);
+            var newPlayerRowNumber = startRowsToIgnoreCount
                 + players.IndexOf(players.First(p => p[(int)NAME_COLUMN].ToString() == playerName))
                 + 1;
 
+            var newValues = GetUpdatedValues(values, players);
+            await UpdateSheetAsync(newValues, range);
+            await UpdateLastRowStyle(newValues.IndexOf(GetTotalsRow(values)));
+
+            return newPlayerRowNumber;
+        }
+
+        private List<IList<object>> GetUpdatedValues(IList<IList<object>> values, IList<IList<object>> players)
+        {
+            var startRowsToIgnore = GetStartRows(values);
             var newValues = new List<IList<object>>(startRowsToIgnore);
             newValues.AddRange(players);
 
+            var totalsRow = GetTotalsRow(values);
             var firstPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + 1}";
             var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + players.Count}";
+
             totalsRow[(int)APPROVE_COLUMN] = $"=SUM({firstPlayerCell}:{lastPlayerCell})";
             newValues.Add(totalsRow);
 
-            await UpdateSheetAsync(newValues, range);
-            await UpdateLastRowStyle(newValues.IndexOf(totalsRow));
+            return newValues;
+        }
 
-            return newPlayerRowNumber;
+        private IList<object> GetTotalsRow(IList<IList<object>> values)
+        {
+            var totalsRow = values.FirstOrDefault(v => CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL));
+            if (totalsRow == null)
+                throw new TotalsRowNotFoundExeption();
+            return totalsRow;
         }
 
         private bool CellEqualsValue(IList<object> row, int columnIndex, string value)

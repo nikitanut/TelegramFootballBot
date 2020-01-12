@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Helpers;
@@ -12,16 +11,27 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
-            var activePlayer = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id && p.IsActive);
-            if (activePlayer != null)
-                activePlayer.IsActive = false;
+            Player player = null;
+            var messageForUser = "Рассылка отменена";
 
-            var messageForUser = activePlayer != null
-                ? "Рассылка отменена"
-                : "Вы не были зарегистрированы";
+            try
+            {
+                player = await Bot.GetPlayerAsync(message.From.Id);
+            }
+            catch (UserNotFoundException)
+            {
+            }
+
+            if (player?.IsActive == true)
+            {
+                player.IsActive = false;
+                await Bot.UpdatePlayerAsync(player);
+            }
+            else
+                messageForUser = "Вы не были зарегистрированы";
 
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
-            await client.SendTextMessageToBotOwnerAsync($"{activePlayer.Name} отписался от рассылки");
+            await client.SendTextMessageToBotOwnerAsync($"{player.Name} отписался от рассылки");
         }
     }
 }

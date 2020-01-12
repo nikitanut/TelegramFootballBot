@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -14,8 +13,12 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
-            var player = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id);
-            if (player == null)
+            Player player;
+            try
+            {
+                player = await Bot.GetPlayerAsync(message.From.Id);
+            }
+            catch (UserNotFoundException)
             {
                 await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /register *Фамилия* *Имя*");
                 return;

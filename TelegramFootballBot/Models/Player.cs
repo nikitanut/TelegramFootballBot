@@ -9,7 +9,6 @@
         public int ApprovedPlayersMessageId { get; set; }
         public bool IsGoingToPlay { get; set; }
 
-        // For serialization
         private Player() { }
 
         public Player(int id, string name, long chatid)

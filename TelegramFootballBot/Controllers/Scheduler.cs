@@ -1,9 +1,6 @@
 ﻿using Serilog;
 using System;
-using System.IO;
-using System.Runtime.Serialization;
 using System.Timers;
-using TelegramFootballBot.Models;
 
 namespace TelegramFootballBot.Controllers
 {
@@ -36,21 +33,6 @@ namespace TelegramFootballBot.Controllers
 
             if (GameStarted(e.SignalTime))
                 await _messageController.ClearGameAttrsAsync();
-
-            if (e.SignalTime.Minute == 0)
-            {
-                try { FileController.UpdatePlayers(Bot.Players); }
-                catch (FileNotFoundException)
-                {
-                    _logger.Error("Players file not found");
-                    _messageController.SendTextMessageToBotOwnerAsync("Файл с игроками не найден");
-                }
-                catch (SerializationException ex)
-                {
-                    _logger.Error(ex, "Serialization error");
-                    _messageController.SendTextMessageToBotOwnerAsync("Ошибка сериализации");
-                }
-            }
         }
 
         private bool DistributionTimeHasCome(DateTime startDate)

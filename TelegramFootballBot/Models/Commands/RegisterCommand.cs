@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -24,21 +23,27 @@ namespace TelegramFootballBot.Models.Commands
                 return;
             }
 
-            var existPlayer = Bot.Players.FirstOrDefault(p => p.Id == message.From.Id);
-            string messageForUser;
-
-            if (existPlayer == null || !existPlayer.IsActive)
+            Player existPlayer = null;
+            var messageForUser = "Регистрация прошла успешно";
+            
+            try
             {
+                existPlayer = await Bot.GetPlayerAsync(message.From.Id);
                 existPlayer.Name = userName;
-                existPlayer.IsActive = true;
-                messageForUser = "Регистрация прошла успешно";
-            }
-            else messageForUser = "Вы уже зарегистрированы";
 
+                if (!existPlayer.IsActive)
+                    existPlayer.IsActive = true;
+                else
+                    messageForUser = existPlayer.Name == userName ? "Вы уже зарегистрированы" : "Имя обновлено";
+            }
+            catch (UserNotFoundException) { }
+            
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
 
             if (existPlayer == null)
-                Bot.AddNewPlayer(new Player(message.From.Id, userName, message.Chat.Id));
+                await Bot.AddNewPlayerAsync(new Player(message.From.Id, userName, message.Chat.Id));
+            else
+                await Bot.UpdatePlayerAsync(existPlayer);
 
             await SheetController.GetInstance().UpsertPlayerAsync(userName);
             await client.SendTextMessageToBotOwnerAsync($"{userName} зарегистрировался");

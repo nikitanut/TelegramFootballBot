@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Data;
 using TelegramFootballBot.Models.Commands;
 
 namespace TelegramFootballBot.Models
@@ -9,10 +11,8 @@ namespace TelegramFootballBot.Models
     public class Bot
     {
         private TelegramBotClient _botClient;
-        private static List<Player> _players;
 
         public static List<Command> Commands { get; private set; }
-        public static IReadOnlyCollection<Player> Players { get; private set; }
 
         public TelegramBotClient GetBotClient()
         {
@@ -21,25 +21,60 @@ namespace TelegramFootballBot.Models
 
             InitializeCommands();
             _botClient = new TelegramBotClient(AppSettings.BotToken);
-            _players = FileController.GetPlayers();
-            Players = _players;
 
             return _botClient;
         }
 
-        public static void AddNewPlayer(Player player)
+        public static async Task AddNewPlayerAsync(Player player)
         {
             if (player == null)
                 return;
 
-            _players.Add(player);
-            Players = _players;
+            using (var db = new ApplicationDbContext())
+            {
+                db.Players.Add(player);
+                await db.SaveChangesAsync();
+            }
         }
-        
-        public static Player GetPlayer(int userId)
+
+        public static async Task UpdatePlayerAsync(Player player)
         {
-            var player = Players.FirstOrDefault(p => p.Id == userId);
-            return player ?? throw new UserNotFoundException();
+            if (player == null || player.Id == default(int))
+                return;
+
+            using (var db = new ApplicationDbContext())
+            {
+                db.Entry(player).State = EntityState.Modified;
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public static async Task UpdatePlayersAsync(IEnumerable<Player> players)
+        {
+            using (var db = new ApplicationDbContext())
+            {
+                foreach (var player in players)
+                    db.Entry(player).State = EntityState.Modified;
+                
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public static async Task<Player> GetPlayerAsync(int userId)
+        {
+            using (var db = new ApplicationDbContext())
+            {
+                var player = await db.Players.FindAsync(userId);
+                return player ?? throw new UserNotFoundException();
+            }
+        }
+
+        public static List<Player> GetActivePlayers()
+        {
+            using (var db = new ApplicationDbContext())
+            {
+                return db.Players.Where(p => p.IsActive).ToList();
+            }
         }
 
         private static void InitializeCommands()
