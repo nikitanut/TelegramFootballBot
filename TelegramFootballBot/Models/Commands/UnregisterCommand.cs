@@ -11,27 +11,21 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
-            Player player = null;
+            var playerName = string.Empty;
             var messageForUser = "Рассылка отменена";
 
             try
             {
-                player = await Bot.GetPlayerAsync(message.From.Id);
+                playerName = (await Bot.GetPlayerAsync(message.From.Id)).Name;
+                await Bot.DeletePlayerAsync(message.From.Id);
             }
             catch (UserNotFoundException)
             {
-            }
-
-            if (player?.IsActive == true)
-            {
-                player.IsActive = false;
-                await Bot.UpdatePlayerAsync(player);
-            }
-            else
                 messageForUser = "Вы не были зарегистрированы";
+            }
 
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
-            await client.SendTextMessageToBotOwnerAsync($"{player.Name} отписался от рассылки");
+            await client.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
         }
     }
 }

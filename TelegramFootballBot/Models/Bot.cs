@@ -60,6 +60,17 @@ namespace TelegramFootballBot.Models
             }
         }
 
+        public static async Task DeletePlayerAsync(int userId)
+        {
+            var player = await GetPlayerAsync(userId);
+
+            using (var db = new ApplicationDbContext())
+            {
+                db.Players.Remove(player);
+                await db.SaveChangesAsync();
+            }
+        }
+
         public static async Task<Player> GetPlayerAsync(int userId)
         {
             using (var db = new ApplicationDbContext())
@@ -69,11 +80,11 @@ namespace TelegramFootballBot.Models
             }
         }
 
-        public static List<Player> GetActivePlayers()
+        public static async Task<List<Player>> GetPlayersAsync()
         {
             using (var db = new ApplicationDbContext())
             {
-                return db.Players.Where(p => p.IsActive).ToList();
+                return await db.Players.ToListAsync();
             }
         }
 

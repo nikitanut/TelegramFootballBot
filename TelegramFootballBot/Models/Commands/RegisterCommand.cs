@@ -19,32 +19,24 @@ namespace TelegramFootballBot.Models.Commands
 
             if (userName == string.Empty)
             {
-                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register *Фамилия* *Имя*");
+                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register Фамилия Имя");
                 return;
             }
-
-            Player existPlayer = null;
-            var messageForUser = "Регистрация прошла успешно";
             
+            var messageForUser = "Регистрация прошла успешно";
             try
             {
-                existPlayer = await Bot.GetPlayerAsync(message.From.Id);
+                var existPlayer = await Bot.GetPlayerAsync(message.From.Id);                
+                messageForUser = existPlayer.Name == userName ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
                 existPlayer.Name = userName;
-
-                if (!existPlayer.IsActive)
-                    existPlayer.IsActive = true;
-                else
-                    messageForUser = existPlayer.Name == userName ? "Вы уже зарегистрированы" : "Имя обновлено";
+                await Bot.UpdatePlayerAsync(existPlayer);
             }
-            catch (UserNotFoundException) { }
+            catch (UserNotFoundException)
+            {
+                await Bot.AddNewPlayerAsync(new Player(message.From.Id, userName, message.Chat.Id));
+            }
             
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
-
-            if (existPlayer == null)
-                await Bot.AddNewPlayerAsync(new Player(message.From.Id, userName, message.Chat.Id));
-            else
-                await Bot.UpdatePlayerAsync(existPlayer);
-
             await SheetController.GetInstance().UpsertPlayerAsync(userName);
             await client.SendTextMessageToBotOwnerAsync($"{userName} зарегистрировался");
         }

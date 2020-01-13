@@ -44,22 +44,26 @@ namespace TelegramFootballBot.Controllers
 
         private async void OnMessageRecievedAsync(object sender, MessageEventArgs e)
         {
-            var command = Bot.Commands.FirstOrDefault(c => c.Contains(e.Message));
+            var command = Bot.Commands.FirstOrDefault(c => c.StartsWith(e.Message));
             if (command == null)
                 return;
 
+            var playerName = string.Empty;
             try
             {
+                playerName = await GetPlayerNameAsync(e.Message.From.Id);
                 await command.Execute(e.Message, _client);
-                var player = await Bot.GetPlayerAsync(e.Message.From.Id);
-                _logger.Information($"Command {e.Message.Text} processed for user {player.Name}");
+
+                if (string.IsNullOrEmpty(playerName))
+                    playerName = await GetPlayerNameAsync(e.Message.From.Id);
+
+                _logger.Information($"Command {e.Message.Text} processed for user {playerName}");
             }
             catch (Exception ex)
             {
-                var player = await Bot.GetPlayerAsync(e.Message.From.Id);
-                _logger.Error(ex, $"Error on processing {e.Message.Text} command for user {player.Name}");
-                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {player.Name}: {ex.Message}");
-                await _client.SendErrorMessageToUser(e.Message.Chat.Id, player.Name);
+                _logger.Error(ex, $"Error on processing {e.Message.Text} command for user {playerName}");
+                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+                await _client.SendErrorMessageToUser(e.Message.Chat.Id, playerName);
             }
         }
 
@@ -72,7 +76,7 @@ namespace TelegramFootballBot.Controllers
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
 
-            foreach (var player in Bot.GetActivePlayers())
+            foreach (var player in await Bot.GetPlayersAsync())
             {
                 var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
                 var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message, markup);
@@ -94,8 +98,8 @@ namespace TelegramFootballBot.Controllers
                 _approvedPlayersMessage = approvedPlayersMessage;
                 var requests = new List<Task<Message>>();
                 var playersRequestsIds = new Dictionary<int, Player>();
-                
-                foreach (var player in Bot.GetActivePlayers().Where(p => p.ApprovedPlayersMessageId != 0))
+
+                foreach (var player in (await Bot.GetPlayersAsync()).Where(p => p.ApprovedPlayersMessageId != 0))
                 {
                     var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
                     requests.Add(request);
@@ -135,7 +139,7 @@ namespace TelegramFootballBot.Controllers
 
         public async Task ClearGameAttrsAsync()
         {
-            var playersToUpdate = Bot.GetActivePlayers().Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
+            var playersToUpdate = (await Bot.GetPlayersAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
             foreach (var player in playersToUpdate)
             {
                 player.IsGoingToPlay = false;
@@ -192,7 +196,7 @@ namespace TelegramFootballBot.Controllers
             player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
 
             await _sheetController.UpdateApproveCellAsync(player.Name, GetApproveCellValue(userAnswer));            
-            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(chatId, player);
+            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(chatId);
             
             await Bot.UpdatePlayerAsync(player);
         }
@@ -213,7 +217,7 @@ namespace TelegramFootballBot.Controllers
             return gameDate.Date < Scheduler.GetGameDate(DateTime.Now).Date;
         }
 
-        private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
+        private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId)
         {
             var approvedPlayersMessage = await _sheetController.GetApprovedPlayersMessageAsync();
             var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage);
@@ -277,6 +281,18 @@ namespace TelegramFootballBot.Controllers
             }
             
             await NotifyAboutError(callbackQuery.Message.Chat.Id, messageForUser, messageForBotOwner);
+        }
+
+        private async Task<string> GetPlayerNameAsync(int userId)
+        {
+            try
+            {
+                return (await Bot.GetPlayerAsync(userId)).Name;
+            }
+            catch (UserNotFoundException)
+            {
+                return string.Empty;
+            }
         }
     }
 }

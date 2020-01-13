@@ -5,7 +5,6 @@
         public int Id { get; set; }
         public string Name { get; set; }      
         public long ChatId { get; set; }
-        public bool IsActive { get; set; }
         public int ApprovedPlayersMessageId { get; set; }
         public bool IsGoingToPlay { get; set; }
 
@@ -16,8 +15,6 @@
             Id = id;
             Name = name;
             ChatId = chatid;
-            IsActive = true;
-            ApprovedPlayersMessageId = 0;
         }
     }
 }

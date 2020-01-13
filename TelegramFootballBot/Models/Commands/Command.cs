@@ -10,12 +10,12 @@ namespace TelegramFootballBot.Models.Commands
 
         public abstract Task Execute(Message message, TelegramBotClient client);
 
-        public bool Contains(Message message)
+        public bool StartsWith(Message message)
         {
             if (message.Type != Telegram.Bot.Types.Enums.MessageType.Text)
                 return false;
 
-            return message.Text.Contains(Name);
+            return message.Text.StartsWith(Name);
         }
     }
 }
