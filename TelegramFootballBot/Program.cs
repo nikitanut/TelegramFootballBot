@@ -24,7 +24,7 @@ namespace TelegramFootballBot
                     messageController.Run();
                     scheduler.Run();
 
-                    Console.ReadLine();
+                    while (true);
                 }
                 catch (Exception ex)
                 {

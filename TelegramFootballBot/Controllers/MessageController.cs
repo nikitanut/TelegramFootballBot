@@ -179,7 +179,8 @@ namespace TelegramFootballBot.Controllers
 
         private async Task DetermineIfUserIsReadyToPlayAsync(ChatId chatId, int messageId, int userId, string callbackData)
         {
-            ClearInlineKeyboardAsync(chatId, messageId);
+            await ClearInlineKeyboardAsync(chatId, messageId);
+            await DeleteMessageAsync(chatId, messageId);
 
             var callbackDataArr = callbackData.Split(Constants.CALLBACK_DATA_SEPARATOR, 2);
             if (!callbackDataArr[0].Contains(Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR))
@@ -189,15 +190,18 @@ namespace TelegramFootballBot.Controllers
             DateTime.TryParse(prefixArr[1], out DateTime gameDate);
 
             if (IsButtonPressedAfterGame(gameDate))
+            {
+                _logger.Information($"Button is pressed after game by user {userId}. Date of game: {gameDate}. Now: {DateTime.Today}");
                 return;
+            }
 
             var userAnswer = callbackDataArr[1];
             var player = await Bot.GetPlayerAsync(userId);
             player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
 
-            await _sheetController.UpdateApproveCellAsync(player.Name, GetApproveCellValue(userAnswer));            
+            await _sheetController.UpdateApproveCellAsync(player.Name, GetApproveCellValue(userAnswer));
+
             player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(chatId);
-            
             await Bot.UpdatePlayerAsync(player);
         }
 
@@ -214,7 +218,7 @@ namespace TelegramFootballBot.Controllers
 
         private bool IsButtonPressedAfterGame(DateTime gameDate)
         {
-            return gameDate.Date < Scheduler.GetGameDate(DateTime.Now).Date;
+            return gameDate.Date < DateTime.Today;
         }
 
         private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId)
@@ -224,10 +228,19 @@ namespace TelegramFootballBot.Controllers
             return messageSent.MessageId;
         }
 
-        private async void ClearInlineKeyboardAsync(ChatId chatId, int messageId)
+        private async Task ClearInlineKeyboardAsync(ChatId chatId, int messageId)
         {
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: cancellationToken);
+        }
+
+        private async Task DeleteMessageAsync(ChatId chatId, int messageId)
+        {
+            try { await _client.DeleteMessageAsync(chatId, messageId, new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token); }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on deleting message: ");
+            }
         }
 
         private async Task NotifyAboutError(ChatId chatId, string messageForUser, string messageForBotOwner)

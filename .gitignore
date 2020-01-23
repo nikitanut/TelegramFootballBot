@@ -266,3 +266,5 @@ AppSettings.cs
 /TelegramFootballBot/appsettings.json
 /TelegramFootballBot/Properties/PublishProfiles/FolderProfile.pubxml
 *.db
+/TelegramFootballBot/published
+/TelegramFootballBot/Properties/PublishProfiles

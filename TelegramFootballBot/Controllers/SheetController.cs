@@ -188,9 +188,15 @@ namespace TelegramFootballBot.Controllers
                 + 1;
 
             var newValues = GetUpdatedValues(values, players);
-            await UpdateSheetAsync(newValues, range);
-            await UpdateLastRowStyle(newValues.IndexOf(GetTotalsRow(values)));
 
+            // Add empty rows to clear unnecesary data
+            var endEmptyRows = 30;
+            while (--endEmptyRows != 0)
+                newValues.Add(new List<object> { string.Empty, string.Empty});
+
+            await UpdateLastRowStyle(values.IndexOf(GetTotalsRow(values)), newValues.IndexOf(GetTotalsRow(values)));
+            await UpdateSheetAsync(newValues, range);
+            
             return newPlayerRowNumber;
         }
 
@@ -213,8 +219,13 @@ namespace TelegramFootballBot.Controllers
         private IList<object> GetTotalsRow(IList<IList<object>> values)
         {
             var totalsRow = values.FirstOrDefault(v => CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL));
+
             if (totalsRow == null)
                 throw new TotalsRowNotFoundExeption();
+
+            if (totalsRow.Count < 2)
+                totalsRow.Add(string.Empty);
+
             return totalsRow;
         }
 
@@ -224,34 +235,49 @@ namespace TelegramFootballBot.Controllers
                && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
         }
 
-        private async Task UpdateLastRowStyle(int totalsRowIndex)
+        private async Task UpdateLastRowStyle(int oldTotalsRowIndex, int newTotalsRowIndex)
         {
-            var copyStyleToTotalsRowRequest = new CopyPasteRequest()
-            {
-                Source = new GridRange() { StartRowIndex = totalsRowIndex - 1, StartColumnIndex = (int)NAME_COLUMN },
-                Destination = new GridRange() { StartRowIndex = totalsRowIndex, StartColumnIndex = (int)NAME_COLUMN },
-                PasteType = "PASTE_FORMAT"
-            };
+            if (oldTotalsRowIndex == newTotalsRowIndex)
+                return;
 
-            var copyStyleToLastPlayerRowRequest = new CopyPasteRequest()
-            {
-                Source = new GridRange() { StartRowIndex = totalsRowIndex - 2, EndRowIndex = totalsRowIndex - 1, StartColumnIndex = (int)NAME_COLUMN },
-                Destination = new GridRange() { StartRowIndex = totalsRowIndex - 1, EndRowIndex = totalsRowIndex, StartColumnIndex = (int)NAME_COLUMN },
-                PasteType = "PASTE_FORMAT"
-            };
+            var cellWithDefaultStyleRowIndex = 5;
+            var copyStyleToTotalsRowRequest = GetCopyStyleRequest(oldTotalsRowIndex, newTotalsRowIndex);
+            var copyStyleToOldTotalsRowRequest = GetCopyStyleRequest(cellWithDefaultStyleRowIndex, oldTotalsRowIndex);
 
             var cutPasteStyleRequest = new BatchUpdateSpreadsheetRequest()
             {
                 Requests = new List<Request>
                 {
                     new Request() { CopyPaste = copyStyleToTotalsRowRequest },
-                    new Request() { CopyPaste = copyStyleToLastPlayerRowRequest }
+                    new Request() { CopyPaste = copyStyleToOldTotalsRowRequest }
                 }
             };
 
             var updateRequest = _sheetsService.Spreadsheets.BatchUpdate(cutPasteStyleRequest, AppSettings.GoogleDocSheetId);
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             await updateRequest.ExecuteAsync(cancellationToken);
+        }
+
+        private CopyPasteRequest GetCopyStyleRequest(int sourceRowIndex, int destinationRowIndex)
+        {
+            return new CopyPasteRequest()
+            {
+                Source = new GridRange()
+                {
+                    StartRowIndex = sourceRowIndex,
+                    EndRowIndex = sourceRowIndex + 1,
+                    StartColumnIndex = (int)NAME_COLUMN,
+                    EndColumnIndex = (int)APPROVE_COLUMN + 1
+                },
+                Destination = new GridRange()
+                {
+                    StartRowIndex = destinationRowIndex,
+                    EndRowIndex = destinationRowIndex + 1,
+                    StartColumnIndex = (int)NAME_COLUMN,
+                    EndColumnIndex = (int)APPROVE_COLUMN + 1
+                },
+                PasteType = "PASTE_FORMAT"
+            };
         }
 
         private IList<IList<object>> GetOrderedPlayers(IEnumerable<IList<object>> values, int startRowsToIgnore, string newPlayerName = null)
@@ -264,6 +290,15 @@ namespace TelegramFootballBot.Controllers
 
             if (newPlayerName != null)
                 players.Add(new List<object> { newPlayerName, string.Empty });
+
+            // Set empty string for approve cells. Null values do not clear cells.
+            foreach (var player in players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null))
+            {
+                if (player.Count == 1)
+                    player.Add(string.Empty);
+                else
+                    player[(int)APPROVE_COLUMN] = string.Empty;
+            }
 
             return players.OrderBy(v => v[(int)NAME_COLUMN]).ToList();
         }

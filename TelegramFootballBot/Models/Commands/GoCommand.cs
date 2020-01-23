@@ -26,7 +26,7 @@ namespace TelegramFootballBot.Models.Commands
 
             var gameDate = Scheduler.GetGameDate(DateTime.Now);
             var text = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
-            var callbackPrefix = Constants.PLAYERS_SET_CALLBACK_PREFIX + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR + gameDate.ToString("dd.MM.yyyy");
+            var callbackPrefix = Constants.PLAYERS_SET_CALLBACK_PREFIX + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR + gameDate.ToString("yyyy-MM-dd");
             var markup = MarkupHelper.GetKeyBoardMarkup(callbackPrefix, Constants.YES_ANSWER, Constants.NO_ANSWER);
 
             await client.SendTextMessageWithTokenAsync(player.ChatId, text, markup);
