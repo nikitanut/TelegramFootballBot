@@ -80,7 +80,7 @@ namespace TelegramFootballBot.Helpers
             if (newPlayerName != null)
                 players.Add(new List<object> { newPlayerName, string.Empty });
 
-            // Set empty string for approve cells. Null values do not clear cells.
+            // Set empty string for approve cells to clear data
             foreach (var player in players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null))
             {
                 if (player.Count == 1)

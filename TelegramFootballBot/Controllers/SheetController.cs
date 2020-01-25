@@ -2,7 +2,6 @@
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -47,7 +46,7 @@ namespace TelegramFootballBot.Controllers
             });
         }
 
-        public async Task<string> UpdateApproveCellAsync(string playerName, string cellValue)
+        public async Task UpdateApproveCellAsync(string playerName, string cellValue)
         {            
             var sheet = await GetSheetAsync();
             var userRow = SheetHelper.GetUserRowNumber(sheet.Values, playerName);
@@ -58,11 +57,7 @@ namespace TelegramFootballBot.Controllers
             var range = SheetHelper.GetUserRange(userRow);
             var request = _sheetsService.Spreadsheets.Values.Update(SheetHelper.GetValueRange(range, cellValue), AppSettings.GoogleDocSheetId, range);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
-            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-            var response = await request.ExecuteAsync(cancellationToken);
-
-            return JsonConvert.SerializeObject(response);
+            await request.ExecuteAsync(new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token);
         }
 
         public async Task UpsertPlayerAsync(string playerName)
@@ -77,7 +72,7 @@ namespace TelegramFootballBot.Controllers
             var sheet = await GetSheetAsync();            
             var players = SheetHelper.GetOrderedPlayers(sheet.Values);
 
-            var dateOfNextGame = Scheduler.GetGameDate(DateTime.Now);
+            var dateOfNextGame = Scheduler.GetGameDateMoscowTime(DateTime.Now);
             var newValues = new List<IList<object>>();
             newValues.Add(new List<object>() { SheetHelper.GetDateWithRussianMonth(dateOfNextGame) });
 
@@ -106,12 +101,7 @@ namespace TelegramFootballBot.Controllers
             if (SheetHelper.GetUserRowNumber(values, playerName) != -1)
                 throw new ArgumentException($"Player {playerName} already exists.");
 
-            //var startRowsToIgnoreCount = SheetHelper.GetStartRows(values).Count();
             var players = SheetHelper.GetOrderedPlayers(values, playerName);
-            //var newPlayerRowNumber = startRowsToIgnoreCount
-            //    + SheetHelper.GetUserRowNumber(players, playerName)
-            //    + 1;
-
             var newValues = SheetHelper.GetNewValues(values, players);
 
             // Add empty rows to clear unnecesary data

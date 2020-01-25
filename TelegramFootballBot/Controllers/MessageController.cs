@@ -69,8 +69,8 @@ namespace TelegramFootballBot.Controllers
 
         public async Task StartPlayersSetDeterminationAsync()
         {
-            var gameDate = Scheduler.GetGameDate(DateTime.Now);
-            var callbackPrefix = Constants.PLAYERS_SET_CALLBACK_PREFIX + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR + gameDate.ToString("dd.MM.yyyy");
+            var gameDate = Scheduler.GetGameDateMoscowTime(DateTime.UtcNow.ToMoscowTime());
+            var callbackPrefix = GetGameStartCallbackPrefix(gameDate);
             var markup = MarkupHelper.GetKeyBoardMarkup(callbackPrefix, Constants.YES_ANSWER, Constants.NO_ANSWER);
 
             var requests = new List<Task<Message>>();
@@ -156,6 +156,13 @@ namespace TelegramFootballBot.Controllers
             }            
         }
 
+        public static string GetGameStartCallbackPrefix(DateTime gameDate)
+        {
+            return Constants.PLAYERS_SET_CALLBACK_PREFIX 
+                 + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR 
+                 + gameDate.ToString("yyyy-MM-dd");
+        }
+
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
         {            
             try
@@ -191,7 +198,7 @@ namespace TelegramFootballBot.Controllers
 
             if (IsButtonPressedAfterGame(gameDate))
             {
-                _logger.Information($"Button is pressed after game by user {userId}. Date of game: {gameDate}. Now: {DateTime.Today}");
+                _logger.Information($"Button is pressed after game by user {userId}. Date of game: {gameDate}. Now: {DateTime.UtcNow.ToMoscowTime()}");
                 return;
             }
 
@@ -218,7 +225,7 @@ namespace TelegramFootballBot.Controllers
 
         private bool IsButtonPressedAfterGame(DateTime gameDate)
         {
-            return gameDate.Date < DateTime.Today;
+            return gameDate.ToUniversalTime().Date < DateTime.UtcNow.Date;
         }
 
         private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId)

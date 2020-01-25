@@ -46,5 +46,11 @@ namespace TelegramFootballBot.Helpers
                 return await client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
             }
         }
+
+        public static DateTime ToMoscowTime(this DateTime dateTime)
+        {
+            var moscowUtcOffset = 3;
+            return dateTime.ToUniversalTime().AddHours(moscowUtcOffset);
+        }
     }
 }

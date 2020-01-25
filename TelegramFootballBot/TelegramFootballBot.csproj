@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="BotDb.db">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

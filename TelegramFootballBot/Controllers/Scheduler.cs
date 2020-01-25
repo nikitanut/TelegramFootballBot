@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using System;
 using System.Threading;
+using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Controllers
 {
@@ -25,7 +26,7 @@ namespace TelegramFootballBot.Controllers
 
         private async void OnTimerElapsed(object sender)
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
 
             if (DistributionTimeHasCome(now))
                 await _messageController.StartPlayersSetDeterminationAsync();
@@ -37,48 +38,31 @@ namespace TelegramFootballBot.Controllers
                 await _messageController.ClearGameAttrsAsync();
         }
 
-        private bool DistributionTimeHasCome(DateTime startDate)
+        private bool DistributionTimeHasCome(DateTime date)
         {
-            var dayOfWeek = GetDayOfWeek(startDate);
-            return dayOfWeek == AppSettings.DistributionTime.Days
-                && startDate.TimeOfDay.Hours == AppSettings.DistributionTime.Hours
-                && startDate.TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
+            return GetDayOfWeek(date.ToMoscowTime()) == AppSettings.DistributionTime.Days
+                && date.ToMoscowTime().TimeOfDay.Hours == AppSettings.DistributionTime.Hours
+                && date.ToMoscowTime().TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
         }
 
-        private bool NeedToUpdateTotalPlayers(DateTime startDate)
+        private bool NeedToUpdateTotalPlayers(DateTime date)
         {
-            return startDate > GetDistributionDate() && startDate < GetGameDate(startDate);
+            return date.ToMoscowTime() > GetDistributionDateMoscowTime() 
+                && date.ToMoscowTime() < GetGameDateMoscowTime(date);
         }
 
-        private bool GameStarted(DateTime startDate)
+        private bool GameStarted(DateTime date)
         {
-            var gameDate = GetGameDate(startDate);
-            return startDate.Year == gameDate.Year 
-                && startDate.Month == gameDate.Month 
-                && startDate.Hour == gameDate.Hour 
-                && startDate.Minute == gameDate.Minute;
+            var gameDate = GetGameDateMoscowTime(date.ToMoscowTime());
+            return date.ToMoscowTime().Year == gameDate.Year 
+                && date.ToMoscowTime().Month == gameDate.Month 
+                && date.ToMoscowTime().Hour == gameDate.Hour 
+                && date.ToMoscowTime().Minute == gameDate.Minute;
         }
-
-        private int GetDaysLeftBeforeGame()
+        
+        public static DateTime GetGameDateMoscowTime(DateTime date)
         {
-            var daysLeft = 0;
-            var tempDate = DateTime.Now;
-
-            var dayOfWeek = GetDayOfWeek(tempDate);
-
-            while (AppSettings.GameDay.Days != dayOfWeek)
-            {
-                daysLeft++;
-                tempDate = tempDate.AddDays(1);
-                dayOfWeek = GetDayOfWeek(tempDate);
-            }
-
-            return daysLeft;
-        }
-
-        public static DateTime GetGameDate(DateTime startDate)
-        {
-            var gameDate = startDate.Date;
+            var gameDate = date.ToMoscowTime().Date;
             var dayOfWeek = GetDayOfWeek(gameDate);
 
             while (AppSettings.GameDay.Days != dayOfWeek)
@@ -88,12 +72,12 @@ namespace TelegramFootballBot.Controllers
             }
 
             gameDate = gameDate.AddHours(AppSettings.GameDay.Hours).AddMinutes(AppSettings.GameDay.Minutes);
-            return gameDate > DateTime.Now ? gameDate : gameDate.AddDays(7);
+            return gameDate.ToUniversalTime() > DateTime.UtcNow ? gameDate : gameDate.AddDays(7);
         }
 
-        private DateTime GetDistributionDate()
+        private DateTime GetDistributionDateMoscowTime()
         {
-            var distributionDate = DateTime.Now;
+            var distributionDate = DateTime.UtcNow.ToMoscowTime();
             var dayOfWeek = GetDayOfWeek(distributionDate);
 
             while (AppSettings.DistributionTime.Days != dayOfWeek)
