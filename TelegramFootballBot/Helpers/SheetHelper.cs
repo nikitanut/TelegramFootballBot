@@ -16,6 +16,7 @@ namespace TelegramFootballBot.Helpers
         private const string SHEET_NAME = "Участие в играх";
         private const string TOTAL_LABEL = "Всего";
         private const int DEFAULT_STYLE_ROW_INDEX = 5;
+        private const int START_ROWS_COUNT = 2;
 
         private static readonly Dictionary<int, string> _monthNames = new Dictionary<int, string>()
         {
@@ -25,7 +26,7 @@ namespace TelegramFootballBot.Helpers
 
         public static IEnumerable<IList<object>> GetStartRows(IList<IList<object>> values)
         {
-            return values.TakeWhile(v => v.Count == 0 || string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()));
+            return values.Take(START_ROWS_COUNT);
         }
 
         public static ValueRange GetValueRange(string range, params object[] values)

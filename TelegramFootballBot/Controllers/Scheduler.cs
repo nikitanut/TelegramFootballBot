@@ -1,6 +1,6 @@
 ﻿using Serilog;
 using System;
-using System.Timers;
+using System.Threading;
 
 namespace TelegramFootballBot.Controllers
 {
@@ -12,26 +12,28 @@ namespace TelegramFootballBot.Controllers
 
         public Scheduler(MessageController messageController, ILogger logger)
         {
-            _timer = new Timer(60 * 1000);
+            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite); 
             _messageController = messageController;
             _logger = logger;
         }
 
         public void Run()
         {
-            _timer.Elapsed += OnTimerElapsed;
-            _timer.Start();
+            var interval = 60 * 1000;
+            _timer.Change(0, interval); 
         }
 
-        private async void OnTimerElapsed(object sender, ElapsedEventArgs e)
+        private async void OnTimerElapsed(object sender)
         {
-            if (DistributionTimeHasCome(e.SignalTime))
+            var now = DateTime.Now;
+
+            if (DistributionTimeHasCome(now))
                 await _messageController.StartPlayersSetDeterminationAsync();
 
-            if (NeedToUpdateTotalPlayers(e.SignalTime))
+            if (NeedToUpdateTotalPlayers(now))
                 await _messageController.UpdateTotalPlayersMessagesAsync();
 
-            if (GameStarted(e.SignalTime))
+            if (GameStarted(now))
                 await _messageController.ClearGameAttrsAsync();
         }
 
