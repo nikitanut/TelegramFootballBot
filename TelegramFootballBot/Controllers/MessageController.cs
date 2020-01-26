@@ -18,7 +18,6 @@ namespace TelegramFootballBot.Controllers
         private readonly ILogger _logger;
         private readonly Bot _bot;
         private readonly TelegramBotClient _client;
-        private readonly SheetController _sheetController;
         private string _approvedPlayersMessage = null;
 
         public MessageController(ILogger logger)
@@ -26,7 +25,6 @@ namespace TelegramFootballBot.Controllers
             _logger = logger;
             _bot = new Bot();
             _client = _bot.GetBotClient();
-            _sheetController = SheetController.GetInstance();
         }
 
         public void Run()
@@ -69,12 +67,11 @@ namespace TelegramFootballBot.Controllers
 
         public async Task StartPlayersSetDeterminationAsync()
         {
-            var gameDate = Scheduler.GetGameDateMoscowTime(DateTime.UtcNow.ToMoscowTime());
-            var callbackPrefix = GetGameStartCallbackPrefix(gameDate);
-            var markup = MarkupHelper.GetKeyBoardMarkup(callbackPrefix, Constants.YES_ANSWER, Constants.NO_ANSWER);
-
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
+
+            var gameDate = Scheduler.GetGameDateMoscowTime(DateTime.UtcNow.ToMoscowTime());
+            var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
 
             foreach (var player in await Bot.GetPlayersAsync())
             {
@@ -91,7 +88,7 @@ namespace TelegramFootballBot.Controllers
         {
             try
             {
-                var approvedPlayersMessage = await _sheetController.GetApprovedPlayersMessageAsync();
+                var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
                 if (approvedPlayersMessage == _approvedPlayersMessage)
                     return;
 
@@ -134,32 +131,6 @@ namespace TelegramFootballBot.Controllers
                     _logger.Error($"Error for user {playerName}: {errorMessage}");               
                 }
             }
-        }
-
-        public async Task ClearGameAttrsAsync()
-        {
-            var playersToUpdate = (await Bot.GetPlayersAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
-            foreach (var player in playersToUpdate)
-            {
-                player.IsGoingToPlay = false;
-                player.ApprovedPlayersMessageId = 0;
-            };
-
-            await Bot.UpdatePlayersAsync(playersToUpdate);
-
-            try { await _sheetController.ClearApproveCellsAsync(); }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Excel-file updating error");
-                SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
-            }            
-        }
-
-        public static string GetGameStartCallbackPrefix(DateTime gameDate)
-        {
-            return Constants.PLAYERS_SET_CALLBACK_PREFIX 
-                 + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR 
-                 + gameDate.ToString("yyyy-MM-dd");
         }
 
         private async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
@@ -205,7 +176,7 @@ namespace TelegramFootballBot.Controllers
             var player = await Bot.GetPlayerAsync(userId);
             player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
 
-            await _sheetController.UpdateApproveCellAsync(player.Name, GetApproveCellValue(userAnswer));
+            await SheetController.GetInstance().UpdateApproveCellAsync(player.Name, GetApproveCellValue(userAnswer));
 
             player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(chatId);
             await Bot.UpdatePlayerAsync(player);
@@ -217,6 +188,7 @@ namespace TelegramFootballBot.Controllers
             {
                 case Constants.YES_ANSWER: return "1"; 
                 case Constants.NO_ANSWER: return "0";
+                case Constants.MAYBE_ANSWER: return "0.5";
                 default:
                     throw new ArgumentOutOfRangeException($"userAnswer: {userAnswer}");
             }
@@ -229,7 +201,7 @@ namespace TelegramFootballBot.Controllers
 
         private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId)
         {
-            var approvedPlayersMessage = await _sheetController.GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
             var messageSent = await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage);
             return messageSent.MessageId;
         }

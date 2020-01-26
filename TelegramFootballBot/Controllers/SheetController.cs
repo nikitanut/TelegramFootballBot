@@ -5,9 +5,11 @@ using Google.Apis.Sheets.v4.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Models;
 using ValueRange = Google.Apis.Sheets.v4.Data.ValueRange;
 
 namespace TelegramFootballBot.Controllers
@@ -88,7 +90,20 @@ namespace TelegramFootballBot.Controllers
             var players = SheetHelper.GetOrderedPlayers(sheet.Values);
             return SheetHelper.GetApprovedPlayersString(players);            
         }
-        
+
+        public async Task ClearGameAttrsAsync()
+        {
+            var playersToUpdate = (await Bot.GetPlayersAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
+            foreach (var player in playersToUpdate)
+            {
+                player.IsGoingToPlay = false;
+                player.ApprovedPlayersMessageId = 0;
+            };
+
+            await Bot.UpdatePlayersAsync(playersToUpdate);
+            await ClearApproveCellsAsync();
+        }
+
         private async Task<ValueRange> GetSheetAsync()
         {
             var request = _sheetsService.Spreadsheets.Values.Get(AppSettings.GoogleDocSheetId, SheetHelper.GetAllUsersRange());

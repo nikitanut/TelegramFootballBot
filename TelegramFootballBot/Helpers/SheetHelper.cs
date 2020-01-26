@@ -1,7 +1,9 @@
 ﻿using Google.Apis.Sheets.v4.Data;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using TelegramFootballBot.Controllers;
 using TelegramFootballBot.Models;
 
@@ -88,36 +90,67 @@ namespace TelegramFootballBot.Helpers
         }
 
         public static string GetApprovedPlayersString(IList<IList<object>> players)
+        {            
+            var headerMessage = $"{Scheduler.GetGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {GetTotalApprovedPlayers(players)}.";
+            var markedPlayers = GetMarkedPlayers(players);
+
+            var playersMessage = new StringBuilder(headerMessage);
+            playersMessage.AppendLine();
+            playersMessage.AppendLine(GetDashedString(headerMessage.Length));
+            playersMessage.AppendLine(string.Join(Environment.NewLine, markedPlayers.Where(p => p.Value == '+').Select(p => p.Key)));
+
+            if (GetTotalMaybePlayers(players) > 0)
+            {
+                playersMessage.AppendLine(GetDashedString(headerMessage.Length));
+                playersMessage.AppendLine($"Под вопросом: {GetTotalMaybePlayers(players)}.");
+                playersMessage.AppendLine(string.Join(Environment.NewLine, markedPlayers.Where(p => p.Value == '?').Select(p => p.Key)));
+            }
+
+            return playersMessage.ToString();
+        }
+
+        private static IEnumerable<KeyValuePair<string, char>> GetMarkedPlayers(IList<IList<object>> players)
         {
-            var playersNames = players.Where(p =>
+            return players.Where(p =>
             {
                 if (p.Count <= (int)APPROVE_COLUMN) return false;
-                int.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out int approveValue);
+                var approveValue = ToDouble(p[(int)APPROVE_COLUMN]);
                 return approveValue > 0;
             })
             .Select(p =>
             {
-                int.TryParse(p[(int)APPROVE_COLUMN].ToString(), out int countByPlayer);
                 var playerName = p[(int)NAME_COLUMN].ToString();
-                return countByPlayer == 1 ? playerName : playerName + " x" + countByPlayer;
+                var countByPlayer = ToDouble(p[(int)APPROVE_COLUMN]);
+                if (countByPlayer == 1) return new KeyValuePair<string, char>(playerName, '+');
+                if (countByPlayer < 1) return new KeyValuePair<string, char>(playerName, '?');
+                return new KeyValuePair<string, char>($"{playerName} x{countByPlayer}", '+');
             });
-
-            return Scheduler.GetGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()
-                + Environment.NewLine
-                + $"Отметились: {GetTotalApprovedPlayers(players)}"
-                + Environment.NewLine
-                + Environment.NewLine
-                + string.Join(Environment.NewLine, playersNames);
         }
 
-        public static int GetTotalApprovedPlayers(IList<IList<object>> players)
+        private static int GetTotalApprovedPlayers(IList<IList<object>> players)
         {
             return players.Sum(p =>
             {
                 if (p.Count <= (int)APPROVE_COLUMN) return 0;
-                double.TryParse(p[(int)APPROVE_COLUMN]?.ToString(), out double approveValue);
+                var approveValue = ToDouble(p[(int)APPROVE_COLUMN]);
                 return (int)approveValue;
             });
+        }
+
+        private static int GetTotalMaybePlayers(IList<IList<object>> players)
+        {
+            return players.Sum(p =>
+            {
+                if (p.Count <= (int)APPROVE_COLUMN) return 0;
+                var approveValue = ToDouble(p[(int)APPROVE_COLUMN]);
+                return approveValue % 1 != 0 ? 1 : 0;
+            });
+        }
+
+        private static double ToDouble(object cell)
+        {
+            double.TryParse(cell?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double value);
+            return value;
         }
 
         public static int GetUserRowNumber(IList<IList<object>> values, string playerName)
@@ -139,7 +172,8 @@ namespace TelegramFootballBot.Helpers
                 Requests = new List<Request>
                 {
                     new Request() { CopyPaste = GetCopyStyleRequest(sourceRowIndex, destinationRowIndex) },
-                    new Request() { CopyPaste = GetCopyStyleRequest(DEFAULT_STYLE_ROW_INDEX, sourceRowIndex) }
+                    new Request() { CopyPaste = GetCopyStyleRequest(DEFAULT_STYLE_ROW_INDEX, sourceRowIndex) },
+                    new Request() { UpdateDimensionProperties = GetStandardRowHeightRequest(destinationRowIndex) }
                 }
             };
         }
@@ -168,6 +202,11 @@ namespace TelegramFootballBot.Helpers
                 && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
         }
 
+        private static string GetDashedString(int mainStringLength)
+        {
+            return new string('-', (int)(mainStringLength * 1.5) + 6);
+        }
+
         private static CopyPasteRequest GetCopyStyleRequest(int sourceRowIndex, int destinationRowIndex)
         {
             return new CopyPasteRequest()
@@ -187,6 +226,21 @@ namespace TelegramFootballBot.Helpers
                     EndColumnIndex = (int)APPROVE_COLUMN + 1
                 },
                 PasteType = "PASTE_FORMAT"
+            };
+        }
+
+        private static UpdateDimensionPropertiesRequest GetStandardRowHeightRequest(int destinationRowIndex)
+        {
+            return new UpdateDimensionPropertiesRequest()
+            {
+                Range = new DimensionRange()
+                {
+                    Dimension = "ROWS",
+                    StartIndex = destinationRowIndex,
+                    EndIndex = destinationRowIndex + 1
+                },
+                Properties = new DimensionProperties() { PixelSize = 30 },
+                Fields = "pixelSize"
             };
         }
 

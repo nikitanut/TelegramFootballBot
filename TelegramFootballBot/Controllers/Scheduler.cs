@@ -35,7 +35,17 @@ namespace TelegramFootballBot.Controllers
                 await _messageController.UpdateTotalPlayersMessagesAsync();
 
             if (GameStarted(now))
-                await _messageController.ClearGameAttrsAsync();
+            {
+                try
+                {
+                    await SheetController.GetInstance().ClearGameAttrsAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Excel-file updating error");
+                    _messageController.SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
+                }
+            }
         }
 
         private bool DistributionTimeHasCome(DateTime now)

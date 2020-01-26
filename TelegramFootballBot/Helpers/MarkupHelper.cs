@@ -1,4 +1,5 @@
-﻿using Telegram.Bot.Types.ReplyMarkups;
+﻿using System;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace TelegramFootballBot.Helpers
 {
@@ -22,6 +23,18 @@ namespace TelegramFootballBot.Helpers
             }
 
             return new InlineKeyboardMarkup(keyBoard);
+        }
+
+        public static InlineKeyboardMarkup GetUserDeterminationMarkup(DateTime gameDate)
+        {
+            return GetKeyBoardMarkup(GetGameStartCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
+        }
+
+        private static string GetGameStartCallbackPrefix(DateTime gameDate)
+        {
+            return Constants.PLAYERS_SET_CALLBACK_PREFIX
+                 + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR
+                 + gameDate.ToString("yyyy-MM-dd");
         }
     }
 }
