@@ -74,7 +74,7 @@ namespace TelegramFootballBot.Controllers
 
             var dateOfNextGame = Scheduler.GetGameDateMoscowTime(DateTime.Now);
             var newValues = new List<IList<object>>();
-            newValues.Add(new List<object>() { SheetHelper.GetDateWithRussianMonth(dateOfNextGame) });
+            newValues.Add(new List<object>() { dateOfNextGame.ToRussianDayMonthString() });
 
             foreach (var player in players)
                 newValues.Add(new List<object>() { string.Empty });

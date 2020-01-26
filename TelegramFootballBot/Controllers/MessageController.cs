@@ -78,7 +78,7 @@ namespace TelegramFootballBot.Controllers
 
             foreach (var player in await Bot.GetPlayersAsync())
             {
-                var message = $"Идёшь на футбол {gameDate.ToString("dd.MM")}?";
+                var message = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
                 var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message, markup);
                 requests.Add(request);
                 playersRequestsIds.Add(request.Id, player);
@@ -131,8 +131,7 @@ namespace TelegramFootballBot.Controllers
                 {                    
                     var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
                     var errorMessage = response.IsFaulted ? response.Exception.Message : $"Тайм-аут {Constants.ASYNC_OPERATION_TIMEOUT} мс";
-                    _logger.Error($"Error for user {playerName}: {errorMessage}");
-                    await _client.SendTextMessageToBotOwnerAsync($"Ошибка при рассылке для игрока {playerName}: {errorMessage}");                    
+                    _logger.Error($"Error for user {playerName}: {errorMessage}");               
                 }
             }
         }

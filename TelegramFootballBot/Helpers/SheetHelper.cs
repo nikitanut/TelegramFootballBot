@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TelegramFootballBot.Controllers;
 using TelegramFootballBot.Models;
 
 namespace TelegramFootballBot.Helpers
@@ -17,13 +18,7 @@ namespace TelegramFootballBot.Helpers
         private const string TOTAL_LABEL = "Всего";
         private const int DEFAULT_STYLE_ROW_INDEX = 5;
         private const int START_ROWS_COUNT = 2;
-
-        private static readonly Dictionary<int, string> _monthNames = new Dictionary<int, string>()
-        {
-            { 1, "января" }, { 2, "февраля" }, { 3, "марта" }, { 4, "апреля" }, { 5, "мая" }, { 6, "июня" },
-            { 7, "июля" }, { 8, "августа" }, { 9, "сентября" }, { 10, "октября" }, { 11, "ноября" }, { 12, "декабря" }
-        };
-
+        
         public static IEnumerable<IList<object>> GetStartRows(IList<IList<object>> values)
         {
             return values.Take(START_ROWS_COUNT);
@@ -94,7 +89,6 @@ namespace TelegramFootballBot.Helpers
 
         public static string GetApprovedPlayersString(IList<IList<object>> players)
         {
-            var totalApprovedPlayers = $"Всего отметилось: {GetTotalApprovedPlayers(players)}";
             var playersNames = players.Where(p =>
             {
                 if (p.Count <= (int)APPROVE_COLUMN) return false;
@@ -108,7 +102,9 @@ namespace TelegramFootballBot.Helpers
                 return countByPlayer == 1 ? playerName : playerName + " x" + countByPlayer;
             });
 
-            return totalApprovedPlayers
+            return Scheduler.GetGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()
+                + Environment.NewLine
+                + $"Отметились: {GetTotalApprovedPlayers(players)}"
                 + Environment.NewLine
                 + Environment.NewLine
                 + string.Join(Environment.NewLine, playersNames);
@@ -147,12 +143,7 @@ namespace TelegramFootballBot.Helpers
                 }
             };
         }
-
-        public static string GetDateWithRussianMonth(DateTime date)
-        {
-            return $"{date.Day} {_monthNames[date.Month]}";
-        }
-
+        
         public static string GetApproveColumnRange(IList<IList<object>> values, int totalPlayers)
         {
             var startRowsToIgnore = GetStartRows(values).Count();

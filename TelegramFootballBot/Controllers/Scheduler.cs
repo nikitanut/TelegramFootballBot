@@ -24,7 +24,7 @@ namespace TelegramFootballBot.Controllers
             _timer.Change(0, interval); 
         }
 
-        private async void OnTimerElapsed(object sender)
+        private async void OnTimerElapsed(object state)
         {
             var now = DateTime.UtcNow;
 
@@ -38,55 +38,57 @@ namespace TelegramFootballBot.Controllers
                 await _messageController.ClearGameAttrsAsync();
         }
 
-        private bool DistributionTimeHasCome(DateTime date)
+        private bool DistributionTimeHasCome(DateTime now)
         {
-            return GetDayOfWeek(date.ToMoscowTime()) == AppSettings.DistributionTime.Days
-                && date.ToMoscowTime().TimeOfDay.Hours == AppSettings.DistributionTime.Hours
-                && date.ToMoscowTime().TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
+            return GetDayOfWeek(now.ToMoscowTime()) == AppSettings.DistributionTime.Days
+                && now.ToMoscowTime().TimeOfDay.Hours == AppSettings.DistributionTime.Hours
+                && now.ToMoscowTime().TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
         }
 
-        private bool NeedToUpdateTotalPlayers(DateTime date)
+        private bool NeedToUpdateTotalPlayers(DateTime now)
         {
-            return date.ToMoscowTime() > GetDistributionDateMoscowTime() 
-                && date.ToMoscowTime() < GetGameDateMoscowTime(date);
+            return now.ToMoscowTime() > GetDistributionDateMoscowTime(now) 
+                && now.ToMoscowTime() < GetGameDateMoscowTime(now);
         }
 
-        private bool GameStarted(DateTime date)
+        private bool GameStarted(DateTime now)
         {
-            var gameDate = GetGameDateMoscowTime(date.ToMoscowTime());
-            return date.ToMoscowTime().Year == gameDate.Year 
-                && date.ToMoscowTime().Month == gameDate.Month 
-                && date.ToMoscowTime().Hour == gameDate.Hour 
-                && date.ToMoscowTime().Minute == gameDate.Minute;
+            var gameDate = GetGameDateMoscowTime(now.ToMoscowTime());
+            return now.ToMoscowTime().Year == gameDate.Year 
+                && now.ToMoscowTime().Month == gameDate.Month 
+                && now.ToMoscowTime().Hour == gameDate.Hour 
+                && now.ToMoscowTime().Minute == gameDate.Minute;
         }
         
-        public static DateTime GetGameDateMoscowTime(DateTime date)
+        public static DateTime GetGameDateMoscowTime(DateTime now)
         {
-            var gameDate = date.ToMoscowTime().Date;
-            var dayOfWeek = GetDayOfWeek(gameDate);
-
-            while (AppSettings.GameDay.Days != dayOfWeek)
-            {
-                gameDate = gameDate.AddDays(1);
-                dayOfWeek = GetDayOfWeek(gameDate);
-            }
-
-            gameDate = gameDate.AddHours(AppSettings.GameDay.Hours).AddMinutes(AppSettings.GameDay.Minutes);
-            return gameDate.ToUniversalTime() > DateTime.UtcNow ? gameDate : gameDate.AddDays(7);
+            return GetNearestDate(now, 
+                AppSettings.GameDay.Days, 
+                AppSettings.GameDay.Hours, 
+                AppSettings.GameDay.Minutes);
         }
 
-        private DateTime GetDistributionDateMoscowTime()
+        private DateTime GetDistributionDateMoscowTime(DateTime now)
         {
-            var distributionDate = DateTime.UtcNow.ToMoscowTime();
-            var dayOfWeek = GetDayOfWeek(distributionDate);
+            return GetNearestDate(now, 
+                AppSettings.DistributionTime.Days, 
+                AppSettings.DistributionTime.Hours, 
+                AppSettings.DistributionTime.Minutes);
+        }
 
-            while (AppSettings.DistributionTime.Days != dayOfWeek)
+        private static DateTime GetNearestDate(DateTime now, int eventDayOfWeek, int eventHour, int eventMinutes)
+        {
+            var eventDate = now.ToMoscowTime().Date;
+            var dayOfWeek = GetDayOfWeek(eventDate);
+
+            while (eventDayOfWeek != dayOfWeek)
             {
-                distributionDate = distributionDate.AddDays(1);
-                dayOfWeek = GetDayOfWeek(distributionDate);
+                eventDate = eventDate.AddDays(1);
+                dayOfWeek = GetDayOfWeek(eventDate);
             }
 
-            return distributionDate;
+            eventDate = eventDate.AddHours(eventHour).AddMinutes(eventMinutes);
+            return eventDate;
         }
 
         private static int GetDayOfWeek(DateTime date)
