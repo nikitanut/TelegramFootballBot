@@ -239,7 +239,7 @@ namespace TelegramFootballBot.Controllers
             if (ex is UserNotFoundException)
             {
                 _logger.Error($"User with id {userId} not found. Name: {callbackQuery.From.FirstName} {callbackQuery.From.LastName}");
-                messageForUser = "Вы не зарегистрированы. Введите команду /register *Фамилия* *Имя*.";
+                messageForUser = "Вы не зарегистрированы. Введите команду /reg *Фамилия* *Имя*.";
                 messageForBotOwner = $"Пользователь {callbackQuery.From.FirstName} {callbackQuery.From.LastName} не найден";
             }
 

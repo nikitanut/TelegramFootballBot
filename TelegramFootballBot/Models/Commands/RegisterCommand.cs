@@ -9,7 +9,7 @@ namespace TelegramFootballBot.Models.Commands
 {
     public class RegisterCommand : Command
     {
-        public override string Name => "/register";
+        public override string Name => "/reg";
 
         public override async Task Execute(Message message, TelegramBotClient client)
         {
@@ -19,7 +19,7 @@ namespace TelegramFootballBot.Models.Commands
 
             if (userName == string.Empty)
             {
-                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /register Фамилия Имя");
+                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
             
