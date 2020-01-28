@@ -56,8 +56,7 @@ namespace TelegramFootballBot.Helpers
 
         public static DateTime ToMoscowTime(this DateTime dateTime)
         {
-            var moscowUtcOffset = 3;
-            return dateTime.ToUniversalTime().AddHours(moscowUtcOffset);
+            return dateTime.ToUniversalTime().AddHours(Constants.MOSCOW_UTC_OFFSET);
         }
 
         public static string ToRussianDayMonthString(this DateTime dateTime)

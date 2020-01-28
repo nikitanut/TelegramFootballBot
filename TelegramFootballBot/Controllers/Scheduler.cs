@@ -66,6 +66,7 @@ namespace TelegramFootballBot.Controllers
             var gameDate = GetGameDateMoscowTime(now.ToMoscowTime());
             return now.ToMoscowTime().Year == gameDate.Year 
                 && now.ToMoscowTime().Month == gameDate.Month 
+                && now.ToMoscowTime().Day == gameDate.Day
                 && now.ToMoscowTime().Hour == gameDate.Hour 
                 && now.ToMoscowTime().Minute == gameDate.Minute;
         }
