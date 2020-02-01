@@ -27,7 +27,7 @@ namespace TelegramFootballBot
             catch (Exception ex)
             {
                 logger.Fatal(ex, "FATAL ERROR");
-                try { new MessageController(logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}"); }
+                try { new MessageController(logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}").Wait(); }
                 catch { }
                 throw;
             }

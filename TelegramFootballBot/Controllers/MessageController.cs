@@ -65,7 +65,7 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        public async Task StartPlayersSetDeterminationAsync()
+        public async Task SendQuestionToAllUsersAsync()
         {
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
@@ -86,33 +86,25 @@ namespace TelegramFootballBot.Controllers
         
         public async Task UpdateTotalPlayersMessagesAsync()
         {
-            try
+            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
+            if (approvedPlayersMessage == _approvedPlayersMessage)
+                return;
+
+            _approvedPlayersMessage = approvedPlayersMessage;
+            var requests = new List<Task<Message>>();
+            var playersRequestsIds = new Dictionary<int, Player>();
+
+            foreach (var player in (await Bot.GetPlayersAsync()).Where(p => p.ApprovedPlayersMessageId != 0))
             {
-                var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
-                if (approvedPlayersMessage == _approvedPlayersMessage)
-                    return;
-
-                _approvedPlayersMessage = approvedPlayersMessage;
-                var requests = new List<Task<Message>>();
-                var playersRequestsIds = new Dictionary<int, Player>();
-
-                foreach (var player in (await Bot.GetPlayersAsync()).Where(p => p.ApprovedPlayersMessageId != 0))
-                {
-                    var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
-                    requests.Add(request);
-                    playersRequestsIds.Add(request.Id, player);
-                }
-
-                await ProcessRequests(requests, playersRequestsIds);
+                var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                requests.Add(request);
+                playersRequestsIds.Add(request.Id, player);
             }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, $"Error on updating total players messages");
-                await _client.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
-            }
+
+            await ProcessRequests(requests, playersRequestsIds);
         }
 
-        public async void SendTextMessageToBotOwnerAsync(string text)
+        public async Task SendTextMessageToBotOwnerAsync(string text)
         {
             await _client.SendTextMessageToBotOwnerAsync(text);
         }

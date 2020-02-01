@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Controllers
@@ -29,22 +30,51 @@ namespace TelegramFootballBot.Controllers
             var now = DateTime.UtcNow;
 
             if (DistributionTimeHasCome(now))
-                await _messageController.StartPlayersSetDeterminationAsync();
+                await SendQuestionToAllUsersAsync();
 
             if (NeedToUpdateTotalPlayers(now))
-                await _messageController.UpdateTotalPlayersMessagesAsync();
+                await UpdateTotalPlayersMessagesAsync();
 
             if (GameStarted(now))
+                await ClearGameAttrsAsync();
+        }
+
+        private async Task ClearGameAttrsAsync()
+        {
+            try
             {
-                try
-                {
-                    await SheetController.GetInstance().ClearGameAttrsAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Excel-file updating error");
-                    _messageController.SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
-                }
+                await SheetController.GetInstance().ClearGameAttrsAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Excel-file updating error");
+                await _messageController.SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
+            }
+        }
+
+        private async Task UpdateTotalPlayersMessagesAsync()
+        {
+            try
+            {
+                await _messageController.UpdateTotalPlayersMessagesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on updating total players messages");
+                await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
+            }
+        }
+
+        private async Task SendQuestionToAllUsersAsync()
+        {
+            try
+            {
+                await _messageController.SendQuestionToAllUsersAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error on StartPlayersSetDeterminationAsync");
+                await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при определении списка игроков: {ex.Message}");
             }
         }
 
