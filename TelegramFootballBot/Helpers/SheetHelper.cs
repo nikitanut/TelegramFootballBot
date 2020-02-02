@@ -204,7 +204,7 @@ namespace TelegramFootballBot.Helpers
 
         private static string GetDashedString(int mainStringLength)
         {
-            return new string('-', (int)(mainStringLength * 1.5) + 6);
+            return new string('-', (int)(mainStringLength * 1.5));
         }
 
         private static CopyPasteRequest GetCopyStyleRequest(int sourceRowIndex, int destinationRowIndex)

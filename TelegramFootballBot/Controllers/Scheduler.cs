@@ -14,7 +14,7 @@ namespace TelegramFootballBot.Controllers
 
         public Scheduler(MessageController messageController, ILogger logger)
         {
-            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite); 
+            _timer = new Timer(OnTimerElapsed, DateTime.UtcNow, Timeout.Infinite, Timeout.Infinite); 
             _messageController = messageController;
             _logger = logger;
         }
@@ -27,13 +27,12 @@ namespace TelegramFootballBot.Controllers
 
         private async void OnTimerElapsed(object state)
         {
-            var now = DateTime.UtcNow;
+            var now = (DateTime)state;
+
+            await UpdateTotalPlayersMessagesAsync();
 
             if (DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
-
-            if (NeedToUpdateTotalPlayers(now))
-                await UpdateTotalPlayersMessagesAsync();
 
             if (GameStarted(now))
                 await ClearGameAttrsAsync();
@@ -85,12 +84,6 @@ namespace TelegramFootballBot.Controllers
                 && now.ToMoscowTime().TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
         }
 
-        private bool NeedToUpdateTotalPlayers(DateTime now)
-        {
-            return now.ToMoscowTime() > GetDistributionDateMoscowTime(now) 
-                && now.ToMoscowTime() < GetGameDateMoscowTime(now);
-        }
-
         private bool GameStarted(DateTime now)
         {
             var gameDate = GetGameDateMoscowTime(now.ToMoscowTime());
@@ -108,15 +101,7 @@ namespace TelegramFootballBot.Controllers
                 AppSettings.GameDay.Hours, 
                 AppSettings.GameDay.Minutes);
         }
-
-        private DateTime GetDistributionDateMoscowTime(DateTime now)
-        {
-            return GetNearestDate(now, 
-                AppSettings.DistributionTime.Days, 
-                AppSettings.DistributionTime.Hours, 
-                AppSettings.DistributionTime.Minutes);
-        }
-
+        
         private static DateTime GetNearestDate(DateTime now, int eventDayOfWeek, int eventHour, int eventMinutes)
         {
             var eventDate = now.ToMoscowTime().Date;
