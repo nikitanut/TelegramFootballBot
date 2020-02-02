@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Models.Commands
             }
             catch (UserNotFoundException)
             {
-                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg *Фамилия* *Имя*");
+                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
 
