@@ -38,7 +38,9 @@ namespace TelegramFootballBot.Models.Commands
             
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
             await SheetController.GetInstance().UpsertPlayerAsync(userName);
-            await client.SendTextMessageToBotOwnerAsync($"{userName} зарегистрировался");
+
+            if (AppSettings.NotifyOwner)
+                await client.SendTextMessageToBotOwnerAsync($"{userName} зарегистрировался");
         }
     }
 }

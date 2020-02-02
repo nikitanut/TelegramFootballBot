@@ -17,6 +17,8 @@ namespace TelegramFootballBot
 
         public static TimeSpan GameDay => TimeSpan.Parse(_configuration["gameDay"]);
 
-        public static int BotOwnerChatId => int.Parse(_configuration["BotOwnerChatId"]);
+        public static int BotOwnerChatId => int.Parse(_configuration["botOwnerChatId"]);
+
+        public static bool NotifyOwner { get; set; } = true;
     }
 }

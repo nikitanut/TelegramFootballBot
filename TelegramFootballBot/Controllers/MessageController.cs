@@ -16,15 +16,13 @@ namespace TelegramFootballBot.Controllers
     public class MessageController
     {
         private readonly ILogger _logger;
-        private readonly Bot _bot;
         private readonly TelegramBotClient _client;
         private string _approvedPlayersMessage = null;
 
         public MessageController(ILogger logger)
         {
             _logger = logger;
-            _bot = new Bot();
-            _client = _bot.GetBotClient();
+            _client = new Bot().GetBotClient();
         }
 
         public void Run()
@@ -60,8 +58,8 @@ namespace TelegramFootballBot.Controllers
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on processing {e.Message.Text} command for user {playerName}");
-                await _client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
-                await _client.SendErrorMessageToUser(e.Message.Chat.Id, playerName);
+                await SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+                await _client.SendErrorMessageToUser(e.Message.Chat.Id, playerName);                
             }
         }
 
@@ -106,9 +104,10 @@ namespace TelegramFootballBot.Controllers
 
         public async Task SendTextMessageToBotOwnerAsync(string text)
         {
-            await _client.SendTextMessageToBotOwnerAsync(text);
+            if (AppSettings.NotifyOwner)
+                await _client.SendTextMessageToBotOwnerAsync(text);
         }
-
+        
         private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
         {
             while (requests.Count > 0)
@@ -216,7 +215,7 @@ namespace TelegramFootballBot.Controllers
         private async Task NotifyAboutError(ChatId chatId, string messageForUser, string messageForBotOwner)
         {
             await _client.SendTextMessageWithTokenAsync(chatId, messageForUser);
-            await _client.SendTextMessageToBotOwnerAsync(messageForBotOwner);
+            await SendTextMessageToBotOwnerAsync(messageForBotOwner);
         }
 
         private async Task ProcessCallbackError(CallbackQuery callbackQuery, Exception ex)

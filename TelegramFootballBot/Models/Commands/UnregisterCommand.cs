@@ -25,7 +25,9 @@ namespace TelegramFootballBot.Models.Commands
             }
 
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
-            await client.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
+
+            if (AppSettings.NotifyOwner)
+                await client.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
         }
     }
 }
