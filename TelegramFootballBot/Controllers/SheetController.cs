@@ -74,9 +74,11 @@ namespace TelegramFootballBot.Controllers
             var sheet = await GetSheetAsync();            
             var players = SheetHelper.GetOrderedPlayers(sheet.Values);
 
-            var dateOfNextGame = Scheduler.GetGameDateMoscowTime(DateTime.Now).AddDays(7);
-            var newValues = new List<IList<object>>();
-            newValues.Add(new List<object>() { dateOfNextGame.ToRussianDayMonthString() });
+            var dateOfNextGame = Scheduler.GetNearestGameDateMoscowTime(DateTime.Now).AddDays(7);
+            var newValues = new List<IList<object>>
+            {
+                new List<object>() { dateOfNextGame.ToRussianDayMonthString() }
+            };
 
             foreach (var player in players)
                 newValues.Add(new List<object>() { string.Empty });

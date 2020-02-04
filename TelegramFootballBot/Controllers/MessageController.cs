@@ -68,7 +68,7 @@ namespace TelegramFootballBot.Controllers
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
 
-            var gameDate = Scheduler.GetGameDateMoscowTime(DateTime.UtcNow.ToMoscowTime());
+            var gameDate = Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow.ToMoscowTime());
             var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
 
             foreach (var player in await Bot.GetPlayersAsync())

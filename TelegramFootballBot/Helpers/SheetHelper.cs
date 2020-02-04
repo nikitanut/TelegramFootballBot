@@ -91,7 +91,7 @@ namespace TelegramFootballBot.Helpers
 
         public static string GetApprovedPlayersString(IList<IList<object>> players)
         {            
-            var headerMessage = $"{Scheduler.GetGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {GetTotalApprovedPlayers(players)}.";
+            var headerMessage = $"{Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {GetTotalApprovedPlayers(players)}.";
             var markedPlayers = GetMarkedPlayers(players);
 
             var playersMessage = new StringBuilder(headerMessage);
@@ -149,7 +149,7 @@ namespace TelegramFootballBot.Helpers
 
         private static double ToDouble(object cell)
         {
-            double.TryParse(cell?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double value);
+            double.TryParse(cell?.ToString().Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double value);
             return value;
         }
 
@@ -159,7 +159,7 @@ namespace TelegramFootballBot.Helpers
                 return -1;
 
             var userRow = values.FirstOrDefault(v => v.Count > 0 
-                && playerName.Equals(v[(int)NAME_COLUMN].ToString().Trim(), StringComparison.InvariantCultureIgnoreCase));
+                && playerName.Equals(v[(int)NAME_COLUMN]?.ToString().Trim(), StringComparison.InvariantCultureIgnoreCase));
 
             var userRowIndex = values.IndexOf(userRow);
             return userRowIndex != -1 ? userRowIndex + 1 : -1;
@@ -202,7 +202,7 @@ namespace TelegramFootballBot.Helpers
                 && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
         }
 
-        private static string GetDashedString(int mainStringLength)
+        public static string GetDashedString(int mainStringLength)
         {
             return new string('-', 30);
         }

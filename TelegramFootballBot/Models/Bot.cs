@@ -29,7 +29,7 @@ namespace TelegramFootballBot.Models
             if (player == null)
                 return;
 
-            using (var db = new ApplicationDbContext())
+            using (var db = new FootballBotDbContext())
             {
                 db.Players.Add(player);
                 await db.SaveChangesAsync();
@@ -41,7 +41,7 @@ namespace TelegramFootballBot.Models
             if (player == null || player.Id == default(int))
                 return;
 
-            using (var db = new ApplicationDbContext())
+            using (var db = new FootballBotDbContext())
             {
                 db.Entry(player).State = EntityState.Modified;
                 await db.SaveChangesAsync();
@@ -50,7 +50,7 @@ namespace TelegramFootballBot.Models
 
         public static async Task UpdatePlayersAsync(IEnumerable<Player> players)
         {
-            using (var db = new ApplicationDbContext())
+            using (var db = new FootballBotDbContext())
             {
                 foreach (var player in players)
                     db.Entry(player).State = EntityState.Modified;
@@ -63,7 +63,7 @@ namespace TelegramFootballBot.Models
         {
             var player = await GetPlayerAsync(userId);
 
-            using (var db = new ApplicationDbContext())
+            using (var db = new FootballBotDbContext())
             {
                 db.Players.Remove(player);
                 await db.SaveChangesAsync();
@@ -72,7 +72,7 @@ namespace TelegramFootballBot.Models
 
         public static async Task<Player> GetPlayerAsync(int userId)
         {
-            using (var db = new ApplicationDbContext())
+            using (var db = new FootballBotDbContext())
             {
                 var player = await db.Players.FindAsync(userId);
                 return player ?? throw new UserNotFoundException();
@@ -81,7 +81,7 @@ namespace TelegramFootballBot.Models
 
         public static async Task<List<Player>> GetPlayersAsync()
         {
-            using (var db = new ApplicationDbContext())
+            using (var db = new FootballBotDbContext())
             {
                 return await db.Players.ToListAsync();
             }

@@ -86,7 +86,7 @@ namespace TelegramFootballBot.Controllers
 
         private bool GameStarted(DateTime now)
         {
-            var gameDate = GetGameDateMoscowTime(now.ToMoscowTime());
+            var gameDate = GetNearestGameDateMoscowTime(now.ToMoscowTime());
             return now.ToMoscowTime().Year == gameDate.Year 
                 && now.ToMoscowTime().Month == gameDate.Month 
                 && now.ToMoscowTime().Day == gameDate.Day
@@ -94,17 +94,17 @@ namespace TelegramFootballBot.Controllers
                 && now.ToMoscowTime().Minute == gameDate.Minute;
         }
         
-        public static DateTime GetGameDateMoscowTime(DateTime now)
+        public static DateTime GetNearestGameDateMoscowTime(DateTime startDate)
         {
-            return GetNearestDate(now, 
+            return GetNearestDate(startDate, 
                 AppSettings.GameDay.Days, 
                 AppSettings.GameDay.Hours, 
                 AppSettings.GameDay.Minutes);
         }
         
-        private static DateTime GetNearestDate(DateTime now, int eventDayOfWeek, int eventHour, int eventMinutes)
+        private static DateTime GetNearestDate(DateTime startDate, int eventDayOfWeek, int eventHour, int eventMinutes)
         {
-            var eventDate = now.ToMoscowTime().Date;
+            var eventDate = startDate.ToMoscowTime().Date;
             var dayOfWeek = GetDayOfWeek(eventDate);
 
             while (eventDayOfWeek != dayOfWeek)
