@@ -1,7 +1,9 @@
 ﻿using Serilog;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Controllers
@@ -10,13 +12,15 @@ namespace TelegramFootballBot.Controllers
     {
         private readonly Timer _timer;
         private readonly MessageController _messageController;
+        private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
 
-        public Scheduler(MessageController messageController, ILogger logger)
-        {
-            _timer = new Timer(OnTimerElapsed, DateTime.UtcNow, Timeout.Infinite, Timeout.Infinite); 
+        public Scheduler(MessageController messageController, IPlayerRepository playerRepository, ILogger logger)
+        {            
             _messageController = messageController;
+            _playerRepository = playerRepository;
             _logger = logger;
+            _timer = new Timer(OnTimerElapsed, DateTime.UtcNow, Timeout.Infinite, Timeout.Infinite); 
         }
 
         public void Run()
@@ -29,25 +33,34 @@ namespace TelegramFootballBot.Controllers
         {
             var now = (DateTime)state;
 
-            await UpdateTotalPlayersMessagesAsync();
-
             if (DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
 
             if (GameStarted(now))
                 await ClearGameAttrsAsync();
+
+            await UpdateTotalPlayersMessagesAsync();
         }
 
         private async Task ClearGameAttrsAsync()
         {
             try
             {
-                await SheetController.GetInstance().ClearGameAttrsAsync();
+                await SheetController.GetInstance().ClearApproveCellsAsync();
+
+                var playersToUpdate = (await _playerRepository.GetAllAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
+                foreach (var player in playersToUpdate)
+                {
+                    player.IsGoingToPlay = false;
+                    player.ApprovedPlayersMessageId = 0;
+                };
+
+                await _playerRepository.UpdateMultipleAsync(playersToUpdate);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Excel-file updating error");
-                await _messageController.SendTextMessageToBotOwnerAsync("Ошибка при обновлении excel-файла");
+                _logger.Error(ex, "Clearing game attrs error");
+                await _messageController.SendTextMessageToBotOwnerAsync("Ошибка при очищении полей");
             }
         }
 
@@ -56,6 +69,10 @@ namespace TelegramFootballBot.Controllers
             try
             {
                 await _messageController.UpdateTotalPlayersMessagesAsync();
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.Error("The operation was canceled for UpdateTotalPlayersMessagesAsync.");                
             }
             catch (Exception ex)
             {

@@ -80,7 +80,7 @@ namespace TelegramFootballBot.Helpers
             // Set empty string for approve cells to clear data
             foreach (var player in players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null))
             {
-                if (player.Count == 1)
+                if (player.Count <= (int)APPROVE_COLUMN)
                     player.Add(string.Empty);
                 else
                     player[(int)APPROVE_COLUMN] = string.Empty;

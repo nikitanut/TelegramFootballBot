@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
@@ -16,8 +17,9 @@ namespace TelegramFootballBot.Models.Commands
 
             try
             {
-                playerName = (await Bot.GetPlayerAsync(message.From.Id)).Name;
-                await Bot.DeletePlayerAsync(message.From.Id);
+                IPlayerRepository playerRepository = new PlayerRepository();
+                playerName = (await playerRepository.GetAsync(message.From.Id)).Name;
+                await playerRepository.RemoveAsync(message.From.Id);
             }
             catch (UserNotFoundException)
             {

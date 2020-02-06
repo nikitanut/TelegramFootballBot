@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Data;
 
 namespace TelegramFootballBot
 {
@@ -16,8 +17,10 @@ namespace TelegramFootballBot
             try
             {
                 logger.Information("Bot started");
-                var messageController = new MessageController(logger);
-                var scheduler = new Scheduler(messageController, logger);
+
+                var playerRepository = new PlayerRepository();
+                var messageController = new MessageController(playerRepository, logger);
+                var scheduler = new Scheduler(messageController, playerRepository, logger);
 
                 messageController.Run();
                 scheduler.Run();
@@ -27,7 +30,7 @@ namespace TelegramFootballBot
             catch (Exception ex)
             {
                 logger.Fatal(ex, "FATAL ERROR");
-                try { new MessageController(logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}").Wait(); }
+                try { new MessageController(null, logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}").Wait(); }
                 catch { }
                 throw;
             }

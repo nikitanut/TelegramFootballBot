@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
@@ -24,16 +25,18 @@ namespace TelegramFootballBot.Models.Commands
             }
             
             var messageForUser = "Регистрация прошла успешно";
+            IPlayerRepository playerRepository = new PlayerRepository();
+
             try
             {
-                var existPlayer = await Bot.GetPlayerAsync(message.From.Id);                
+                var existPlayer = await playerRepository.GetAsync(message.From.Id);                
                 messageForUser = existPlayer.Name == userName ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
                 existPlayer.Name = userName;
-                await Bot.UpdatePlayerAsync(existPlayer);
+                await playerRepository.UpdateAsync(existPlayer);
             }
             catch (UserNotFoundException)
             {
-                await Bot.AddNewPlayerAsync(new Player(message.From.Id, userName, message.Chat.Id));
+                await playerRepository.AddAsync(new Player(message.From.Id, userName, message.Chat.Id));
             }
             
             await client.SendTextMessageWithTokenAsync(message.Chat.Id, messageForUser);
