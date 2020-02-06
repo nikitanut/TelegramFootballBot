@@ -4,17 +4,21 @@ using TelegramFootballBot.Controllers;
 
 namespace TelegramFootballBot.Models.Commands
 {
-    public class SwitchNotifierCommand : Command
+    public class SayCommand : Command
     {
-        public override string Name => "/switch";
+        public override string Name => "/say";
 
         public override async Task Execute(Message message, MessageController messageController)
         {
             if (message.Chat.Id != AppSettings.BotOwnerChatId)
                 return;
 
-            AppSettings.NotifyOwner = !AppSettings.NotifyOwner;
-            await messageController.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
+            var text = message.Text.Length > Name.Length
+                ? message.Text.Substring(Name.Length).Trim()
+                : string.Empty;
+
+            if (text != string.Empty)
+                await messageController.SendMessageToAllUsersAsync(text);
         }
     }
 }

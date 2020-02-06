@@ -85,7 +85,7 @@ namespace TelegramFootballBot.Controllers
         {
             try
             {
-                await _messageController.SendQuestionToAllUsersAsync();
+                await _messageController.SendDistributionQuestionAsync();
             }
             catch (Exception ex)
             {

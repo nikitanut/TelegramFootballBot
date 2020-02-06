@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
+using TelegramFootballBot.Controllers;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -8,7 +8,7 @@ namespace TelegramFootballBot.Models.Commands
     {
         public abstract string Name { get; }
 
-        public abstract Task Execute(Message message, TelegramBotClient client);
+        public abstract Task Execute(Message message, MessageController messageController);
 
         public bool StartsWith(Message message)
         {

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
-using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
@@ -12,17 +10,16 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/go";
 
-        public override async Task Execute(Message message, TelegramBotClient client)
+        public override async Task Execute(Message message, MessageController messageController)
         {
             Player player;
             try
             {
-                IPlayerRepository playerRepository = new PlayerRepository();
-                player = await playerRepository.GetAsync(message.From.Id);
+                player = await messageController.PlayerRepository.GetAsync(message.From.Id);
             }
             catch (UserNotFoundException)
             {
-                await client.SendTextMessageWithTokenAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
+                await messageController.SendMessageAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
 
@@ -30,7 +27,7 @@ namespace TelegramFootballBot.Models.Commands
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
             var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
 
-            await client.SendTextMessageWithTokenAsync(player.ChatId, text, markup);
+            await messageController.SendMessageAsync(player.ChatId, text, markup);
         }
     }
 }
