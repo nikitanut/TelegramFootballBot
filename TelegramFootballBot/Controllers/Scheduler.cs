@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Controllers
             _messageController = messageController;
             _playerRepository = playerRepository;
             _logger = logger;
-            _timer = new Timer(OnTimerElapsed, DateTime.UtcNow, Timeout.Infinite, Timeout.Infinite); 
+            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite); 
         }
 
         public void Run()
@@ -31,7 +31,7 @@ namespace TelegramFootballBot.Controllers
 
         private async void OnTimerElapsed(object state)
         {
-            var now = (DateTime)state;
+            var now = DateTime.UtcNow;
 
             if (DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
