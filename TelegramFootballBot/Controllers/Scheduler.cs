@@ -48,7 +48,7 @@ namespace TelegramFootballBot.Controllers
             {
                 await SheetController.GetInstance().ClearApproveCellsAsync();
 
-                var playersToUpdate = (await _playerRepository.GetAllAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0);
+                var playersToUpdate = (await _playerRepository.GetAllAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0).ToList();
                 foreach (var player in playersToUpdate)
                 {
                     player.IsGoingToPlay = false;
@@ -94,34 +94,46 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        private bool DistributionTimeHasCome(DateTime now)
+        private bool DistributionTimeHasCome(DateTime currentDate)
         {
-            return GetDayOfWeek(now.ToMoscowTime()) == AppSettings.DistributionTime.Days
-                && now.ToMoscowTime().TimeOfDay.Hours == AppSettings.DistributionTime.Hours
-                && now.ToMoscowTime().TimeOfDay.Minutes == AppSettings.DistributionTime.Minutes;
+            var distributionDate = GetNearestDistributionDateMoscowTime(currentDate);
+            return GetDayOfWeek(currentDate.ToMoscowTime()) == GetDayOfWeek(distributionDate)
+                && currentDate.ToMoscowTime().TimeOfDay.Hours == distributionDate.TimeOfDay.Hours
+                && currentDate.ToMoscowTime().TimeOfDay.Minutes == distributionDate.TimeOfDay.Minutes;
         }
 
-        private bool GameStarted(DateTime now)
+        private bool GameStarted(DateTime currentDate)
         {
-            var gameDate = GetNearestGameDateMoscowTime(now.ToMoscowTime());
-            return now.ToMoscowTime().Year == gameDate.Year 
-                && now.ToMoscowTime().Month == gameDate.Month 
-                && now.ToMoscowTime().Day == gameDate.Day
-                && now.ToMoscowTime().Hour == gameDate.Hour 
-                && now.ToMoscowTime().Minute == gameDate.Minute;
+            var gameDate = GetNearestGameDateMoscowTime(currentDate);
+            return currentDate.ToMoscowTime().Year == gameDate.Year 
+                && currentDate.ToMoscowTime().Month == gameDate.Month 
+                && currentDate.ToMoscowTime().Day == gameDate.Day
+                && currentDate.ToMoscowTime().Hour == gameDate.Hour 
+                && currentDate.ToMoscowTime().Minute == gameDate.Minute;
         }
         
-        public static DateTime GetNearestGameDateMoscowTime(DateTime startDate)
+        public static DateTime GetNearestGameDateMoscowTime(DateTime currentDate)
         {
-            return GetNearestDate(startDate, 
+            return GetNearestDate(currentDate, 
                 AppSettings.GameDay.Days, 
                 AppSettings.GameDay.Hours, 
                 AppSettings.GameDay.Minutes);
         }
-        
-        private static DateTime GetNearestDate(DateTime startDate, int eventDayOfWeek, int eventHour, int eventMinutes)
+
+        public static DateTime GetNearestDistributionDateMoscowTime(DateTime currentDate)
         {
-            var eventDate = startDate.ToMoscowTime().Date;
+            return GetNearestDate(currentDate,
+                AppSettings.DistributionTime.Days,
+                AppSettings.DistributionTime.Hours,
+                AppSettings.DistributionTime.Minutes);
+        }
+        
+        private static DateTime GetNearestDate(DateTime currentDate, int eventDayOfWeek, int eventHour, int eventMinutes)
+        {
+            if (eventDayOfWeek > 7)
+                throw new ArgumentOutOfRangeException("eventDayOfWeek");
+
+            var eventDate = currentDate.ToMoscowTime().Date;
             var dayOfWeek = GetDayOfWeek(eventDate);
 
             while (eventDayOfWeek != dayOfWeek)
