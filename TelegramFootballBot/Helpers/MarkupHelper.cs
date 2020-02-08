@@ -8,28 +8,39 @@ namespace TelegramFootballBot.Helpers
         /// <summary>
         /// Gets custom InlineKeyboardMarkup with buttons
         /// </summary>
-        /// <param name="buttonsTexts">Array of buttons texts</param>
-        public static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, params string [] buttonsTexts)
+        /// <param name="callbackPrefix">Callback prefix for message</param>
+        /// <param name="buttonsLabels">Array of buttons texts</param>
+        public static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, params string [] buttonsLabels)
         {
-            var keyBoard = new[] { new InlineKeyboardButton[buttonsTexts.Length] };
+            var keyBoard = new[] { new InlineKeyboardButton[buttonsLabels.Length] };
 
             for (var i = 0; i < keyBoard[0].Length; i++)
             {
                 keyBoard[0][i] = new InlineKeyboardButton
                 {
-                    Text = buttonsTexts[i],
-                    CallbackData = $"{callbackPrefix}{Constants.CALLBACK_DATA_SEPARATOR}{buttonsTexts[i]}"
+                    Text = buttonsLabels[i],
+                    CallbackData = $"{callbackPrefix}{Constants.CALLBACK_DATA_SEPARATOR}{buttonsLabels[i]}"
                 };
             }
 
             return new InlineKeyboardMarkup(keyBoard);
         }
 
+        /// <summary>
+        /// Gets markup for determination question
+        /// </summary>
+        /// <param name="gameDate">Date of game</param>
+        /// <returns></returns>
         public static InlineKeyboardMarkup GetUserDeterminationMarkup(DateTime gameDate)
         {
             return GetKeyBoardMarkup(GetGameStartCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
         }
 
+        /// <summary>
+        /// Get prefix for game start callback
+        /// </summary>
+        /// <param name="gameDate">Date of game</param>
+        /// <returns></returns>
         private static string GetGameStartCallbackPrefix(DateTime gameDate)
         {
             return Constants.PLAYERS_SET_CALLBACK_PREFIX
