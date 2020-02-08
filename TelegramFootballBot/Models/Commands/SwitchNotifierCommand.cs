@@ -10,7 +10,7 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, MessageController messageController)
         {
-            if (message.Chat.Id != AppSettings.BotOwnerChatId)
+            if (!IsBotOwner(message))
                 return;
 
             AppSettings.NotifyOwner = !AppSettings.NotifyOwner;

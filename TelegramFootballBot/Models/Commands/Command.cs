@@ -12,10 +12,14 @@ namespace TelegramFootballBot.Models.Commands
 
         public bool StartsWith(Message message)
         {
-            if (message.Type != Telegram.Bot.Types.Enums.MessageType.Text)
-                return false;
+            return message.Type == Telegram.Bot.Types.Enums.MessageType.Text
+                ? message.Text.StartsWith(Name)
+                : false;
+        }
 
-            return message.Text.StartsWith(Name);
+        public bool IsBotOwner(Message message)
+        {
+            return message.Chat.Id == AppSettings.BotOwnerChatId;
         }
     }
 }
