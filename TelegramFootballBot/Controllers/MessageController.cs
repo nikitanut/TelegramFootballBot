@@ -165,11 +165,28 @@ namespace TelegramFootballBot.Controllers
 
             var userAnswer = GetUserAnswerFromCallback(callbackData);
             var player = await PlayerRepository.GetAsync(userId);
-            player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
-
             await SheetController.GetInstance().UpdateApproveCellAsync(player.Name, GetApproveCellValue(userAnswer));
 
-            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(chatId);
+            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
+
+            if (player.ApprovedPlayersMessageId != 0)
+            {
+                try
+                {
+                    await _client.EditMessageTextWithTokenAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                }
+                catch (Exception ex) // Telegram API doesn't allow to check if user deleted message
+                {
+                    _logger.Error(ex, $"Error on editing message for user {player.Name}");
+                    player.ApprovedPlayersMessageId = (await SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
+                }                
+            }
+
+            if (player.ApprovedPlayersMessageId == 0)
+                player.ApprovedPlayersMessageId = (await SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
+
+            player.IsGoingToPlay = userAnswer == Constants.YES_ANSWER;
+
             await PlayerRepository.UpdateAsync(player);
         }
 
@@ -209,13 +226,6 @@ namespace TelegramFootballBot.Controllers
         private bool IsButtonPressedAfterGame(DateTime gameDate)
         {
             return gameDate.ToUniversalTime().Date < DateTime.UtcNow.Date;
-        }
-
-        private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId)
-        {
-            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
-            var messageSent = await SendMessageAsync(chatId, approvedPlayersMessage);
-            return messageSent.MessageId;
         }
 
         private async Task ClearInlineKeyboardAsync(ChatId chatId, int messageId)
