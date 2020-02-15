@@ -125,6 +125,18 @@ namespace TelegramFootballBot.Controllers
             return await _client.SendTextMessageWithTokenAsync(chatId, text, replyMarkup);
         }
 
+        public async Task DeleteMessageAsync(ChatId chatId, int messageId)
+        {
+            try
+            {
+                await _client.DeleteMessageWithTokenAsync(chatId, messageId);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on deleting message");
+            }
+        }
+
         private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
         {
             while (requests.Count > 0)

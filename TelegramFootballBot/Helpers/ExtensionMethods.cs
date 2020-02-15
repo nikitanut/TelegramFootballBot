@@ -37,7 +37,6 @@ namespace TelegramFootballBot.Helpers
             }
             catch
             {
-                // TODO: Log
                 return new Message();
             }
         }
@@ -52,6 +51,12 @@ namespace TelegramFootballBot.Helpers
             {
                 return await client.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
             }
+        }
+
+        public static async Task DeleteMessageWithTokenAsync(this TelegramBotClient client, ChatId chatId, int messageId)
+        {
+            var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
+            await client.DeleteMessageAsync(chatId, messageId, cancellationToken: cancellationToken);
         }
 
         public static DateTime ToMoscowTime(this DateTime dateTime)

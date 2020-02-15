@@ -49,7 +49,14 @@ namespace TelegramFootballBot.Controllers
         private async Task DetermineIfUserIsReadyToPlayAsync(ChatId chatId, int messageId, int userId, string callbackData)
         {
             await ClearInlineKeyboardAsync(chatId, messageId);
-            await DeleteMessageAsync(chatId, messageId);
+            try
+            {
+                await _client.DeleteMessageWithTokenAsync(chatId, messageId);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on deleting message");
+            }
 
             if (IsButtonPressedAfterGame(GetDateFromCallback(callbackData)))
                 return;
@@ -139,18 +146,6 @@ namespace TelegramFootballBot.Controllers
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on clearing inline keyboard");
-            }
-        }
-
-        private async Task DeleteMessageAsync(ChatId chatId, int messageId)
-        {
-            try
-            {
-                await _client.DeleteMessageAsync(chatId, messageId, new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, $"Error on deleting message");
             }
         }
 
