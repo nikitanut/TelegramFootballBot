@@ -11,7 +11,7 @@ namespace TelegramFootballBot.Data
         Task UpdateAsync(Player player);
         Task UpdateMultipleAsync(IEnumerable<Player> players);
         Task RemoveAsync(int id);
-        Task<IEnumerable<Player>> GetAllAsync();
-        Task<IEnumerable<Player>> GetReadyToPlayAsync();
+        Task<List<Player>> GetAllAsync();
+        Task<List<Player>> GetReadyToPlayAsync();
     }
 }

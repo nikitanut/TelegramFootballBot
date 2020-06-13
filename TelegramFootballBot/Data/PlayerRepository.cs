@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Data
             }
         }
 
-        public async Task<IEnumerable<Player>> GetAllAsync()
+        public async Task<List<Player>> GetAllAsync()
         {
             using (var db = new FootballBotDbContext())
             {
@@ -71,11 +71,11 @@ namespace TelegramFootballBot.Data
             }
         }
 
-        public async Task<IEnumerable<Player>> GetReadyToPlayAsync()
+        public async Task<List<Player>> GetReadyToPlayAsync()
         {
             using (var db = new FootballBotDbContext())
             {
-                return (await db.Players.ToListAsync()).Where(p => p.ApprovedPlayersMessageId != 0);
+                return (await db.Players.ToListAsync()).Where(p => p.ApprovedPlayersMessageId != 0).ToList();
             }
         }
     }
