@@ -96,17 +96,29 @@ namespace TelegramFootballBot.Helpers
 
             var playersMessage = new StringBuilder(headerMessage);
             playersMessage.AppendLine();
-            playersMessage.AppendLine(GetDashedString(headerMessage.Length));
+            playersMessage.AppendLine(MarkupHelper.GetDashedString());
             playersMessage.AppendLine(string.Join(Environment.NewLine, markedPlayers.Where(p => p.Value == '+').Select(p => p.Key)));
 
             if (GetTotalMaybePlayers(players) > 0)
             {
-                playersMessage.AppendLine(GetDashedString(headerMessage.Length));
+                playersMessage.AppendLine(MarkupHelper.GetDashedString());
                 playersMessage.AppendLine($"Под вопросом: {GetTotalMaybePlayers(players)}.");
                 playersMessage.AppendLine(string.Join(Environment.NewLine, markedPlayers.Where(p => p.Value == '?').Select(p => p.Key)));
             }
 
             return playersMessage.ToString();
+        }
+        
+        public static List<string> GetPlayersReadyToPlay(IList<IList<object>> values)
+        {
+            return GetOrderedPlayers(values).Where(p =>
+            {
+                if (p.Count <= (int)APPROVE_COLUMN) return false;
+                var approveValue = ToDouble(p[(int)APPROVE_COLUMN]);
+                return approveValue >= 1;
+            })
+            .Select(p => p[(int)NAME_COLUMN].ToString().Trim())
+            .ToList();
         }
 
         private static IEnumerable<KeyValuePair<string, char>> GetMarkedPlayers(IList<IList<object>> players)
@@ -200,11 +212,6 @@ namespace TelegramFootballBot.Helpers
         {
             return row.Count > columnIndex
                 && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
-        }
-
-        public static string GetDashedString(int mainStringLength)
-        {
-            return new string('-', 30);
         }
 
         private static CopyPasteRequest GetCopyStyleRequest(int sourceRowIndex, int destinationRowIndex)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TelegramFootballBot.Models;
 
@@ -67,6 +68,14 @@ namespace TelegramFootballBot.Data
                     db.Entry(player).State = EntityState.Modified;
 
                 await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<IEnumerable<Player>> GetReadyToPlayAsync()
+        {
+            using (var db = new FootballBotDbContext())
+            {
+                return (await db.Players.ToListAsync()).Where(p => p.ApprovedPlayersMessageId != 0);
             }
         }
     }

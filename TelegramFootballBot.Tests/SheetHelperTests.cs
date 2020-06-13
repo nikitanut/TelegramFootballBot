@@ -69,7 +69,7 @@ namespace TelegramFootballBot.Tests
             var approvedPlayersString = SheetHelper.GetApprovedPlayersString(_players);
 
             var headerMessage = $"{Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: 7.";
-            var dashedString = SheetHelper.GetDashedString(headerMessage.Length);
+            var dashedString = MarkupHelper.GetDashedString();
             var expectedString = $"{headerMessage}{Environment.NewLine}" +
                 $"{dashedString}{Environment.NewLine}" +
                 $"User3{Environment.NewLine}" +

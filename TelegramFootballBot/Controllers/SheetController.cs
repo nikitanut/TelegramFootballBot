@@ -91,6 +91,12 @@ namespace TelegramFootballBot.Controllers
             return SheetHelper.GetApprovedPlayersString(players);            
         }
 
+        public async Task<List<string>> GetPlayersReadyToPlay()
+        {
+            var sheet = await GetSheetAsync();
+            return SheetHelper.GetPlayersReadyToPlay(sheet.Values);
+        }
+
         private async Task<ValueRange> GetSheetAsync()
         {
             var request = _sheetsService.Spreadsheets.Values.Get(AppSettings.GoogleDocSheetId, SheetHelper.GetAllUsersRange());

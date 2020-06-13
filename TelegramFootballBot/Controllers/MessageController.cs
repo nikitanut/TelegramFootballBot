@@ -104,9 +104,25 @@ namespace TelegramFootballBot.Controllers
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
 
-            foreach (var player in (await PlayerRepository.GetAllAsync()).Where(p => p.ApprovedPlayersMessageId != 0))
+            foreach (var player in await PlayerRepository.GetReadyToPlayAsync())
             {
                 var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                requests.Add(request);
+                playersRequestsIds.Add(request.Id, player);
+            }
+
+            await ProcessRequests(requests, playersRequestsIds);
+        }
+
+        public async Task SendGeneratedTeamsMessageAsync(IEnumerable<Team> teams)
+        {
+            var requests = new List<Task<Message>>();
+            var playersRequestsIds = new Dictionary<int, Player>();
+            var message = string.Join(Environment.NewLine, teams.Select(t => t.ToString()));
+
+            foreach (var player in await PlayerRepository.GetReadyToPlayAsync())
+            {
+                var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message);
                 requests.Add(request);
                 playersRequestsIds.Add(request.Id, player);
             }

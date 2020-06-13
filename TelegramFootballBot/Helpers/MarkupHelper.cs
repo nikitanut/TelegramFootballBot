@@ -36,6 +36,11 @@ namespace TelegramFootballBot.Helpers
             return GetKeyBoardMarkup(GetGameStartCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
         }
 
+        public static string GetDashedString()
+        {
+            return new string('-', 30);
+        }
+
         /// <summary>
         /// Get prefix for game start callback
         /// </summary>

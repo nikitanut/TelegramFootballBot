@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Models;
 
 namespace TelegramFootballBot.Controllers
 {
@@ -35,6 +36,9 @@ namespace TelegramFootballBot.Controllers
 
             if (DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
+
+            if (TeamsGenerationTimeHasCome(now))
+                await SendGeneratedTeamsMessageAsync();
 
             if (GameStarted(now))
                 await ClearGameAttrsAsync();
@@ -94,12 +98,44 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
+        private async Task SendGeneratedTeamsMessageAsync()
+        {
+            try
+            {
+                var playersNames = await SheetController.GetInstance().GetPlayersReadyToPlay();
+                var playersReadyToPlay = (await _playerRepository.GetAllAsync())
+                    .Where(p => playersNames.Contains(p.Name)).ToList();
+
+                playersReadyToPlay.AddRange(playersNames
+                    .Where(n => !playersReadyToPlay.Any(p => p.Name == n))
+                    .Select(n => new Player(n)));
+
+                var teams = TeamsGenerator.Generate(playersReadyToPlay);
+                await _messageController.SendGeneratedTeamsMessageAsync(teams);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error on SendGeneratedTeamsMessageAsync");
+                await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при отправке сообщения с командами: {ex.Message}");
+            }
+        }
+
         private bool DistributionTimeHasCome(DateTime currentDate)
         {
             var distributionDate = GetNearestDistributionDateMoscowTime(currentDate);
             return GetDayOfWeek(currentDate.ToMoscowTime()) == GetDayOfWeek(distributionDate)
                 && currentDate.ToMoscowTime().TimeOfDay.Hours == distributionDate.TimeOfDay.Hours
                 && currentDate.ToMoscowTime().TimeOfDay.Minutes == distributionDate.TimeOfDay.Minutes;
+        }
+
+        private bool TeamsGenerationTimeHasCome(DateTime currentDate)
+        {
+            var gameDate = GetNearestGameDateMoscowTime(currentDate);
+            return currentDate.ToMoscowTime().Year == gameDate.Year
+                && currentDate.ToMoscowTime().Month == gameDate.Month
+                && currentDate.ToMoscowTime().Day == gameDate.Day
+                && currentDate.ToMoscowTime().Hour == gameDate.Hour - 2
+                && currentDate.ToMoscowTime().Minute == gameDate.Minute;
         }
 
         private bool GameStarted(DateTime currentDate)
