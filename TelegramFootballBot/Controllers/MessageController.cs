@@ -73,17 +73,7 @@ namespace TelegramFootballBot.Controllers
 
         public async Task SendMessageToAllUsersAsync(string text, IReplyMarkup replyMarkup = null)
         {
-            var requests = new List<Task<Message>>();
-            var playersRequestsIds = new Dictionary<int, Player>();
-            
-            foreach (var player in await PlayerRepository.GetAllAsync())
-            {
-                var request = SendMessageAsync(player.ChatId, text, replyMarkup);
-                requests.Add(request);
-                playersRequestsIds.Add(request.Id, player);
-            }
-
-            await ProcessRequests(requests, playersRequestsIds);
+            await SendMessageAsync(await PlayerRepository.GetAllAsync(), text, replyMarkup);
         }
         
         public async Task SendDistributionQuestionAsync()
@@ -114,31 +104,39 @@ namespace TelegramFootballBot.Controllers
             await ProcessRequests(requests, playersRequestsIds);
         }
 
-        public async Task SendGeneratedTeamsMessageAsync(IEnumerable<Team> teams)
-        {
+        public async Task SendTeamPollMessageAsync()
+        {            
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
-            var message = string.Join(Environment.NewLine, teams.Select(t => t.ToString()));
-
-            foreach (var player in await PlayerRepository.GetReadyToPlayAsync())
-            {
-                var request = _client.SendTextMessageWithTokenAsync(player.ChatId, message);
-                requests.Add(request);
-                playersRequestsIds.Add(request.Id, player);
-            }
-
-            await ProcessRequests(requests, playersRequestsIds);
+            var message = string.Join(Environment.NewLine, TeamSet.GetRandom().Select(t => string.Join(Environment.NewLine, t)));
+            //await SendMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), message, MarkupHelper.GetTeamPollMarkup());
+            await SendTextMessageToBotOwnerAsync(message, MarkupHelper.GetTeamPollMarkup());
         }
 
-        public async Task SendTextMessageToBotOwnerAsync(string text)
+        public async Task SendTextMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
         {
             if (AppSettings.NotifyOwner)
-                await _client.SendTextMessageToBotOwnerAsync(text);
+                await _client.SendTextMessageToBotOwnerAsync(text, replyMarkup);
         }
         
         public async Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null)
         {
             return await _client.SendTextMessageWithTokenAsync(chatId, text, replyMarkup);
+        }
+        
+        private async Task SendMessageAsync(IEnumerable<Player> players, string text, IReplyMarkup replyMarkup = null)
+        {
+            var requests = new List<Task<Message>>();
+            var playersRequestsIds = new Dictionary<int, Player>();
+
+            foreach (var player in players)
+            {
+                var request = SendMessageAsync(player.ChatId, text, replyMarkup);
+                requests.Add(request);
+                playersRequestsIds.Add(request.Id, player);
+            }
+
+            await ProcessRequests(requests, playersRequestsIds);
         }
 
         public async Task DeleteMessageAsync(ChatId chatId, int messageId)
@@ -152,7 +150,7 @@ namespace TelegramFootballBot.Controllers
                 _logger.Error(ex, $"Error on deleting message");
             }
         }
-
+        
         private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
         {
             while (requests.Count > 0)

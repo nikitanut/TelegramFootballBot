@@ -36,6 +36,11 @@ namespace TelegramFootballBot.Helpers
             return GetKeyBoardMarkup(GetGameStartCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
         }
 
+        public static InlineKeyboardMarkup GetTeamPollMarkup()
+        {
+            return GetKeyBoardMarkup(GetTeamPollCallbackPrefix(), Constants.YES_ANSWER, Constants.NO_ANSWER);
+        }
+
         public static string GetDashedString()
         {
             return new string('-', 30);
@@ -51,6 +56,11 @@ namespace TelegramFootballBot.Helpers
             return Constants.PLAYERS_SET_CALLBACK_PREFIX
                  + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR
                  + gameDate.ToString("yyyy-MM-dd");
+        }
+
+        private static string GetTeamPollCallbackPrefix()
+        {
+            return Constants.TEAM_POLL_CALLBACK_PREFIX;
         }
     }
 }

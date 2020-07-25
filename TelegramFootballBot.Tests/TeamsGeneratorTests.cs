@@ -28,8 +28,8 @@ namespace TelegramFootballBot.Tests
             };
             var teams = TeamsGenerator.Generate(players);
 
-            Assert.Equal(77, teams[0].AverageRating);
-            Assert.Equal(77, teams[1].AverageRating);
+            Assert.Equal(77, teams[0][0].AverageRating);
+            Assert.Equal(77, teams[0][1].AverageRating);
         }
     }
 }

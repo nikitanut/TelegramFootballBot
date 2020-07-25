@@ -21,13 +21,14 @@ namespace TelegramFootballBot.Controllers
             _messageController = messageController;
             _playerRepository = playerRepository;
             _logger = logger;
-            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite); 
+            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
+            TeamSet.OnDislike += RegenerateTeams;
         }
 
         public void Run()
         {
-            var interval = 60 * 1000;
-            _timer.Change(0, interval); 
+            var minuteInterval = 60 * 1000;
+            _timer.Change(0, minuteInterval); 
         }
 
         private async void OnTimerElapsed(object state)
@@ -38,7 +39,7 @@ namespace TelegramFootballBot.Controllers
                 await SendQuestionToAllUsersAsync();
 
             if (TeamsGenerationTimeHasCome(now))
-                await SendGeneratedTeamsMessageAsync();
+                await RegenerateTeams();
 
             if (GameStarted(now))
                 await ClearGameAttrsAsync();
@@ -98,20 +99,36 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
+        private async void RegenerateTeams(object sender, EventArgs args)
+        {
+            await RegenerateTeams();
+        }
+
+        private async Task RegenerateTeams()
+        {
+            await GenerateTeams();
+            await SendGeneratedTeamsMessageAsync();
+        }
+
+        private async Task GenerateTeams()
+        {
+            var playersNames = await SheetController.GetInstance().GetPlayersReadyToPlay();
+            var playersReadyToPlay = (await _playerRepository.GetAllAsync())
+                .Where(p => playersNames.Contains(p.Name)).ToList();
+
+            playersReadyToPlay.AddRange(playersNames
+                .Where(n => !playersReadyToPlay.Any(p => p.Name == n))
+                .Select(n => new Player(n)));
+
+            var teamSet = TeamsGenerator.Generate(playersReadyToPlay);
+            TeamSet.SetActive(teamSet);
+        }
+
         private async Task SendGeneratedTeamsMessageAsync()
         {
             try
             {
-                var playersNames = await SheetController.GetInstance().GetPlayersReadyToPlay();
-                var playersReadyToPlay = (await _playerRepository.GetAllAsync())
-                    .Where(p => playersNames.Contains(p.Name)).ToList();
-
-                playersReadyToPlay.AddRange(playersNames
-                    .Where(n => !playersReadyToPlay.Any(p => p.Name == n))
-                    .Select(n => new Player(n)));
-
-                var teams = TeamsGenerator.Generate(playersReadyToPlay);
-                await _messageController.SendGeneratedTeamsMessageAsync(teams);
+                await _messageController.SendTeamPollMessageAsync();
             }
             catch (Exception ex)
             {
