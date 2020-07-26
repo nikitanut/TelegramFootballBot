@@ -16,7 +16,6 @@ namespace TelegramFootballBot.Controllers
         private readonly TeamsController _teamsController;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
-        int i = 0;
 
         public Scheduler(MessageController messageController, TeamsController teamSet, IPlayerRepository playerRepository, ILogger logger)
         {            
