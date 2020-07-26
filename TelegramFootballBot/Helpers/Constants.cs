@@ -8,6 +8,8 @@
         public const string YES_ANSWER = "Да";
         public const string NO_ANSWER = "Нет";
         public const string MAYBE_ANSWER = "+ / -";
+        public const string LIKE_EMOJI = "👍🏼";
+        public const string DISLIKE_EMOJI = "👎🏼";
         public const int MOSCOW_UTC_OFFSET = 3;
         public const int DEFAULT_PLAYER_RATING = 73;
     }

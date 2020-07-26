@@ -11,7 +11,7 @@ namespace TelegramFootballBot.Helpers
         /// </summary>
         /// <param name="callbackPrefix">Callback prefix for message</param>
         /// <param name="buttonsLabels">Array of buttons texts</param>
-        public static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, params string [] buttonsLabels)
+        public static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, string [] buttonsLabels, string [] buttonValues)
         {
             var keyBoard = new[] { new InlineKeyboardButton[buttonsLabels.Length] };
 
@@ -19,8 +19,8 @@ namespace TelegramFootballBot.Helpers
             {
                 keyBoard[0][i] = new InlineKeyboardButton
                 {
-                    Text = buttonsLabels[i],
-                    CallbackData = Callback.ToCallbackText(callbackPrefix, buttonsLabels[i])
+                    Text = buttonsLabels[i],                    
+                    CallbackData = Callback.ToCallbackText(callbackPrefix, buttonValues[i])
                 };
             }
 
@@ -34,12 +34,16 @@ namespace TelegramFootballBot.Helpers
         /// <returns></returns>
         public static InlineKeyboardMarkup GetUserDeterminationMarkup(DateTime gameDate)
         {
-            return GetKeyBoardMarkup(PlayerSetCallback.GetCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
+            var labels = new[] { Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER };
+            var values = labels;
+            return GetKeyBoardMarkup(PlayerSetCallback.GetCallbackPrefix(gameDate), labels, values);
         }
 
         public static InlineKeyboardMarkup GetTeamPollMarkup(Guid activePollId)
         {
-            return GetKeyBoardMarkup(TeamPollCallback.GetCallbackPrefix(activePollId), Constants.YES_ANSWER, Constants.NO_ANSWER);
+            var labels = new[] { Constants.LIKE_EMOJI, Constants.DISLIKE_EMOJI };
+            var values = new [] { Constants.YES_ANSWER, Constants.NO_ANSWER };
+            return GetKeyBoardMarkup(TeamPollCallback.GetCallbackPrefix(activePollId), labels, values);
         }
 
         public static string GetDashedString()
