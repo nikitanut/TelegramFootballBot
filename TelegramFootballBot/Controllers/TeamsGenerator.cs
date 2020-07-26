@@ -9,7 +9,8 @@ namespace TelegramFootballBot.Controllers
 {
     public static class TeamsGenerator
     {
-        private const int MAX_PLAYERS = 15;
+        private const int MIN_PLAYERS = 10;
+        private const int MAX_PLAYERS = 14;
 
         public static List<List<Team>> Generate(IEnumerable<Player> players)
         {
@@ -19,6 +20,9 @@ namespace TelegramFootballBot.Controllers
             var playersToDistribute = players
                 .OrderByDescending(p => p.Rating)
                 .Take(MAX_PLAYERS).ToList();
+
+            if (playersToDistribute.Count < MIN_PLAYERS) 
+                return new List<List<Team>>();
 
             var variantsCombinations = new KeyValuePair<List<Team>, double?>[10];
             for (var i = 0; i < variantsCombinations.Length; i++)

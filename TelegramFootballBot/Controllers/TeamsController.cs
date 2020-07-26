@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Models
         private readonly IPlayerRepository _playerRepository;
         private List<List<Team>> _teamSets = new List<List<Team>>();
         private List<Team> _activeTeamSet = new List<Team>();
-        private List<int> _dislikedTeamsIndices = new List<int>();
+        private List<List<Team>> _dislikedTeams = new List<List<Team>>();
         private Guid _activePollId;
         private int _likesForActive;
         private int _dislikesForActive;
@@ -28,11 +28,19 @@ namespace TelegramFootballBot.Models
         public TeamsController(IPlayerRepository playerRepository)
         {
             _playerRepository = playerRepository;
-            OnDislike += (o, e) => GenerateNewTeams().Wait();
+            OnDislike += (o, e) =>
+            {
+                _dislikedTeams.Add(_activeTeamSet);
+                GenerateNewTeams().Wait();
+            };
         }
 
         public async Task GenerateNewTeams()
         {
+            GeneratePollId();
+            _likesForActive = 0;
+            _dislikesForActive = 0;
+            
             var playersNames = await SheetController.GetInstance().GetPlayersReadyToPlay();
             var playersReadyToPlay = (await _playerRepository.GetAllAsync())
                 .Where(p => playersNames.Contains(p.Name)).ToList();
@@ -41,11 +49,8 @@ namespace TelegramFootballBot.Models
                 .Where(n => !playersReadyToPlay.Any(p => p.Name == n))
                 .Select(n => new Player(n)));
             
-            _teamSets = TeamsGenerator.Generate(playersReadyToPlay);
+            _teamSets = TeamsGenerator.Generate(playersReadyToPlay);            
             SetActive(GetRandom());
-            GeneratePollId();
-            _likesForActive = 0;
-            _dislikesForActive = 0;
         }   
 
         public Guid GeneratePollId()
@@ -59,6 +64,15 @@ namespace TelegramFootballBot.Models
             return _activeTeamSet;
         }
 
+        public void ClearGeneratedTeams()
+        {
+            _likesForActive = 0;
+            _dislikesForActive = 0;
+            _dislikedTeams.Clear();
+            _teamSets.Clear();
+            SetActive(GetRandom());
+        }
+
         private void SetActive(IEnumerable<Team> teamSet)
         {
             _activeTeamSet = teamSet.ToList();
@@ -66,15 +80,14 @@ namespace TelegramFootballBot.Models
 
         public List<Team> GetRandom()
         {
-            if (_teamSets.Count == _dislikedTeamsIndices.Count)
-                return _teamSets.FirstOrDefault();
+            if (_teamSets.Count == _dislikedTeams.Count)
+                return new List<Team>();
 
-            int randomIndex;
-            do randomIndex = new Random().Next(_teamSets.Count);
-            while (_dislikedTeamsIndices.Contains(randomIndex));
-
-            _dislikedTeamsIndices.Add(randomIndex);
-            return _teamSets.ElementAt(randomIndex);
+            List<Team> randomTeam;
+            do randomTeam = _teamSets.ElementAt(new Random().Next(_teamSets.Count));
+            while (_dislikedTeams.Contains(randomTeam));
+                        
+            return randomTeam;
         }
 
         public void LikeActive()

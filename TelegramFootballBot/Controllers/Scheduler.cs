@@ -13,9 +13,10 @@ namespace TelegramFootballBot.Controllers
     {
         private readonly Timer _timer;
         private readonly MessageController _messageController;
-        private readonly TeamsController _teamSet;
+        private readonly TeamsController _teamsController;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
+        int i = 0;
 
         public Scheduler(MessageController messageController, TeamsController teamSet, IPlayerRepository playerRepository, ILogger logger)
         {            
@@ -23,8 +24,8 @@ namespace TelegramFootballBot.Controllers
             _playerRepository = playerRepository;
             _logger = logger;
             _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
-            _teamSet = teamSet;
-            _teamSet.OnDislike += RegenerateTeams;
+            _teamsController = teamSet;
+            _teamsController.OnDislike += SendGeneratedTeamsMessage;
         }
 
         public void Run()
@@ -41,10 +42,16 @@ namespace TelegramFootballBot.Controllers
                 await SendQuestionToAllUsersAsync();
 
             if (TeamsGenerationTimeHasCome(now))
-                await RegenerateTeams();
+            {
+                await _teamsController.GenerateNewTeams();
+                await SendGeneratedTeamsMessageAsync();
+            }
 
             if (GameStarted(now))
+            {
                 await ClearGameAttrsAsync();
+                _teamsController.ClearGeneratedTeams();
+            }
 
             await UpdateTotalPlayersMessagesAsync();
         }
@@ -101,14 +108,8 @@ namespace TelegramFootballBot.Controllers
             }
         }
 
-        private async void RegenerateTeams(object sender, EventArgs args)
+        private async void SendGeneratedTeamsMessage(object sender, EventArgs args)
         {
-            await RegenerateTeams();
-        }
-
-        private async Task RegenerateTeams()
-        {
-            await _teamSet.GenerateNewTeams();
             await SendGeneratedTeamsMessageAsync();
         }
 

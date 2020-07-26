@@ -110,7 +110,9 @@ namespace TelegramFootballBot.Controllers
         {            
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
-            var message = string.Join(Environment.NewLine, _teamSet.GetRandom().Select(t => string.Join(Environment.NewLine, t)));
+            var message = string.Join(Environment.NewLine, _teamSet.GetActive().Select(t => string.Join(Environment.NewLine, t)));
+            if (string.IsNullOrEmpty(message))
+                return;
             //await SendMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), message, MarkupHelper.GetTeamPollMarkup(_teamSet.GetActivePollId()));
             await SendTextMessageToBotOwnerAsync(message, MarkupHelper.GetTeamPollMarkup(_teamSet.GetActivePollId()));
         }
