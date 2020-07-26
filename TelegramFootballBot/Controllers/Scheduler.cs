@@ -13,16 +13,18 @@ namespace TelegramFootballBot.Controllers
     {
         private readonly Timer _timer;
         private readonly MessageController _messageController;
+        private readonly TeamsController _teamSet;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
 
-        public Scheduler(MessageController messageController, IPlayerRepository playerRepository, ILogger logger)
+        public Scheduler(MessageController messageController, TeamsController teamSet, IPlayerRepository playerRepository, ILogger logger)
         {            
             _messageController = messageController;
             _playerRepository = playerRepository;
             _logger = logger;
             _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
-            TeamSet.OnDislike += RegenerateTeams;
+            _teamSet = teamSet;
+            _teamSet.OnDislike += RegenerateTeams;
         }
 
         public void Run()
@@ -106,22 +108,8 @@ namespace TelegramFootballBot.Controllers
 
         private async Task RegenerateTeams()
         {
-            await GenerateTeams();
+            await _teamSet.GenerateNewTeams();
             await SendGeneratedTeamsMessageAsync();
-        }
-
-        private async Task GenerateTeams()
-        {
-            var playersNames = await SheetController.GetInstance().GetPlayersReadyToPlay();
-            var playersReadyToPlay = (await _playerRepository.GetAllAsync())
-                .Where(p => playersNames.Contains(p.Name)).ToList();
-
-            playersReadyToPlay.AddRange(playersNames
-                .Where(n => !playersReadyToPlay.Any(p => p.Name == n))
-                .Select(n => new Player(n)));
-
-            var teamSet = TeamsGenerator.Generate(playersReadyToPlay);
-            TeamSet.SetActive(teamSet);
         }
 
         private async Task SendGeneratedTeamsMessageAsync()

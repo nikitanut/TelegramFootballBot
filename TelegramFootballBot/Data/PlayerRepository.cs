@@ -8,12 +8,23 @@ namespace TelegramFootballBot.Data
 {
     public class PlayerRepository : IPlayerRepository
     {
+        private readonly DbContextOptions<FootballBotDbContext> _options;
+
+        public PlayerRepository(DbContextOptions<FootballBotDbContext> options)
+        {
+            _options = options;
+            using (var db = new FootballBotDbContext(_options))
+            {
+                db.Database.EnsureCreated();
+            }
+        }
+
         public async Task AddAsync(Player player)
         {
             if (player == null)
                 return;
 
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 db.Players.Add(player);
                 await db.SaveChangesAsync();
@@ -22,7 +33,7 @@ namespace TelegramFootballBot.Data
 
         public async Task<List<Player>> GetAllAsync()
         {
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 return await db.Players.ToListAsync();
             }
@@ -30,7 +41,7 @@ namespace TelegramFootballBot.Data
 
         public async Task<Player> GetAsync(int id)
         {
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 var player = await db.Players.FindAsync(id);
                 return player ?? throw new UserNotFoundException();
@@ -41,7 +52,7 @@ namespace TelegramFootballBot.Data
         {
             var player = await GetAsync(id);
 
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 db.Players.Remove(player);
                 await db.SaveChangesAsync();
@@ -53,7 +64,7 @@ namespace TelegramFootballBot.Data
             if (player == null || player.Id == default(int))
                 return;
 
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 db.Entry(player).State = EntityState.Modified;
                 await db.SaveChangesAsync();
@@ -62,7 +73,7 @@ namespace TelegramFootballBot.Data
 
         public async Task UpdateMultipleAsync(IEnumerable<Player> players)
         {
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 foreach (var player in players)
                     db.Entry(player).State = EntityState.Modified;
@@ -73,7 +84,7 @@ namespace TelegramFootballBot.Data
 
         public async Task<List<Player>> GetReadyToPlayAsync()
         {
-            using (var db = new FootballBotDbContext())
+            using (var db = new FootballBotDbContext(_options))
             {
                 return (await db.Players.ToListAsync()).Where(p => p.ApprovedPlayersMessageId != 0).ToList();
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramFootballBot.Models.CallbackQueries;
 
 namespace TelegramFootballBot.Helpers
 {
@@ -19,7 +20,7 @@ namespace TelegramFootballBot.Helpers
                 keyBoard[0][i] = new InlineKeyboardButton
                 {
                     Text = buttonsLabels[i],
-                    CallbackData = $"{callbackPrefix}{Constants.CALLBACK_DATA_SEPARATOR}{buttonsLabels[i]}"
+                    CallbackData = Callback.ToCallbackText(callbackPrefix, buttonsLabels[i])
                 };
             }
 
@@ -33,34 +34,17 @@ namespace TelegramFootballBot.Helpers
         /// <returns></returns>
         public static InlineKeyboardMarkup GetUserDeterminationMarkup(DateTime gameDate)
         {
-            return GetKeyBoardMarkup(GetGameStartCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
+            return GetKeyBoardMarkup(PlayerSetCallback.GetCallbackPrefix(gameDate), Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER);
         }
 
-        public static InlineKeyboardMarkup GetTeamPollMarkup()
+        public static InlineKeyboardMarkup GetTeamPollMarkup(Guid activePollId)
         {
-            return GetKeyBoardMarkup(GetTeamPollCallbackPrefix(), Constants.YES_ANSWER, Constants.NO_ANSWER);
+            return GetKeyBoardMarkup(TeamPollCallback.GetCallbackPrefix(activePollId), Constants.YES_ANSWER, Constants.NO_ANSWER);
         }
 
         public static string GetDashedString()
         {
             return new string('-', 30);
-        }
-
-        /// <summary>
-        /// Get prefix for game start callback
-        /// </summary>
-        /// <param name="gameDate">Date of game</param>
-        /// <returns></returns>
-        private static string GetGameStartCallbackPrefix(DateTime gameDate)
-        {
-            return Constants.PLAYERS_SET_CALLBACK_PREFIX
-                 + Constants.PLAYERS_SET_CALLBACK_PREFIX_SEPARATOR
-                 + gameDate.ToString("yyyy-MM-dd");
-        }
-
-        private static string GetTeamPollCallbackPrefix()
-        {
-            return Constants.TEAM_POLL_CALLBACK_PREFIX;
         }
     }
 }

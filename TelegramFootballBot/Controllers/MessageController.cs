@@ -17,18 +17,20 @@ namespace TelegramFootballBot.Controllers
     {
         public IPlayerRepository PlayerRepository { get; }
 
-        private readonly ILogger _logger;        
-        private readonly TelegramBotClient _client;
+        private readonly ILogger _logger;   
+        private readonly TelegramBotClient _client;  
+        private readonly TeamsController _teamSet;
+        private readonly MessageCallbackController _messageCallbackController;
         private string _approvedPlayersMessage = null;
         private bool _isRunning = false;
-        private MessageCallbackController _messageCallbackController;
-
-        public MessageController(IPlayerRepository playerRepository, ILogger logger)
+        
+        public MessageController(IPlayerRepository playerRepository, TeamsController teamSet, ILogger logger)
         {
             PlayerRepository = playerRepository;
+            _teamSet = teamSet;
             _logger = logger;
-            _client = new Bot().GetBotClient();
-            _messageCallbackController = new MessageCallbackController(_client, PlayerRepository, _logger);
+            _client = new Bot().GetBotClient();            
+            _messageCallbackController = new MessageCallbackController(_client, _teamSet, PlayerRepository, _logger);
         }
 
         public void Run()
@@ -108,9 +110,9 @@ namespace TelegramFootballBot.Controllers
         {            
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
-            var message = string.Join(Environment.NewLine, TeamSet.GetRandom().Select(t => string.Join(Environment.NewLine, t)));
-            //await SendMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), message, MarkupHelper.GetTeamPollMarkup());
-            await SendTextMessageToBotOwnerAsync(message, MarkupHelper.GetTeamPollMarkup());
+            var message = string.Join(Environment.NewLine, _teamSet.GetRandom().Select(t => string.Join(Environment.NewLine, t)));
+            //await SendMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), message, MarkupHelper.GetTeamPollMarkup(_teamSet.GetActivePollId()));
+            await SendTextMessageToBotOwnerAsync(message, MarkupHelper.GetTeamPollMarkup(_teamSet.GetActivePollId()));
         }
 
         public async Task SendTextMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
