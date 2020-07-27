@@ -16,14 +16,14 @@ namespace TelegramFootballBot.Controllers
     public class MessageCallbackController
     {
         private readonly TelegramBotClient _client;
-        private readonly TeamsController _teamSet;
+        private readonly TeamsController _teamsController;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
 
-        public MessageCallbackController(TelegramBotClient client, TeamsController teamSet, IPlayerRepository playerRepository, ILogger logger)
+        public MessageCallbackController(TelegramBotClient client, TeamsController teamsController, IPlayerRepository playerRepository, ILogger logger)
         {
             _client = client;
-            _teamSet = teamSet;
+            _teamsController = teamsController;
             _playerRepository = playerRepository;
             _logger = logger;
         }
@@ -40,7 +40,7 @@ namespace TelegramFootballBot.Controllers
                     await DetermineIfUserIsReadyToPlayAsync(e.CallbackQuery);
 
                 if (Callback.GetCallbackName(callbackData) == TeamPollCallback.Name)
-                    await ProcessPollChoice(e.CallbackQuery);
+                    await DetermineIfUserLikesTeamAsync(e.CallbackQuery);
             }
             catch (Exception ex)
             {
@@ -69,15 +69,9 @@ namespace TelegramFootballBot.Controllers
             await SheetController.GetInstance().UpdateApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
 
             player.IsGoingToPlay = playerSetCallback.UserAnswer == Constants.YES_ANSWER;
-            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessage(callbackQuery.Message.Chat.Id, player);
+            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(callbackQuery.Message.Chat.Id, player);
 
             await _playerRepository.UpdateAsync(player);
-        }
-
-        private async Task ProcessPollChoice(CallbackQuery callbackQuery)
-        {
-            await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
-            _teamSet.ProcessPollChoice(new TeamPollCallback(callbackQuery.Data));
         }
 
         /// <summary>
@@ -86,7 +80,7 @@ namespace TelegramFootballBot.Controllers
         /// <param name="chatId">Player chat id</param>
         /// <param name="player">Player</param>
         /// <returns>Sent message id</returns>
-        private async Task<int> SendApprovedPlayersMessage(ChatId chatId, Player player)
+        private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
         {
             var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
 
@@ -105,6 +99,22 @@ namespace TelegramFootballBot.Controllers
             }
 
             return (await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage)).MessageId;
+        }
+
+        private async Task DetermineIfUserLikesTeamAsync(CallbackQuery callbackQuery)
+        {
+            await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+            _teamsController.ProcessPollChoice(new TeamPollCallback(callbackQuery.Data));
+            
+            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
+            player.PollMessageId = await SendTeamPollMessageAsync(callbackQuery.Message.Chat.Id);
+            await _playerRepository.UpdateAsync(player);
+        }
+
+        private async Task<int> SendTeamPollMessageAsync(ChatId chatId)
+        {
+            var message = _teamsController.LikesMessage();
+            return (await _client.SendTextMessageWithTokenAsync(chatId, message)).MessageId;
         }
 
         private string GetApproveCellValue(string userAnswer)

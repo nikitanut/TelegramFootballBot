@@ -64,6 +64,16 @@ namespace TelegramFootballBot.Models
             return _activeTeamSet;
         }
 
+        public string GenerateMessage()
+        {
+            return string.Join(Environment.NewLine, GetActive().Select(t => string.Join(Environment.NewLine, t)));
+        }
+
+        public string LikesMessage()
+        {
+            return $"За - {_likesForActive}. Против - {_dislikesForActive}.";
+        }
+
         public void ClearGeneratedTeams()
         {
             _likesForActive = 0;

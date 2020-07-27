@@ -1,6 +1,5 @@
 ﻿using Serilog;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TelegramFootballBot.Data;
@@ -16,6 +15,7 @@ namespace TelegramFootballBot.Controllers
         private readonly TeamsController _teamsController;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
+        private bool _firstLaunch = true;
 
         public Scheduler(MessageController messageController, TeamsController teamSet, IPlayerRepository playerRepository, ILogger logger)
         {            
@@ -35,8 +35,13 @@ namespace TelegramFootballBot.Controllers
 
         private async void OnTimerElapsed(object state)
         {
+            if (_firstLaunch)
+            {
+                _firstLaunch = false;
+                await ClearPlayersMessages();
+            }
+            
             var now = DateTime.UtcNow;
-
             if (DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
 
@@ -53,6 +58,7 @@ namespace TelegramFootballBot.Controllers
             }
 
             await UpdateTotalPlayersMessagesAsync();
+            await UpdateTeamPollMessagesAsync();            
         }
 
         private async Task ClearGameAttrsAsync()
@@ -60,21 +66,26 @@ namespace TelegramFootballBot.Controllers
             try
             {
                 await SheetController.GetInstance().ClearApproveCellsAsync();
-
-                var playersToUpdate = (await _playerRepository.GetAllAsync()).Where(p => p.IsGoingToPlay || p.ApprovedPlayersMessageId != 0).ToList();
-                foreach (var player in playersToUpdate)
-                {
-                    player.IsGoingToPlay = false;
-                    player.ApprovedPlayersMessageId = 0;
-                };
-
-                await _playerRepository.UpdateMultipleAsync(playersToUpdate);
+                await ClearPlayersMessages();
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Clearing game attrs error");
                 await _messageController.SendTextMessageToBotOwnerAsync("Ошибка при очищении полей");
             }
+        }
+
+        private async Task ClearPlayersMessages()
+        {
+            var playersToUpdate = await _playerRepository.GetAllAsync();
+            foreach (var player in playersToUpdate)
+            {
+                player.PollMessageId = 0;               
+                player.ApprovedPlayersMessageId = 0;                
+                player.IsGoingToPlay = false;
+            };
+
+            await _playerRepository.UpdateMultipleAsync(playersToUpdate);
         }
 
         private async Task UpdateTotalPlayersMessagesAsync()
@@ -85,11 +96,28 @@ namespace TelegramFootballBot.Controllers
             }
             catch (TaskCanceledException)
             {
-                _logger.Error("The operation was canceled for UpdateTotalPlayersMessagesAsync.");                
+                _logger.Error($"The operation was canceled for {nameof(UpdateTotalPlayersMessagesAsync)}.");                
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error on updating total players messages");
+                _logger.Error(ex, $"Error on updating total players messages, {nameof(UpdateTotalPlayersMessagesAsync)}");
+                await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
+            }
+        }
+
+        private async Task UpdateTeamPollMessagesAsync()
+        {
+            try
+            {
+                await _messageController.UpdatePollMessagesAsync();
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.Error($"The operation was canceled for {nameof(UpdateTeamPollMessagesAsync)}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on updating total players messages, {nameof(UpdateTeamPollMessagesAsync)}");
                 await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
             }
         }
@@ -102,7 +130,7 @@ namespace TelegramFootballBot.Controllers
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error on StartPlayersSetDeterminationAsync");
+                _logger.Error(ex, $"Error on {nameof(SendQuestionToAllUsersAsync)}");
                 await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при определении списка игроков: {ex.Message}");
             }
         }
@@ -120,7 +148,7 @@ namespace TelegramFootballBot.Controllers
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error on SendGeneratedTeamsMessageAsync");
+                _logger.Error(ex, $"Error on {nameof(SendGeneratedTeamsMessageAsync)}");
                 await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при отправке сообщения с командами: {ex.Message}");
             }
         }

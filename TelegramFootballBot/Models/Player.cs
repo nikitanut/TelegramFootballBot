@@ -7,6 +7,7 @@
         public int Rating { get; set; }
         public long ChatId { get; set; }
         public int ApprovedPlayersMessageId { get; set; }
+        public int PollMessageId { get; set; }
         public bool IsGoingToPlay { get; set; }
         
         private Player() { }

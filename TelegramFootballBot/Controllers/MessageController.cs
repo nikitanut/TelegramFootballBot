@@ -19,18 +19,19 @@ namespace TelegramFootballBot.Controllers
 
         private readonly ILogger _logger;   
         private readonly TelegramBotClient _client;  
-        private readonly TeamsController _teamSet;
+        private readonly TeamsController _teamsController;
         private readonly MessageCallbackController _messageCallbackController;
         private string _approvedPlayersMessage = null;
+        private string _likesMessage = null;
         private bool _isRunning = false;
         
         public MessageController(IPlayerRepository playerRepository, TeamsController teamSet, ILogger logger)
         {
             PlayerRepository = playerRepository;
-            _teamSet = teamSet;
+            _teamsController = teamSet;
             _logger = logger;
             _client = new Bot().GetBotClient();            
-            _messageCallbackController = new MessageCallbackController(_client, _teamSet, PlayerRepository, _logger);
+            _messageCallbackController = new MessageCallbackController(_client, _teamsController, PlayerRepository, _logger);
         }
 
         public void Run()
@@ -93,28 +94,29 @@ namespace TelegramFootballBot.Controllers
                 return;
 
             _approvedPlayersMessage = approvedPlayersMessage;
-            var requests = new List<Task<Message>>();
-            var playersRequestsIds = new Dictionary<int, Player>();
+            await EditMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), _approvedPlayersMessage, Constants.APPROVED_PLAYERS_MESSAGE_TYPE);
+        }
 
-            foreach (var player in await PlayerRepository.GetReadyToPlayAsync())
-            {
-                var request = _client.EditMessageTextWithTokenAsync(player.ChatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
-                requests.Add(request);
-                playersRequestsIds.Add(request.Id, player);
-            }
+        public async Task UpdatePollMessagesAsync()
+        {
+            var likesMessage = _teamsController.LikesMessage();
+            if (likesMessage == _likesMessage)
+                return;
 
-            await ProcessRequests(requests, playersRequestsIds);
+            _likesMessage = likesMessage;
+            var playersVoted = (await PlayerRepository.GetAllAsync()).Where(p => p.PollMessageId != 0);
+            await EditMessageAsync(playersVoted, _likesMessage, Constants.TEAM_POLL_MESSAGE_TYPE);
         }
 
         public async Task SendTeamPollMessageAsync()
         {            
-            var requests = new List<Task<Message>>();
-            var playersRequestsIds = new Dictionary<int, Player>();
-            var message = string.Join(Environment.NewLine, _teamSet.GetActive().Select(t => string.Join(Environment.NewLine, t)));
-            if (string.IsNullOrEmpty(message))
+            var pollMessage = _teamsController.GenerateMessage();
+            if (string.IsNullOrEmpty(pollMessage))
                 return;
-            //await SendMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), message, MarkupHelper.GetTeamPollMarkup(_teamSet.GetActivePollId()));
-            await SendTextMessageToBotOwnerAsync(message, MarkupHelper.GetTeamPollMarkup(_teamSet.GetActivePollId()));
+
+            _likesMessage = _teamsController.LikesMessage();
+            var players = new List<Player>() { await PlayerRepository.GetAsync(470064312) }; //await PlayerRepository.GetReadyToPlayAsync();
+            await SendMessageAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamsController.GetActivePollId()));
         }
 
         public async Task SendTextMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
@@ -128,7 +130,7 @@ namespace TelegramFootballBot.Controllers
             return await _client.SendTextMessageWithTokenAsync(chatId, text, replyMarkup);
         }
         
-        private async Task SendMessageAsync(IEnumerable<Player> players, string text, IReplyMarkup replyMarkup = null)
+        private async Task SendMessageAsync(IEnumerable<Player> players, string text, IReplyMarkup replyMarkup = null, Action<Player, Message> actionOnSuccess = null)
         {
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
@@ -140,7 +142,32 @@ namespace TelegramFootballBot.Controllers
                 playersRequestsIds.Add(request.Id, player);
             }
 
+            await ProcessRequests(requests, playersRequestsIds, actionOnSuccess);
+        }
+
+        private async Task EditMessageAsync(IEnumerable<Player> players, string text, string messageType)
+        {
+            var requests = new List<Task<Message>>();
+            var playersRequestsIds = new Dictionary<int, Player>();
+
+            foreach (var player in players)
+            {
+                var request = _client.EditMessageTextWithTokenAsync(player.ChatId, GetMessageId(messageType, player), text);
+                requests.Add(request);
+                playersRequestsIds.Add(request.Id, player);
+            }
+
             await ProcessRequests(requests, playersRequestsIds);
+        }
+
+        private int GetMessageId(string messageType, Player player)
+        {
+            switch (messageType)
+            {
+                case Constants.APPROVED_PLAYERS_MESSAGE_TYPE: return player.ApprovedPlayersMessageId;
+                case Constants.TEAM_POLL_MESSAGE_TYPE: return player.PollMessageId;
+                default: throw new ArgumentOutOfRangeException(nameof(messageType));
+            }
         }
 
         public async Task DeleteMessageAsync(ChatId chatId, int messageId)
@@ -155,19 +182,22 @@ namespace TelegramFootballBot.Controllers
             }
         }
         
-        private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
+        private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds, Action<Player, Message> actionOnSuccess = null)
         {
             while (requests.Count > 0)
             {
                 var response = await Task.WhenAny(requests);
                 requests.Remove(response);
+                var player = playersRequestsIds.First(r => r.Key == response.Id).Value;
 
                 if (response.IsFaulted || response.IsCanceled)
                 {                    
-                    var playerName = playersRequestsIds.First(r => r.Key == response.Id).Value.Name;
                     var errorMessage = response.IsFaulted ? response.Exception.Message : $"Тайм-аут {Constants.ASYNC_OPERATION_TIMEOUT} мс";
-                    _logger.Error($"Error for user {playerName}: {errorMessage}");               
+                    _logger.Error($"Error for user {player.Name}: {errorMessage}");
+                    return;
                 }
+
+                actionOnSuccess?.Invoke(player, response.Result);
             }
         }
                 
