@@ -16,5 +16,6 @@
         public const int MOSCOW_UTC_OFFSET = 3;
         public const int DEFAULT_PLAYER_RATING = 73;
         public const int ASYNC_OPERATION_TIMEOUT = 10000;
+        public const int TEAM_VARIANTS_TO_GENERATE = 8;
     }
 }

@@ -24,7 +24,7 @@ namespace TelegramFootballBot.Controllers
             if (playersToDistribute.Count < MIN_PLAYERS) 
                 return new List<List<Team>>();
 
-            var variantsCombinations = new KeyValuePair<List<Team>, double?>[10];
+            var variantsCombinations = new KeyValuePair<List<Team>, double?>[Constants.TEAM_VARIANTS_TO_GENERATE];
             for (var i = 0; i < variantsCombinations.Length; i++)
                 variantsCombinations[i] = new KeyValuePair<List<Team>, double?>(null, double.MaxValue);
 
@@ -49,28 +49,34 @@ namespace TelegramFootballBot.Controllers
                 var maxDelta = maxDeltaVariant.Value ?? double.MaxValue;
                 var currentDelta = CountDelta(teams);
 
-                if (currentDelta < maxDelta //&& !variantsCombinations.Any(v => v.Value == currentDelta)
-                    )
+                if (currentDelta < maxDelta && !variantsCombinations.Any(v => v.Value == currentDelta))
                     variantsCombinations[index] = new KeyValuePair<List<Team>, double?>(teams.ToList(), currentDelta);
             }
 
             foreach (var combination in variantsCombinations)
             {
+                var orderedByRatingTeams = combination.Key.OrderBy(t => t.AverageRating);
                 var teamIndex = 0;
-                var remainingPlayers = new Stack<Player>(players.Where(p => !combination.Key.Any(t => t.Players.Contains(p))));
+                var remainingPlayers = new Stack<Player>(players.Where(p => !orderedByRatingTeams.Any(t => t.Players.Contains(p))));
 
                 while (remainingPlayers.Any())
                 {
-                    if (teamIndex == combination.Key.Count())
+                    if (teamIndex == orderedByRatingTeams.Count())
                         teamIndex = 0;
 
-                    combination.Key.Skip(teamIndex).First().Players.Add(remainingPlayers.Pop());
+                    orderedByRatingTeams.Skip(teamIndex).First().Players.Add(remainingPlayers.Pop());
                     teamIndex++;
                 }
             }
 
-            foreach (var team in variantsCombinations.SelectMany(v => v.Key))
-                team.Players = team.Players.OrderBy(p => p.Name).ToList();
+            var allTeams = variantsCombinations.SelectMany(v => v.Key).ToArray();
+            var teamsNames = NamesGenerator.Generate(allTeams.Length);
+
+            for (int i = 0; i < allTeams.Length; i++)
+            {
+                allTeams[i].Name = teamsNames[i];
+                allTeams[i].Players = allTeams[i].Players.OrderBy(p => p.Name).ToList();
+            }
 
             return variantsCombinations.Select(v => v.Key).ToList();
         }

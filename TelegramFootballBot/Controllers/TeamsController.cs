@@ -66,7 +66,7 @@ namespace TelegramFootballBot.Models
 
         public string GenerateMessage()
         {
-            return string.Join(Environment.NewLine, GetActive().Select(t => string.Join(Environment.NewLine, t)));
+            return string.Join(Environment.NewLine + Environment.NewLine, GetActive().Select(t => string.Join(Environment.NewLine, t)));
         }
 
         public string LikesMessage()
@@ -90,7 +90,7 @@ namespace TelegramFootballBot.Models
 
         public List<Team> GetRandom()
         {
-            if (_teamSets.Count == _dislikedTeams.Count)
+            if (_teamSets.Count == _dislikedTeams.Count || !_teamSets.Any())
                 return new List<Team>();
 
             List<Team> randomTeam;

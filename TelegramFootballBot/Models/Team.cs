@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models
 {
@@ -31,8 +30,7 @@ namespace TelegramFootballBot.Models
 
         public override string ToString()
         {
-            return $"{Name}{Environment.NewLine}{MarkupHelper.GetDashedString()}{Environment.NewLine}" 
-                + string.Join(Environment.NewLine, Players.Select(p => p.Name));
+            return $"{Name}{Environment.NewLine}{string.Join(Environment.NewLine, Players.Select(p => p.Name))}";
         }
     }
 }
