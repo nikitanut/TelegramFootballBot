@@ -2,7 +2,7 @@
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Models.Commands.AdminCommands
 {
     public class SwitchNotifierCommand : Command
     {
