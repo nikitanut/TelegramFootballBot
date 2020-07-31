@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
-using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -13,19 +11,24 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, MessageController messageController)
         {
-            if (!IsBotOwner(message))
-                return;
+            if (IsBotOwner(message))
+            {
+                var text = $"/distribute - run distribution{Environment.NewLine}" +
+                           $"/say - send text to all players{Environment.NewLine}" +
+                           $"/status - get statistics{Environment.NewLine}" +
+                           $"/switch - turn on / turn off notifications";
 
-            var players = await messageController.PlayerRepository.GetAllAsync();
-            var text = $"Now: {DateTime.Now.ToMoscowTime()}{Environment.NewLine}" +
-                       $"Distribution: {AppSettings.DistributionTime}{Environment.NewLine}" +
-                       $"GameDate: {AppSettings.GameDay}{Environment.NewLine}" +
-                       $"Nearest Distribution: {Scheduler.GetNearestDistributionDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
-                       $"Nearest GameDate: {Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +                       
-                       $"Players: {players.Count()}{Environment.NewLine}" +
-                       $"Got message: {players.Count(p => p.ApprovedPlayersMessageId != 0)}";
-            
-            await messageController.SendMessageAsync(message.Chat.Id, text);
+                await messageController.SendMessageAsync(message.Chat.Id, text);
+            }
+
+            if (!IsBotOwner(message))
+            {
+                var text = $"/reg - зарегистрироваться{Environment.NewLine}" +
+                           $"/unregister - отписаться от рассылки{Environment.NewLine}" +
+                           $"/go - отметиться";
+
+                await messageController.SendMessageAsync(message.Chat.Id, text);
+            }
         }
     }
 }
