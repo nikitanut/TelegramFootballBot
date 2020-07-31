@@ -10,6 +10,9 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, MessageController messageController)
         {
+            if (!IsBotOwner(message))
+                return;
+
             await messageController.SendMessageAsync(message.Chat.Id, "pong");
         }
     }
