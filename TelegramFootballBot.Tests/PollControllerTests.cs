@@ -48,55 +48,5 @@ namespace TelegramFootballBot.Tests
             Assert.Equal(3, teamSet.ActiveLikes);
             Assert.Equal(1, teamSet.ActiveDislikes);
         }
-
-        [Fact]
-        public async void OnDislikeTeamSet_GeneratesNewSet()
-        {
-            var teamSet = new TeamsController(_playerRepository);
-            await teamSet.GenerateNewTeams(TestPlayerSet.Get().Select(p => p.Name));
-            var activeTeam = teamSet.GetActive();
-            
-            var callBacks = new[]
-            {
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"), // Regenerate here         
-            };
-
-            foreach (var callBack in callBacks)
-                teamSet.ProcessPollChoice(callBack);
-
-            teamSet.ProcessPollChoice(new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет")); // New poll
-
-            Assert.NotEqual(teamSet.GetActive(), activeTeam);  
-            Assert.Equal(1, teamSet.ActiveDislikes);
-        }
-
-        [Fact]
-        public async void OnLikeTeamSet_DoesNotGenerateNewSet()
-        {
-            var teamSet = new TeamsController(_playerRepository);
-            await teamSet.GenerateNewTeams(teamSet.GetActive().Select(t => t.Name));
-            var activeTeam = teamSet.GetActive();
-
-            var callBacks = new[]
-            {
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет") // No regenerate here                
-            };
-
-            foreach (var callBack in callBacks)
-                teamSet.ProcessPollChoice(callBack);
-
-            teamSet.ProcessPollChoice(new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"));
-
-            Assert.Equal(teamSet.GetActive(), activeTeam);
-            Assert.Equal(5, teamSet.ActiveLikes);
-        }
     }
 }

@@ -17,14 +17,13 @@ namespace TelegramFootballBot.Controllers
         private readonly ILogger _logger;
         private bool _firstLaunch = true;
 
-        public Scheduler(MessageController messageController, TeamsController teamSet, IPlayerRepository playerRepository, ILogger logger)
+        public Scheduler(MessageController messageController, TeamsController teamsController, IPlayerRepository playerRepository, ILogger logger)
         {            
             _messageController = messageController;
             _playerRepository = playerRepository;
             _logger = logger;
             _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
-            _teamsController = teamSet;
-            _teamsController.OnDislike += SendGeneratedTeamsMessage;
+            _teamsController = teamsController;
         }
 
         public void Run()
@@ -39,17 +38,13 @@ namespace TelegramFootballBot.Controllers
             {
                 _firstLaunch = false;
                 await ClearPlayersMessages();
-
-                var players = await SheetController.GetInstance().GetPlayersReadyToPlay();
-                await _teamsController.GenerateNewTeams(players);
-                await SendGeneratedTeamsMessageAsync();
             }
             
             var now = DateTime.UtcNow;
             if (DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
 
-            if (TeamsGenerationTimeHasCome(now))
+            if (TeamsGenerationTimeHasCome(now) || _teamsController.IsActiveDisliked)
             {
                 var players = await SheetController.GetInstance().GetPlayersReadyToPlay();
                 await _teamsController.GenerateNewTeams(players);
@@ -138,11 +133,6 @@ namespace TelegramFootballBot.Controllers
                 _logger.Error(ex, $"Error on {nameof(SendQuestionToAllUsersAsync)}");
                 await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при определении списка игроков: {ex.Message}");
             }
-        }
-
-        private async void SendGeneratedTeamsMessage(object sender, EventArgs args)
-        {
-            await SendGeneratedTeamsMessageAsync();
         }
 
         private async Task SendGeneratedTeamsMessageAsync()
