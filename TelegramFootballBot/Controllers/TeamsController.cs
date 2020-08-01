@@ -16,6 +16,7 @@ namespace TelegramFootballBot.Models
 
         public int ActiveLikes => _likesForActive;
         public int ActiveDislikes => _dislikesForActive;
+        public bool IsActiveDisliked => false;
 
         private readonly IPlayerRepository _playerRepository;
         private List<List<Team>> _teamSets = new List<List<Team>>();
@@ -28,20 +29,15 @@ namespace TelegramFootballBot.Models
         public TeamsController(IPlayerRepository playerRepository)
         {
             _playerRepository = playerRepository;
-            OnDislike += (o, e) =>
-            {
-                _dislikedTeams.Add(_activeTeamSet);
-                GenerateNewTeams().Wait();
-            };
+            OnDislike += RegenerateTeams;
         }
 
-        public async Task GenerateNewTeams()
+        public async Task GenerateNewTeams(IEnumerable<string> playersNames)
         {
             GeneratePollId();
             _likesForActive = 0;
             _dislikesForActive = 0;
             
-            var playersNames = await SheetController.GetInstance().GetPlayersReadyToPlay();
             var playersReadyToPlay = (await _playerRepository.GetAllAsync())
                 .Where(p => playersNames.Contains(p.Name)).ToList();
 
@@ -81,6 +77,13 @@ namespace TelegramFootballBot.Models
             _dislikedTeams.Clear();
             _teamSets.Clear();
             SetActive(GetRandom());
+        }
+               
+        private void RegenerateTeams(object o, EventArgs e)
+        {
+            _dislikedTeams.Add(_activeTeamSet);
+            var players = SheetController.GetInstance().GetPlayersReadyToPlay().Result;
+            GenerateNewTeams(players).Wait();
         }
 
         private void SetActive(IEnumerable<Team> teamSet)

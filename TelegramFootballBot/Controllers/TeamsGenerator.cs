@@ -21,7 +21,7 @@ namespace TelegramFootballBot.Controllers
                 .OrderByDescending(p => p.Rating)
                 .Take(MAX_PLAYERS).ToList();
 
-            if (playersToDistribute.Count < MIN_PLAYERS) 
+            if (playersToDistribute.Count < MIN_PLAYERS)
                 return new List<List<Team>>();
 
             var variantsCombinations = new KeyValuePair<List<Team>, double?>[Constants.TEAM_VARIANTS_TO_GENERATE];
@@ -53,7 +53,7 @@ namespace TelegramFootballBot.Controllers
                     variantsCombinations[index] = new KeyValuePair<List<Team>, double?>(teams.ToList(), currentDelta);
             }
 
-            foreach (var combination in variantsCombinations)
+            foreach (var combination in variantsCombinations.Where(v => v.Key != null))
             {
                 var orderedByRatingTeams = combination.Key.OrderBy(t => t.AverageRating);
                 var teamIndex = 0;
@@ -69,7 +69,7 @@ namespace TelegramFootballBot.Controllers
                 }
             }
 
-            var allTeams = variantsCombinations.SelectMany(v => v.Key).ToArray();
+            var allTeams = variantsCombinations.Where(v => v.Key != null).SelectMany(v => v.Key).ToArray();
             var teamsNames = NamesGenerator.Generate(allTeams.Length);
 
             for (int i = 0; i < allTeams.Length; i++)
@@ -78,7 +78,7 @@ namespace TelegramFootballBot.Controllers
                 allTeams[i].Players = allTeams[i].Players.OrderBy(p => p.Name).ToList();
             }
 
-            return variantsCombinations.Select(v => v.Key).ToList();
+            return variantsCombinations.Where(v => v.Key != null).Select(v => v.Key).ToList();
         }
                 
         private static double CountDelta(IEnumerable<Team> teamsToCheck)

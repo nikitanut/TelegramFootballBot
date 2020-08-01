@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Telegram.Bot;
 using TelegramFootballBot.Models.Commands;
+using TelegramFootballBot.Models.Commands.AdminCommands;
 
 namespace TelegramFootballBot.Models
 {
@@ -31,7 +32,7 @@ namespace TelegramFootballBot.Models
                 new SwitchNotifierCommand(),
                 new DistributeCommand(),
                 new SayCommand(),
-                new PingCommand(),
+                new StatusCommand(),
                 new InfoCommand(),
                 new StartCommand()
             };

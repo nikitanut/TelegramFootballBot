@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
+using System.Linq;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Models;
 using TelegramFootballBot.Models.CallbackQueries;
@@ -52,7 +53,7 @@ namespace TelegramFootballBot.Tests
         public async void OnDislikeTeamSet_GeneratesNewSet()
         {
             var teamSet = new TeamsController(_playerRepository);
-            await teamSet.GenerateNewTeams();
+            await teamSet.GenerateNewTeams(TestPlayerSet.Get().Select(p => p.Name));
             var activeTeam = teamSet.GetActive();
             
             var callBacks = new[]
@@ -61,8 +62,7 @@ namespace TelegramFootballBot.Tests
                 new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
                 new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
                 new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"),
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"), // Regenerate here               
+                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Нет"), // Regenerate here         
             };
 
             foreach (var callBack in callBacks)
@@ -78,12 +78,11 @@ namespace TelegramFootballBot.Tests
         public async void OnLikeTeamSet_DoesNotGenerateNewSet()
         {
             var teamSet = new TeamsController(_playerRepository);
-           await teamSet.GenerateNewTeams();
+            await teamSet.GenerateNewTeams(teamSet.GetActive().Select(t => t.Name));
             var activeTeam = teamSet.GetActive();
 
             var callBacks = new[]
             {
-                new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
                 new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
                 new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
                 new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"),
@@ -97,7 +96,7 @@ namespace TelegramFootballBot.Tests
             teamSet.ProcessPollChoice(new TeamPollCallback($"TeamPoll|{teamSet.GetActivePollId()}_Да"));
 
             Assert.Equal(teamSet.GetActive(), activeTeam);
-            Assert.Equal(6, teamSet.ActiveLikes);
+            Assert.Equal(5, teamSet.ActiveLikes);
         }
     }
 }

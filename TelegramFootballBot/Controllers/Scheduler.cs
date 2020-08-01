@@ -39,6 +39,10 @@ namespace TelegramFootballBot.Controllers
             {
                 _firstLaunch = false;
                 await ClearPlayersMessages();
+
+                var players = await SheetController.GetInstance().GetPlayersReadyToPlay();
+                await _teamsController.GenerateNewTeams(players);
+                await SendGeneratedTeamsMessageAsync();
             }
             
             var now = DateTime.UtcNow;
@@ -47,7 +51,8 @@ namespace TelegramFootballBot.Controllers
 
             if (TeamsGenerationTimeHasCome(now))
             {
-                await _teamsController.GenerateNewTeams();
+                var players = await SheetController.GetInstance().GetPlayersReadyToPlay();
+                await _teamsController.GenerateNewTeams(players);
                 await SendGeneratedTeamsMessageAsync();
             }
 

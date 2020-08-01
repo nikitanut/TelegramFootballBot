@@ -21,9 +21,7 @@ namespace TelegramFootballBot.Tests
                 new Player($"{id++}") { Rating = 60 },
                 new Player($"{id++}") { Rating = 64 },
                 new Player($"{id++}") { Rating = 73 },
-                new Player($"{id++}") { Rating = 75 },
-                new Player($"{id++}") { Rating = 76 },
-                new Player($"{id++}") { Rating = 71 }
+                new Player($"{id++}") { Rating = 75 }
             };
         }
 
