@@ -34,7 +34,8 @@ namespace TelegramFootballBot.Models
                 new SayCommand(),
                 new StatusCommand(),
                 new InfoCommand(),
-                new StartCommand()
+                new StartCommand(),
+                new ListCommand()
             };
         }
     }

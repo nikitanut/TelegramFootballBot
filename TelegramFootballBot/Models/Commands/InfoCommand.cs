@@ -14,6 +14,7 @@ namespace TelegramFootballBot.Models.Commands
             if (IsBotOwner(message))
             {
                 var text = $"/distribute - run distribution{Environment.NewLine}" +
+                           $"/list - list of registered players{Environment.NewLine}" +
                            $"/say - send text to all players{Environment.NewLine}" +
                            $"/status - get statistics{Environment.NewLine}" +
                            $"/switch - turn on / turn off notifications";
