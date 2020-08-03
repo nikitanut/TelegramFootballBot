@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Models;
 using Xunit;
 
 namespace TelegramFootballBot.Tests
@@ -16,6 +18,14 @@ namespace TelegramFootballBot.Tests
 
             Assert.Equal(77.6, optimalTeam[0].AverageRating);
             Assert.Equal(77.8, optimalTeam[1].AverageRating);
+        }
+
+        [Fact]
+        public void GenerateTeamsWithNotEnoughPlayers_GeneratesEmptyList()
+        {
+            var teams = TeamsGenerator.Generate(new List<Player> { new Player("test") });
+
+            Assert.False(teams.Any());
         }
     }
 }

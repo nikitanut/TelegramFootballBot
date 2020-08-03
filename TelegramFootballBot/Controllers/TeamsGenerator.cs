@@ -14,48 +14,44 @@ namespace TelegramFootballBot.Controllers
 
         public static List<List<Team>> Generate(IEnumerable<Player> players)
         {
+            SetUnknownPlayersDefaultRating(players);
+            var teamSets = GenerateTeamSets(players);
+            FillRemainingPlayers(players, teamSets);
+            SetTeamNames(teamSets);
+            return ToOrderedTeamSets(teamSets);
+        }
+
+        private static void SetUnknownPlayersDefaultRating(IEnumerable<Player> players)
+        {
             foreach (var playerWithoutRating in players.Where(p => p.Rating == 0))
                 playerWithoutRating.Rating = Constants.DEFAULT_PLAYER_RATING;
-
-            var playersToDistribute = players
-                .OrderByDescending(p => p.Rating)
-                .Take(MAX_PLAYERS).ToList();
-
+        }
+        
+        private static KeyValuePair<List<Team>, double?>[] GenerateTeamSets(IEnumerable<Player> players)
+        {
+            var generatingSets = DefaultSet();
+            var playersToDistribute = players.OrderByDescending(p => p.Rating).Take(MAX_PLAYERS).ToList();
             if (playersToDistribute.Count < MIN_PLAYERS)
-                return new List<List<Team>>();
-
-            var variantsCombinations = new KeyValuePair<List<Team>, double?>[Constants.TEAM_VARIANTS_TO_GENERATE];
-            for (var i = 0; i < variantsCombinations.Length; i++)
-                variantsCombinations[i] = new KeyValuePair<List<Team>, double?>(null, double.MaxValue);
-
+                return new KeyValuePair<List<Team>, double?>[0];
+            
             foreach (var line in File.ReadLines($"Variants for {playersToDistribute.Count()}"))
+                AnalyzeTeamSetRating(generatingSets, SetFromFileLine(playersToDistribute, line));
+
+            return generatingSets.Where(v => v.Key != null).ToArray();
+        }
+
+        private static IEnumerable<Team> SetFromFileLine(List<Player> playersToDistribute, string fileLine)
+        {
+            return fileLine.Split(',')
+                .Select(set => set.Split(' ').Select(indexString => Convert.ToInt32(indexString)))
+                .Select(teamIndices => new Team(teamIndices.Select(i => playersToDistribute.ElementAt(i))));
+        }
+
+        private static void FillRemainingPlayers(IEnumerable<Player> players, KeyValuePair<List<Team>, double?>[] teamSets)
+        {
+            foreach (var set in teamSets)
             {
-                var teams = line.Split(',')
-                    .Select(c => c.Split(' ').Select(i => Convert.ToInt32(i)))
-                    .Select(teamIndices => new Team(teamIndices.Select(i => playersToDistribute.ElementAt(i))));
-
-                var index = 0;
-                var maxDeltaVariant = new KeyValuePair<List<Team>, double?>(null, double.MinValue);
-
-                for (int i = 0; i < variantsCombinations.Length; i++)
-                {
-                    if (maxDeltaVariant.Value < variantsCombinations[i].Value)
-                    {
-                        maxDeltaVariant = variantsCombinations[i];
-                        index = i;
-                    }
-                }
-
-                var maxDelta = maxDeltaVariant.Value ?? double.MaxValue;
-                var currentDelta = CountDelta(teams);
-
-                if (currentDelta < maxDelta && !variantsCombinations.Any(v => v.Value == currentDelta))
-                    variantsCombinations[index] = new KeyValuePair<List<Team>, double?>(teams.ToList(), currentDelta);
-            }
-
-            foreach (var combination in variantsCombinations.Where(v => v.Key != null))
-            {
-                var orderedByRatingTeams = combination.Key.OrderBy(t => t.AverageRating);
+                var orderedByRatingTeams = set.Key.OrderBy(t => t.AverageRating);
                 var teamIndex = 0;
                 var remainingPlayers = new Stack<Player>(players.Where(p => !orderedByRatingTeams.Any(t => t.Players.Contains(p))));
 
@@ -68,20 +64,56 @@ namespace TelegramFootballBot.Controllers
                     teamIndex++;
                 }
             }
+        }
 
-            var allTeams = variantsCombinations.Where(v => v.Key != null).SelectMany(v => v.Key).ToArray();
+        private static void SetTeamNames(KeyValuePair<List<Team>, double?>[] teamSets)
+        {
+            var allTeams = teamSets.SelectMany(v => v.Key).ToArray();
             var teamsNames = NamesGenerator.Generate(allTeams.Length);
-
             for (int i = 0; i < allTeams.Length; i++)
-            {
                 allTeams[i].Name = teamsNames[i];
-                allTeams[i].Players = allTeams[i].Players.OrderBy(p => p.Name).ToList();
+        }
+        
+        private static List<List<Team>> ToOrderedTeamSets(KeyValuePair<List<Team>, double?>[] teamSets)
+        {
+            foreach (var set in teamSets.Select(t => t.Key))
+                foreach (var team in set)
+                    team.Players.Sort((a, b) => a.Name.CompareTo(b.Name));
+
+            return teamSets.Select(t => t.Key).ToList();
+        }
+
+        private static KeyValuePair<List<Team>, double?>[] DefaultSet()
+        {
+            var generatingSets = new KeyValuePair<List<Team>, double?>[Constants.TEAM_VARIANTS_TO_GENERATE];
+            for (var i = 0; i < generatingSets.Length; i++)
+                generatingSets[i] = new KeyValuePair<List<Team>, double?>(null, double.MaxValue);
+            return generatingSets;
+        }
+
+        private static void AnalyzeTeamSetRating(KeyValuePair<List<Team>, double?>[] generatedSets, IEnumerable<Team> currentSet)
+        {
+            var index = 0;
+            var maxDeltaVariant = new KeyValuePair<List<Team>, double?>(null, double.MinValue);
+
+            for (int i = 0; i < generatedSets.Length; i++)
+            {
+                if (maxDeltaVariant.Value < generatedSets[i].Value)
+                {
+                    maxDeltaVariant = generatedSets[i];
+                    index = i;
+                }
             }
 
-            return variantsCombinations.Where(v => v.Key != null).Select(v => v.Key).ToList();
+            var maxDelta = maxDeltaVariant.Value ?? double.MaxValue;
+            var currentDelta = Delta(currentSet);
+            var isDuplicate = generatedSets.Any(v => v.Value == currentDelta);
+
+            if (currentDelta < maxDelta && !isDuplicate)
+                generatedSets[index] = new KeyValuePair<List<Team>, double?>(currentSet.ToList(), currentDelta);
         }
-                
-        private static double CountDelta(IEnumerable<Team> teamsToCheck)
+
+        private static double Delta(IEnumerable<Team> teamsToCheck)
         {
             return teamsToCheck.Max(t => t.AverageRating) - teamsToCheck.Min(t => t.AverageRating);
         }            
