@@ -15,10 +15,9 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
             if (!IsBotOwner(message))
                 return;
 
-            var playersNames = (await messageController.PlayerRepository.GetAllAsync())
-                .Select(p => p.Name).OrderBy(p => p);
+            var players = (await messageController.PlayerRepository.GetAllAsync()).OrderBy(p => p.Name);
 
-            var text = string.Join(Environment.NewLine, playersNames);
+            var text = string.Join(Environment.NewLine, players.Select(p => $"{p.Name} - {p.Rating}"));
             await messageController.SendMessageAsync(message.Chat.Id, text);
         }
     }
