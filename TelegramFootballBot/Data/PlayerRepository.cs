@@ -48,6 +48,15 @@ namespace TelegramFootballBot.Data
             }
         }
 
+        public async Task<Player> GetAsync(string name)
+        {
+            using (var db = new FootballBotDbContext(_options))
+            {
+                var player = await db.Players.FirstOrDefaultAsync(p => p.Name.Equals(name, System.StringComparison.InvariantCultureIgnoreCase));
+                return player ?? throw new UserNotFoundException();
+            }
+        }
+
         public async Task RemoveAsync(int id)
         {
             var player = await GetAsync(id);
