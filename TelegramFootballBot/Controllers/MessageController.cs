@@ -94,7 +94,7 @@ namespace TelegramFootballBot.Controllers
                 return;
 
             _approvedPlayersMessage = approvedPlayersMessage;
-            await EditMessageAsync(await PlayerRepository.GetReadyToPlayAsync(), _approvedPlayersMessage, Constants.APPROVED_PLAYERS_MESSAGE_TYPE);
+            await EditMessageAsync(await PlayerRepository.GetRecievedMessageAsync(), _approvedPlayersMessage, Constants.APPROVED_PLAYERS_MESSAGE_TYPE);
         }
 
         public async Task UpdatePollMessagesAsync()
@@ -115,7 +115,7 @@ namespace TelegramFootballBot.Controllers
                 return;
 
             _likesMessage = _teamsController.LikesMessage();
-            var players = new List<Player>() { await PlayerRepository.GetAsync(470064312) }; //await PlayerRepository.GetReadyToPlayAsync();
+            var players = await PlayerRepository.GetReadyToPlayAsync();
             await SendMessageAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamsController.GetActivePollId()));
         }
 

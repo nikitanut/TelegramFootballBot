@@ -162,7 +162,7 @@ namespace TelegramFootballBot.Controllers
             return currentDate.ToMoscowTime().Year == gameDate.Year
                 && currentDate.ToMoscowTime().Month == gameDate.Month
                 && currentDate.ToMoscowTime().Day == gameDate.Day
-                && currentDate.ToMoscowTime().Hour == gameDate.Hour - 2
+                && currentDate.ToMoscowTime().Hour == gameDate.Hour - 1 // 1 hour before game
                 && currentDate.ToMoscowTime().Minute == gameDate.Minute;
         }
 
