@@ -25,10 +25,10 @@ namespace TelegramFootballBot.Controllers
         private string _likesMessage = null;
         private bool _isRunning = false;
         
-        public MessageController(IPlayerRepository playerRepository, TeamsController teamSet, ILogger logger)
+        public MessageController(IPlayerRepository playerRepository, TeamsController teamsControllerSet, ILogger logger)
         {
             PlayerRepository = playerRepository;
-            _teamsController = teamSet;
+            _teamsController = teamsControllerSet;
             _logger = logger;
             _client = new Bot().GetBotClient();            
             _messageCallbackController = new MessageCallbackController(_client, _teamsController, PlayerRepository, _logger);
@@ -81,7 +81,7 @@ namespace TelegramFootballBot.Controllers
         
         public async Task SendDistributionQuestionAsync()
         {
-            var gameDate = Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow);
+            var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var message = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
             var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
             await SendMessageToAllUsersAsync(message, markup);
@@ -152,7 +152,7 @@ namespace TelegramFootballBot.Controllers
 
             foreach (var player in players)
             {
-                var request = _client.EditMessageTextWithTokenAsync(player.ChatId, GetMessageId(messageType, player), text);
+                var request = _client.EditMessageTextWithTokenAsync(player.ChatId, MessageId(messageType, player), text);
                 requests.Add(request);
                 playersRequestsIds.Add(request.Id, player);
             }
@@ -160,7 +160,7 @@ namespace TelegramFootballBot.Controllers
             await ProcessRequests(requests, playersRequestsIds);
         }
 
-        private int GetMessageId(string messageType, Player player)
+        private int MessageId(string messageType, Player player)
         {
             switch (messageType)
             {

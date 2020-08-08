@@ -23,7 +23,7 @@ namespace TelegramFootballBot.Models.Commands
                 return;
             }
 
-            var gameDate = Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow);
+            var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
             var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
 

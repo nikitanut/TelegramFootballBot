@@ -20,8 +20,8 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
             var text = $"Now: {DateTime.Now.ToMoscowTime()}{Environment.NewLine}" +
                        $"Distribution: {AppSettings.DistributionTime}{Environment.NewLine}" +
                        $"GameDate: {AppSettings.GameDay}{Environment.NewLine}" +
-                       $"Nearest Distribution: {Scheduler.GetNearestDistributionDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
-                       $"Nearest GameDate: {Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
+                       $"Nearest Distribution: {DateHelper.GetNearestDistributionDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
+                       $"Nearest GameDate: {DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
                        $"Players: {players.Count}{Environment.NewLine}" +
                        $"Got message: {players.Count(p => p.ApprovedPlayersMessageId != 0)}";
 

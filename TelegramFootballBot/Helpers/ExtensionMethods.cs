@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -10,12 +9,6 @@ namespace TelegramFootballBot.Helpers
 {
     public static class ExtensionMethods
     {
-        private static readonly Dictionary<int, string> _russianMonthNames = new Dictionary<int, string>()
-        {
-            { 1, "января" }, { 2, "февраля" }, { 3, "марта" }, { 4, "апреля" }, { 5, "мая" }, { 6, "июня" },
-            { 7, "июля" }, { 8, "августа" }, { 9, "сентября" }, { 10, "октября" }, { 11, "ноября" }, { 12, "декабря" }
-        };
-
         public static async Task<Message> SendTextMessageWithTokenAsync(this TelegramBotClient client, ChatId chatId, string text, IReplyMarkup replyMarkup = null)
         {
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
@@ -57,16 +50,6 @@ namespace TelegramFootballBot.Helpers
         {
             var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
             await client.DeleteMessageAsync(chatId, messageId, cancellationToken: cancellationToken);
-        }
-
-        public static DateTime ToMoscowTime(this DateTime dateTime)
-        {
-            return dateTime.ToUniversalTime().AddHours(Constants.MOSCOW_UTC_OFFSET);
-        }
-
-        public static string ToRussianDayMonthString(this DateTime dateTime)
-        {
-            return $"{dateTime.Day} {_russianMonthNames[dateTime.Month]}";
         }
     }
 }

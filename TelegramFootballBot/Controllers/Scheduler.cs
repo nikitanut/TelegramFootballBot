@@ -41,17 +41,17 @@ namespace TelegramFootballBot.Controllers
             }
             
             var now = DateTime.UtcNow;
-            if (DistributionTimeHasCome(now))
+            if (DateHelper.DistributionTimeHasCome(now))
                 await SendQuestionToAllUsersAsync();
 
-            if (TeamsGenerationTimeHasCome(now) || _teamsController.IsActiveDisliked)
+            if (DateHelper.TeamsGenerationTimeHasCome(now) || _teamsController.IsActiveDisliked)
             {
                 var players = await SheetController.GetInstance().GetPlayersReadyToPlay();
                 await _teamsController.GenerateNewTeams(players);
                 await SendGeneratedTeamsMessageAsync();
             }
 
-            if (GameStarted(now))
+            if (DateHelper.GameStarted(now))
             {
                 await ClearGameAttrsAsync();
                 _teamsController.ClearGeneratedTeams();
@@ -146,73 +146,6 @@ namespace TelegramFootballBot.Controllers
                 _logger.Error(ex, $"Error on {nameof(SendGeneratedTeamsMessageAsync)}");
                 await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при отправке сообщения с командами: {ex.Message}");
             }
-        }
-
-        private bool DistributionTimeHasCome(DateTime currentDate)
-        {
-            var distributionDate = GetNearestDistributionDateMoscowTime(currentDate);
-            return GetDayOfWeek(currentDate.ToMoscowTime()) == GetDayOfWeek(distributionDate)
-                && currentDate.ToMoscowTime().TimeOfDay.Hours == distributionDate.TimeOfDay.Hours
-                && currentDate.ToMoscowTime().TimeOfDay.Minutes == distributionDate.TimeOfDay.Minutes;
-        }
-
-        private bool TeamsGenerationTimeHasCome(DateTime currentDate)
-        {
-            var gameDate = GetNearestGameDateMoscowTime(currentDate);
-            return currentDate.ToMoscowTime().Year == gameDate.Year
-                && currentDate.ToMoscowTime().Month == gameDate.Month
-                && currentDate.ToMoscowTime().Day == gameDate.Day
-                && currentDate.ToMoscowTime().Hour == gameDate.Hour - 1 // 1 hour before game
-                && currentDate.ToMoscowTime().Minute == gameDate.Minute;
-        }
-
-        private bool GameStarted(DateTime currentDate)
-        {
-            var gameDate = GetNearestGameDateMoscowTime(currentDate);
-            return currentDate.ToMoscowTime().Year == gameDate.Year 
-                && currentDate.ToMoscowTime().Month == gameDate.Month 
-                && currentDate.ToMoscowTime().Day == gameDate.Day
-                && currentDate.ToMoscowTime().Hour == gameDate.Hour 
-                && currentDate.ToMoscowTime().Minute == gameDate.Minute;
-        }
-        
-        public static DateTime GetNearestGameDateMoscowTime(DateTime currentDate)
-        {
-            return GetNearestDate(currentDate, 
-                AppSettings.GameDay.Days, 
-                AppSettings.GameDay.Hours, 
-                AppSettings.GameDay.Minutes);
-        }
-
-        public static DateTime GetNearestDistributionDateMoscowTime(DateTime currentDate)
-        {
-            return GetNearestDate(currentDate,
-                AppSettings.DistributionTime.Days,
-                AppSettings.DistributionTime.Hours,
-                AppSettings.DistributionTime.Minutes);
-        }
-        
-        private static DateTime GetNearestDate(DateTime currentDate, int eventDayOfWeek, int eventHour, int eventMinutes)
-        {
-            if (eventDayOfWeek > 7)
-                throw new ArgumentOutOfRangeException("eventDayOfWeek");
-
-            var eventDate = currentDate.ToMoscowTime().Date;
-            var dayOfWeek = GetDayOfWeek(eventDate);
-
-            while (eventDayOfWeek != dayOfWeek)
-            {
-                eventDate = eventDate.AddDays(1);
-                dayOfWeek = GetDayOfWeek(eventDate);
-            }
-
-            eventDate = eventDate.AddHours(eventHour).AddMinutes(eventMinutes);
-            return eventDate;
-        }
-
-        private static int GetDayOfWeek(DateTime date)
-        {
-            return date.DayOfWeek != 0 ? (int)date.DayOfWeek : 7;
         }
     }
 }

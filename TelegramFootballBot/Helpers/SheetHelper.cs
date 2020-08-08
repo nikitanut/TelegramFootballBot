@@ -91,7 +91,7 @@ namespace TelegramFootballBot.Helpers
 
         public static string GetApprovedPlayersString(IList<IList<object>> players)
         {            
-            var headerMessage = $"{Scheduler.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {GetTotalApprovedPlayers(players)}.";
+            var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {GetTotalApprovedPlayers(players)}.";
             var markedPlayers = GetMarkedPlayers(players);
 
             var playersMessage = new StringBuilder(headerMessage);
