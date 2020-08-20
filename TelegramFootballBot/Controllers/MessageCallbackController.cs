@@ -152,7 +152,7 @@ namespace TelegramFootballBot.Controllers
             var messageForUser = string.Empty;
             var messageForBotOwner = string.Empty;
             var userId = callbackQuery.From.Id;
-            var player = !(ex is UserNotFoundException) ? await _playerRepository.GetAsync(userId) : null;
+            var player = ex is UserNotFoundException ? null : await _playerRepository.GetAsync(userId);
 
             if (ex is UserNotFoundException)
             {

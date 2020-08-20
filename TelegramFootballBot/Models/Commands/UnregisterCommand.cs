@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Data;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -10,21 +11,24 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, MessageController messageController)
         {
-            var playerName = string.Empty;
-            var messageForUser = "Рассылка отменена";
+            var playerName = await DeletePlayer(messageController.PlayerRepository, message.From.Id);
+            var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
+            await messageController.SendMessageAsync(message.Chat.Id, messageForUser);
+            await messageController.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
+        }
 
+        private async Task<string> DeletePlayer(IPlayerRepository playerRepository, int playerId)
+        {
             try
             {
-                playerName = (await messageController.PlayerRepository.GetAsync(message.From.Id)).Name;
-                await messageController.PlayerRepository.RemoveAsync(message.From.Id);
+                var player = await playerRepository.GetAsync(playerId);
+                await playerRepository.RemoveAsync(player.Id);
+                return player.Name;
             }
             catch (UserNotFoundException)
             {
-                messageForUser = "Вы не были зарегистрированы";
+                return null;
             }
-
-            await messageController.SendMessageAsync(message.Chat.Id, messageForUser);
-            await messageController.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
         }
     }
 }

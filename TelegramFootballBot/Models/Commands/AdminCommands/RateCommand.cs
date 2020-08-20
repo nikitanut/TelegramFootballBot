@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Data;
 
 namespace TelegramFootballBot.Models.Commands.AdminCommands
 {
@@ -22,12 +23,8 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
                 return;
             }
 
-            Player player;
-            try
-            {
-                player = await messageController.PlayerRepository.GetAsync(playerName);
-            }
-            catch (UserNotFoundException)
+            var player = await FindPlayer(messageController.PlayerRepository, playerName);
+            if (player == null)
             {
                 await messageController.SendMessageAsync(message.Chat.Id, "Player not found");
                 return;
@@ -52,6 +49,18 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
 
             name = ratingString.Substring(0, ratingSeparatorIndex);
             return int.TryParse(ratingString.Substring(ratingSeparatorIndex + 1), out rating);
+        }
+
+        private async Task<Player> FindPlayer(IPlayerRepository playerRepository, string playerName)
+        {
+            try
+            {
+                return await playerRepository.GetAsync(playerName);
+            }
+            catch (UserNotFoundException)
+            {
+                return null;
+            }
         }
     }
 }

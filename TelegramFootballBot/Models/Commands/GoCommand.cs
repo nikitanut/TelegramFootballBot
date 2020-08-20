@@ -25,10 +25,9 @@ namespace TelegramFootballBot.Models.Commands
 
             var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
-            var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
 
             await messageController.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-            await messageController.SendMessageAsync(player.ChatId, text, markup);
+            await messageController.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserDeterminationMarkup(gameDate));
         }
     }
 }

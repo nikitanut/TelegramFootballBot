@@ -18,11 +18,6 @@ namespace TelegramFootballBot.Models
 
         public List<Player> Players { get; set; }
 
-        public Team()
-        {
-            Players = new List<Player>();
-        }
-
         public Team(IEnumerable<Player> players)
         {
             Players = players.ToList();

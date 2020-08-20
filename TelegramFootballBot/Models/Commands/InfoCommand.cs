@@ -11,26 +11,24 @@ namespace TelegramFootballBot.Models.Commands
 
         public override async Task Execute(Message message, MessageController messageController)
         {
+            await messageController.SendMessageAsync(message.Chat.Id, Text(message));
+        }
+
+        private string Text(Message message)
+        {
             if (IsBotOwner(message))
             {
-                var text = $"/distribute - run distribution{Environment.NewLine}" +
-                           $"/list - list of registered players{Environment.NewLine}" +
-                           $"/rate - set player rating{Environment.NewLine}" +
-                           $"/say - send text to all players{Environment.NewLine}" +
-                           $"/status - get statistics{Environment.NewLine}" +
-                           $"/switch - turn on / turn off notifications";
-
-                await messageController.SendMessageAsync(message.Chat.Id, text);
+                return $"/distribute - run distribution{Environment.NewLine}" +
+                       $"/list - list of registered players{Environment.NewLine}" +
+                       $"/rate - set player rating{Environment.NewLine}" +
+                       $"/say - send text to all players{Environment.NewLine}" +
+                       $"/status - get statistics{Environment.NewLine}" +
+                       $"/switch - turn on / turn off notifications";                
             }
-
-            if (!IsBotOwner(message))
-            {
-                var text = $"/reg - зарегистрироваться{Environment.NewLine}" +
-                           $"/unregister - отписаться от рассылки{Environment.NewLine}" +
-                           $"/go - отметиться";
-
-                await messageController.SendMessageAsync(message.Chat.Id, text);
-            }
+            
+            return $"/reg - зарегистрироваться{Environment.NewLine}" +
+                   $"/unregister - отписаться от рассылки{Environment.NewLine}" +
+                   $"/go - отметиться";
         }
     }
 }
