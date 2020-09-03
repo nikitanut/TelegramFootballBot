@@ -65,7 +65,7 @@ namespace TelegramFootballBot.Models
 
         public string LikesMessage()
         {
-            return $"За - {_likesForActive}. Против - {_dislikesForActive}.";
+            return $"{Constants.LIKE_EMOJI} - {_likesForActive}   {Constants.DISLIKE_EMOJI} - {_dislikesForActive}";
         }
 
         public void ClearGeneratedTeams()
