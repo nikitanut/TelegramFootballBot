@@ -101,10 +101,9 @@ namespace TelegramFootballBot.Models
 
         public void DislikeActive()
         {
-            var halfOfPlayers = GetActive().Sum(t => t.Players.Count) / 2;
             var activeDislikes = Interlocked.Increment(ref _dislikesForActive);
 
-            if (activeDislikes == halfOfPlayers)
+            if (activeDislikes == Constants.TEAM_DISLIKES_LIMIT)
             {
                 IsActiveDisliked = true;
                 _dislikedTeams.Add(_activeTeamSet);
