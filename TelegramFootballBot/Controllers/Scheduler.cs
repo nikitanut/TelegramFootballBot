@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using TelegramFootballBot.Data;
@@ -58,7 +59,8 @@ namespace TelegramFootballBot.Controllers
             }
 
             await UpdateTotalPlayersMessagesAsync();
-            await UpdateTeamPollMessagesAsync();            
+            await UpdateTeamPollMessagesAsync();
+            await SetPlayersReadyToPlayBySheet();
         }
 
         private async Task ClearGameAttrsAsync()
@@ -146,6 +148,25 @@ namespace TelegramFootballBot.Controllers
                 _logger.Error(ex, $"Error on {nameof(SendGeneratedTeamsMessageAsync)}");
                 await _messageController.SendTextMessageToBotOwnerAsync($"Ошибка при отправке сообщения с командами: {ex.Message}");
             }
+        }
+
+        private async Task SetPlayersReadyToPlayBySheet()
+        {
+            var playersUpdate = new List<Player>();
+            var playersReadyFromSheet = await SheetController.GetInstance().GetPlayersReadyToPlay();
+            var playersRecievedMessages = await _playerRepository.GetRecievedMessageAsync();
+
+            foreach (var player in playersRecievedMessages)
+            {
+                var isGoingToPlay = playersReadyFromSheet.Contains(player.Name);
+                if (player.IsGoingToPlay != isGoingToPlay)
+                {
+                    player.IsGoingToPlay = isGoingToPlay;
+                    playersUpdate.Add(player);
+                }
+            }
+
+            await _playerRepository.UpdateMultipleAsync(playersUpdate);
         }
     }
 }

@@ -82,6 +82,8 @@ namespace TelegramFootballBot.Data
 
         public async Task UpdateMultipleAsync(IEnumerable<Player> players)
         {
+            if (!players.Any()) return;
+
             using (var db = new FootballBotDbContext(_options))
             {
                 foreach (var player in players)
