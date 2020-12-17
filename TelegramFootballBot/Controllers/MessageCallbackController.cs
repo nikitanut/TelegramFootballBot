@@ -41,6 +41,8 @@ namespace TelegramFootballBot.Controllers
 
                 if (Callback.GetCallbackName(callbackData) == TeamPollCallback.Name)
                     await DetermineIfUserLikesTeamAsync(e.CallbackQuery);
+
+                _logger.Information($"Processed callback: {e.CallbackQuery.Data}");
             }
             catch (Exception ex)
             {
@@ -63,7 +65,10 @@ namespace TelegramFootballBot.Controllers
             }
 
             if (IsButtonPressedAfterGame(playerSetCallback.GameDate))
+            {
+                _logger.Information($"Button pressed after game: now - {DateTime.UtcNow}, game date - {playerSetCallback.GameDate.Date}");
                 return;
+            }
 
             var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
             await SheetController.GetInstance().UpdateApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
@@ -131,7 +136,7 @@ namespace TelegramFootballBot.Controllers
 
         private bool IsButtonPressedAfterGame(DateTime gameDate)
         {
-            return gameDate.ToUniversalTime().Date < DateTime.UtcNow.Date;
+            return gameDate.Date < DateTime.Now.Date;
         }
 
         private async Task ClearInlineKeyboardAsync(ChatId chatId, int messageId)
