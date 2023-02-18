@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 
 namespace TelegramFootballBot.Models.Commands
@@ -10,18 +10,18 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/reg";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             if (PlayerName(message) == string.Empty)
             {
-                await messageController.SendMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /reg Фамилия Имя");
+                await messageService.SendMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
 
-            var messageForUser = await RegisterPlayer(message, messageController.PlayerRepository);
-            await messageController.SendMessageAsync(message.Chat.Id, messageForUser);
-            await SheetController.GetInstance().UpsertPlayerAsync(PlayerName(message));
-            await messageController.SendTextMessageToBotOwnerAsync($"{PlayerName(message)} зарегистрировался");
+            var messageForUser = await RegisterPlayer(message, messageService.PlayerRepository);
+            await messageService.SendMessageAsync(message.Chat.Id, messageForUser);
+            await SheetService.GetInstance().UpsertPlayerAsync(PlayerName(message));
+            await messageService.SendTextMessageToBotOwnerAsync($"{PlayerName(message)} зарегистрировался");
         }
 
         private string PlayerName(Message message)

@@ -10,24 +10,24 @@ using System.Threading.Tasks;
 using TelegramFootballBot.Helpers;
 using ValueRange = Google.Apis.Sheets.v4.Data.ValueRange;
 
-namespace TelegramFootballBot.Controllers
+namespace TelegramFootballBot.Services
 {
-    public class SheetController
+    public class SheetService
     {
-        private static SheetController _sheetController;    
+        private static SheetService _sheetService;    
         
         private readonly SheetsService _sheetsService;        
 
-        private SheetController()
+        private SheetService()
         {
             _sheetsService = GetSheetsService();
         }
 
-        public static SheetController GetInstance()
+        public static SheetService GetInstance()
         {
-            if (_sheetController == null)
-                _sheetController = new SheetController();
-            return _sheetController;
+            if (_sheetService == null)
+                _sheetService = new SheetService();
+            return _sheetService;
         }
 
         private SheetsService GetSheetsService()

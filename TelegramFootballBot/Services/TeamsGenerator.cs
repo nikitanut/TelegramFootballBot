@@ -5,7 +5,7 @@ using System.Linq;
 using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
 
-namespace TelegramFootballBot.Controllers
+namespace TelegramFootballBot.Services
 {
     public static class TeamsGenerator
     {

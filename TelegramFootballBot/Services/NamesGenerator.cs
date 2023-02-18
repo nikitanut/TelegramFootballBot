@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TelegramFootballBot.Controllers
+namespace TelegramFootballBot.Services
 {
     public static class NamesGenerator
     {

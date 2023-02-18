@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 
 namespace TelegramFootballBot.Models.Commands
@@ -9,12 +9,12 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/unregister";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
-            var playerName = await DeletePlayer(messageController.PlayerRepository, message.From.Id);
+            var playerName = await DeletePlayer(messageService.PlayerRepository, message.From.Id);
             var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
-            await messageController.SendMessageAsync(message.Chat.Id, messageForUser);
-            await messageController.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
+            await messageService.SendMessageAsync(message.Chat.Id, messageForUser);
+            await messageService.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
         }
 
         private async Task<string> DeletePlayer(IPlayerRepository playerRepository, int playerId)

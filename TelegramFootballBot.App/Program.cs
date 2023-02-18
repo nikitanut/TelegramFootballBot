@@ -5,7 +5,7 @@ using Serilog;
 using Serilog.Core;
 using System.Threading.Tasks;
 using TelegramFootballBot.App.Services;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Models;
 
@@ -28,10 +28,10 @@ namespace TelegramFootballBot.App
                     services.AddHostedService(s => 
                     {
                         var logger = s.GetRequiredService<ILogger>();
-                        var teamSet = new TeamsController(s.GetRequiredService<IPlayerRepository>());
+                        var teamSet = new TeamsService(s.GetRequiredService<IPlayerRepository>());
                         var playerRepository = s.GetRequiredService<IPlayerRepository>();
-                        var messageController = new MessageController(playerRepository, teamSet, logger);
-                        return new SchedulerService(messageController, teamSet, playerRepository, logger);
+                        var messageService = new MessageService(playerRepository, teamSet, logger);
+                        return new SchedulerService(messageService, teamSet, playerRepository, logger);
                     });
                 })
                 .Build();

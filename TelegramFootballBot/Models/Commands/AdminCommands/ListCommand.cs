@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 
 namespace TelegramFootballBot.Models.Commands.AdminCommands
 {
@@ -10,15 +10,15 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/list";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             if (!IsBotOwner(message))
                 return;
 
-            var players = (await messageController.PlayerRepository.GetAllAsync()).OrderBy(p => p.Name);
+            var players = (await messageService.PlayerRepository.GetAllAsync()).OrderBy(p => p.Name);
 
             var text = string.Join(Environment.NewLine, players.Select(p => $"{p.Name} - {p.Rating}"));
-            await messageController.SendMessageAsync(message.Chat.Id, text);
+            await messageService.SendMessageAsync(message.Chat.Id, text);
         }
     }
 }

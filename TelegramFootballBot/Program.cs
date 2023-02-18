@@ -2,7 +2,7 @@
 using Serilog;
 using System;
 using System.Threading;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Models;
 
@@ -21,11 +21,11 @@ namespace TelegramFootballBot
                 logger.Information("Bot started");
 
                 var playerRepository = new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options);
-                var teamSet = new TeamsController(playerRepository);
-                var messageController = new MessageController(playerRepository, teamSet, logger);
-                var scheduler = new Scheduler(messageController, teamSet, playerRepository, logger);
+                var teamSet = new TeamsService(playerRepository);
+                var messageService = new MessageService(playerRepository, teamSet, logger);
+                var scheduler = new Scheduler(messageService, teamSet, playerRepository, logger);
 
-                messageController.Run();
+                messageService.Run();
                 scheduler.Run();
 
                 Thread.Sleep(Timeout.Infinite);
@@ -33,7 +33,7 @@ namespace TelegramFootballBot
             catch (Exception ex)
             {
                 logger.Fatal(ex, "FATAL ERROR");
-                try { new MessageController(null, null, logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}").Wait(); }
+                try { new MessageService(null, null, logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}").Wait(); }
                 catch { }
                 throw;
             }

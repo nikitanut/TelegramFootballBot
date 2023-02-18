@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TelegramFootballBot.Controllers;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Models;
 using TelegramFootballBot.Models.CallbackQueries;
 
-namespace TelegramFootballBot.Models
+namespace TelegramFootballBot.Services
 {
-    public class TeamsController
+    public class TeamsService
     {
         public int ActiveLikes => _likesForActive;
         public int ActiveDislikes => _dislikesForActive;
@@ -24,7 +24,7 @@ namespace TelegramFootballBot.Models
         private int _likesForActive;
         private int _dislikesForActive;
 
-        public TeamsController(IPlayerRepository playerRepository)
+        public TeamsService(IPlayerRepository playerRepository)
         {
             _playerRepository = playerRepository;
         }

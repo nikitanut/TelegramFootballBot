@@ -11,36 +11,36 @@ using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
 
-namespace TelegramFootballBot.Controllers
+namespace TelegramFootballBot.Services
 {
-    public class MessageController
+    public class MessageService
     {
         public IPlayerRepository PlayerRepository { get; }
 
         private readonly ILogger _logger;   
         private readonly TelegramBotClient _client;  
-        private readonly TeamsController _teamsController;
-        private readonly MessageCallbackController _messageCallbackController;
+        private readonly TeamsService _teamsService;
+        private readonly MessageCallbackService _messageCallbackService;
         private string _approvedPlayersMessage = null;
         private string _likesMessage = null;
         private bool _isRunning = false;
         
-        public MessageController(IPlayerRepository playerRepository, TeamsController teamsControllerSet, ILogger logger)
+        public MessageService(IPlayerRepository playerRepository, TeamsService teamsServiceSet, ILogger logger)
         {
             PlayerRepository = playerRepository;
-            _teamsController = teamsControllerSet;
+            _teamsService = teamsServiceSet;
             _logger = logger;
             _client = new Bot().GetBotClient();            
-            _messageCallbackController = new MessageCallbackController(_client, _teamsController, PlayerRepository, _logger);
+            _messageCallbackService = new MessageCallbackService(_client, _teamsService, PlayerRepository, _logger);
         }
 
         public void Run()
         {
             if (_isRunning)
-                throw new ApplicationException("MessageController is already running");
+                throw new ApplicationException("MessageService is already running");
 
             _client.OnMessage += OnMessageRecievedAsync;
-            _client.OnCallbackQuery += _messageCallbackController.OnCallbackQueryAsync;
+            _client.OnCallbackQuery += _messageCallbackService.OnCallbackQueryAsync;
             _client.StartReceiving();
             _isRunning = true;
         }
@@ -48,7 +48,7 @@ namespace TelegramFootballBot.Controllers
         public void Stop()
         {
             _client.OnMessage -= OnMessageRecievedAsync;
-            _client.OnCallbackQuery -= _messageCallbackController.OnCallbackQueryAsync;
+            _client.OnCallbackQuery -= _messageCallbackService.OnCallbackQueryAsync;
             _client.StopReceiving();
             _isRunning = false;
         }
@@ -89,7 +89,7 @@ namespace TelegramFootballBot.Controllers
 
         public async Task UpdateTotalPlayersMessagesAsync()
         {
-            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await SheetService.GetInstance().GetApprovedPlayersMessageAsync();
             if (approvedPlayersMessage == _approvedPlayersMessage)
                 return;
 
@@ -99,7 +99,7 @@ namespace TelegramFootballBot.Controllers
 
         public async Task UpdatePollMessagesAsync()
         {
-            var likesMessage = _teamsController.LikesMessage();
+            var likesMessage = _teamsService.LikesMessage();
             if (likesMessage == _likesMessage)
                 return;
 
@@ -110,13 +110,13 @@ namespace TelegramFootballBot.Controllers
 
         public async Task SendTeamPollMessageAsync()
         {            
-            var pollMessage = _teamsController.GenerateMessage();
+            var pollMessage = _teamsService.GenerateMessage();
             if (string.IsNullOrEmpty(pollMessage))
                 return;
 
-            _likesMessage = _teamsController.LikesMessage();
+            _likesMessage = _teamsService.LikesMessage();
             var players = await PlayerRepository.GetReadyToPlayAsync();
-            await SendMessageAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamsController.GetActivePollId()));
+            await SendMessageAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamsService.GetActivePollId()));
         }
 
         public async Task SendTextMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)

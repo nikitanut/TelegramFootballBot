@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 
 namespace TelegramFootballBot.Models.Commands.AdminCommands
 {
@@ -8,13 +8,13 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/switch";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             if (!IsBotOwner(message))
                 return;
 
             AppSettings.NotifyOwner = !AppSettings.NotifyOwner;
-            await messageController.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
+            await messageService.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 
 namespace TelegramFootballBot.Models.Commands.AdminCommands
 {
@@ -8,7 +8,7 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/say";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             if (!IsBotOwner(message))
                 return;
@@ -18,7 +18,7 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
                 : string.Empty;
 
             if (text != string.Empty)
-                await messageController.SendMessageToAllUsersAsync(text);
+                await messageService.SendMessageToAllUsersAsync(text);
         }
     }
 }

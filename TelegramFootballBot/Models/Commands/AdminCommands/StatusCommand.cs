@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands.AdminCommands
@@ -11,12 +11,12 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/status";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             if (!IsBotOwner(message))
                 return;
 
-            var players = await messageController.PlayerRepository.GetAllAsync();
+            var players = await messageService.PlayerRepository.GetAllAsync();
             var text = $"Now: {DateTime.Now.ToMoscowTime()}{Environment.NewLine}" +
                        $"Distribution: {AppSettings.DistributionTime}{Environment.NewLine}" +
                        $"GameDate: {AppSettings.GameDay}{Environment.NewLine}" +
@@ -25,7 +25,7 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
                        $"Players: {players.Count}{Environment.NewLine}" +
                        $"Got message: {players.Count(p => p.ApprovedPlayersMessageId != 0)}";
 
-            await messageController.SendMessageAsync(message.Chat.Id, text);
+            await messageService.SendMessageAsync(message.Chat.Id, text);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 
 namespace TelegramFootballBot.Models.Commands
 {
@@ -9,9 +9,9 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/info";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
-            await messageController.SendMessageAsync(message.Chat.Id, Text(message));
+            await messageService.SendMessageAsync(message.Chat.Id, Text(message));
         }
 
         private string Text(Message message)

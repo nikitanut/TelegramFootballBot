@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.Models.Commands
@@ -10,24 +10,24 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/go";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             Player player;
             try
             {
-                player = await messageController.PlayerRepository.GetAsync(message.From.Id);
+                player = await messageService.PlayerRepository.GetAsync(message.From.Id);
             }
             catch (UserNotFoundException)
             {
-                await messageController.SendMessageAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
+                await messageService.SendMessageAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
 
             var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
 
-            await messageController.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-            await messageController.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserDeterminationMarkup(gameDate));
+            await messageService.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            await messageService.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserDeterminationMarkup(gameDate));
         }
     }
 }

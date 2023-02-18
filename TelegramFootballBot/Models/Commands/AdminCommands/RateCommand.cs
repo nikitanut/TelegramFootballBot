@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 
 namespace TelegramFootballBot.Models.Commands.AdminCommands
@@ -9,7 +9,7 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/rate";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        public override async Task Execute(Message message, MessageService messageService)
         {
             if (!IsBotOwner(message))
                 return;
@@ -19,20 +19,20 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
 
             if (!TryParse(message, out playerName, out rating))
             {
-                await messageController.SendMessageAsync(message.Chat.Id, "Wrong rating string. Example: /rate playerName rating");
+                await messageService.SendMessageAsync(message.Chat.Id, "Wrong rating string. Example: /rate playerName rating");
                 return;
             }
 
-            var player = await FindPlayer(messageController.PlayerRepository, playerName);
+            var player = await FindPlayer(messageService.PlayerRepository, playerName);
             if (player == null)
             {
-                await messageController.SendMessageAsync(message.Chat.Id, "Player not found");
+                await messageService.SendMessageAsync(message.Chat.Id, "Player not found");
                 return;
             }
 
             player.Rating = rating;
-            await messageController.PlayerRepository.UpdateAsync(player);
-            await messageController.SendMessageAsync(message.Chat.Id, $"{player.Name} - {player.Rating}");
+            await messageService.PlayerRepository.UpdateAsync(player);
+            await messageService.SendMessageAsync(message.Chat.Id, $"{player.Name} - {player.Rating}");
         }
 
         private bool TryParse(Message message, out string name, out int rating)

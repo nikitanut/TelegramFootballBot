@@ -1,19 +1,18 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
-using System.Linq;
 using TelegramFootballBot.Data;
-using TelegramFootballBot.Models;
 using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Services;
 using Xunit;
 
 namespace TelegramFootballBot.Tests
 {
-    public class PollControllerTests
+    public class PollServiceTests
     {
         private readonly IPlayerRepository _playerRepository;
 
-        public PollControllerTests()
+        public PollServiceTests()
         {
             var dbOptions = new DbContextOptionsBuilder<FootballBotDbContext>()
                               .UseSqlite(CreateInMemoryDatabase())
@@ -31,7 +30,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void ProcessPollChoise_ReturnsCorrectAmountOfLikes()
         {
-            var teamSet = new TeamsController(_playerRepository);
+            var teamSet = new TeamsService(_playerRepository);
 
             var pollId = teamSet.GetActivePollId();
             var callBacks = new[]
