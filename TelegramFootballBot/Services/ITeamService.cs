@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TelegramFootballBot.Models;
-using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Core.Models;
+using TelegramFootballBot.Core.Models.CallbackQueries;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Services
 {
     public interface ITeamService
     {

@@ -2,7 +2,7 @@
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Services
 {
     public interface IMessageService
     {

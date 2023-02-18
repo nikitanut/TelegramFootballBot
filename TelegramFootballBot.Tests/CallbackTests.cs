@@ -1,5 +1,5 @@
 ﻿using System;
-using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Core.Models.CallbackQueries;
 using Xunit;
 
 namespace TelegramFootballBot.Tests

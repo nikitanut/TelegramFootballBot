@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TelegramFootballBot.Helpers;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Models;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Helpers
 {
     public static class TeamsGenerator
     {

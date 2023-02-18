@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Models.Commands;
-using TelegramFootballBot.Models.Commands.AdminCommands;
-using TelegramFootballBot.Services;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Models.Commands;
+using TelegramFootballBot.Core.Models.Commands.AdminCommands;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Helpers
+namespace TelegramFootballBot.Core.Helpers
 {
     public class CommandFactory
     {

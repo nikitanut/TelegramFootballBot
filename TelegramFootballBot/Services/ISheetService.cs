@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Services
 {
     public interface ISheetService
     {

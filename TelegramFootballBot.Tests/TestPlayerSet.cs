@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Tests
 {

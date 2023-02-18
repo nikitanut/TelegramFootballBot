@@ -1,8 +1,8 @@
 ﻿using System;
 using Telegram.Bot.Types.ReplyMarkups;
-using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Core.Models.CallbackQueries;
 
-namespace TelegramFootballBot.Helpers
+namespace TelegramFootballBot.Core.Helpers
 {
     public static class MarkupHelper
     {

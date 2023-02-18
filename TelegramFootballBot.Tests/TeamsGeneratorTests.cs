@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TelegramFootballBot.Services;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
 using Xunit;
 
 namespace TelegramFootballBot.Tests

@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Services;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class StartCommand : Command
     {

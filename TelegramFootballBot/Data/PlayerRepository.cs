@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Models;
 
-namespace TelegramFootballBot.Data
+namespace TelegramFootballBot.Core.Data
 {
     public class PlayerRepository : IPlayerRepository
     {

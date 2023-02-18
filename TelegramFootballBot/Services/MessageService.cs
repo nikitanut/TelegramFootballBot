@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Helpers;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Services
 {
     public class MessageService : IMessageService
     {

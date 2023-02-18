@@ -1,7 +1,7 @@
 ﻿using System;
-using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Core.Helpers;
 
-namespace TelegramFootballBot.Models.CallbackQueries
+namespace TelegramFootballBot.Core.Models.CallbackQueries
 {
     public abstract class Callback
     {

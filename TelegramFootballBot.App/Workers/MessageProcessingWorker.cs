@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using TelegramFootballBot.Services;
+using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.App.Workers
 {

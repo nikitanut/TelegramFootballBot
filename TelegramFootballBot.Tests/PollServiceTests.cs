@@ -1,9 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Models.CallbackQueries;
-using TelegramFootballBot.Services;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Models.CallbackQueries;
+using TelegramFootballBot.Core.Services;
 using Xunit;
 
 namespace TelegramFootballBot.Tests

@@ -7,10 +7,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Core.Helpers;
 using ValueRange = Google.Apis.Sheets.v4.Data.ValueRange;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Services
 {
     public class SheetService : ISheetService
     {

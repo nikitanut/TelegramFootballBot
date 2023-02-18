@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using TelegramFootballBot.Services;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Helpers;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.App.Workers
 {

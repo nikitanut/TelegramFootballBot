@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public abstract class Command
     {

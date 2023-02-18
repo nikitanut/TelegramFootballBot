@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Models;
 
-namespace TelegramFootballBot.Data
+namespace TelegramFootballBot.Core.Data
 {
     public class FootballBotDbContext : DbContext
     {        

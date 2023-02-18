@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Models;
 
-namespace TelegramFootballBot.Helpers
+namespace TelegramFootballBot.Core.Helpers
 {
     public static class SheetHelper
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TelegramFootballBot.Models
+namespace TelegramFootballBot.Core.Models
 {
     public class Team
     {

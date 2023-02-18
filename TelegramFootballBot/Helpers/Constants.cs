@@ -1,4 +1,4 @@
-﻿namespace TelegramFootballBot.Helpers
+﻿namespace TelegramFootballBot.Core.Helpers
 {
     public static class Constants
     {

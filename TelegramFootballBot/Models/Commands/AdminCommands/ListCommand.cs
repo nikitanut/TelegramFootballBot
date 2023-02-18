@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Services;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Models.Commands.AdminCommands
+namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
 {
     public class ListCommand : Command
     {

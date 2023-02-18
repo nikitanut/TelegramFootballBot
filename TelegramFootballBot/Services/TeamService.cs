@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Helpers;
-using TelegramFootballBot.Models;
-using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
+using TelegramFootballBot.Core.Models.CallbackQueries;
 
-namespace TelegramFootballBot.Services
+namespace TelegramFootballBot.Core.Services
 {
     public class TeamService : ITeamService
     {

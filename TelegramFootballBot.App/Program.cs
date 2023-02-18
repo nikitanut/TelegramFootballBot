@@ -4,12 +4,13 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
 using System.Threading.Tasks;
-using TelegramFootballBot.Services;
-using TelegramFootballBot.Data;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.App.Workers;
 using System.IO;
 using Telegram.Bot;
-using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core;
 
 namespace TelegramFootballBot.App
 {

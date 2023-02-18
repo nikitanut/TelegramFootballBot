@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Services;
-using TelegramFootballBot.Data;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Data;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class UnregisterCommand : Command
     {

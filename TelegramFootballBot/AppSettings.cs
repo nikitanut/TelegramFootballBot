@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 
-namespace TelegramFootballBot
+namespace TelegramFootballBot.Core
 {
     public static class AppSettings
     {
