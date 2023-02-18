@@ -12,13 +12,13 @@ namespace TelegramFootballBot.Services
     public class Scheduler
     {
         private readonly Timer _timer;
-        private readonly MessageService _messageService;
+        private readonly IMessageService _messageService;
         private readonly TeamsService _teamsService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
         private bool _firstLaunch = true;
 
-        public Scheduler(MessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
+        public Scheduler(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
         {            
             _messageService = messageService;
             _playerRepository = playerRepository;

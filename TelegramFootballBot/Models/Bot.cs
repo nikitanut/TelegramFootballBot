@@ -1,42 +1,46 @@
 ﻿using System.Collections.Generic;
 using Telegram.Bot;
+using TelegramFootballBot.Data;
 using TelegramFootballBot.Models.Commands;
 using TelegramFootballBot.Models.Commands.AdminCommands;
+using TelegramFootballBot.Services;
 
 namespace TelegramFootballBot.Models
 {
     public class Bot
     {
-        private TelegramBotClient _botClient;
+        public List<Command> Commands { get; private set; }
 
-        public static List<Command> Commands { get; private set; }
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
 
-        public TelegramBotClient GetBotClient()
+        public Bot(IMessageService messageService, IPlayerRepository playerRepository)
         {
-            if (_botClient != null)
-                return _botClient;
-
+            _messageService = messageService;
+            _playerRepository = playerRepository;
             InitializeCommands();
-            _botClient = new TelegramBotClient(AppSettings.BotToken);
+        }
 
-            return _botClient;
+        public static TelegramBotClient CreateBotClient()
+        {
+            return new TelegramBotClient(AppSettings.BotToken);
         }
         
-        private static void InitializeCommands()
+        private void InitializeCommands()
         {
             Commands = new List<Command>
             {
-                new RegisterCommand(),
-                new UnregisterCommand(),
-                new GoCommand(),
-                new SwitchNotifierCommand(),
-                new DistributeCommand(),
-                new SayCommand(),
-                new StatusCommand(),
-                new InfoCommand(),
-                new StartCommand(),
-                new ListCommand(),
-                new RateCommand()
+                new RegisterCommand(_messageService, _playerRepository),
+                new UnregisterCommand(_messageService, _playerRepository),
+                new GoCommand(_messageService, _playerRepository),
+                new SwitchNotifierCommand(_messageService),
+                new DistributeCommand(_messageService),
+                new SayCommand(_messageService),
+                new StatusCommand(_messageService, _playerRepository),
+                new InfoCommand(_messageService),
+                new StartCommand(_messageService),
+                new ListCommand(_messageService, _playerRepository),
+                new RateCommand(_messageService, _playerRepository)
             };
         }
     }

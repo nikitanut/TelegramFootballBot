@@ -9,7 +9,16 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/rate";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
+
+        public RateCommand(IMessageService messageService, IPlayerRepository playerRepository)
+        {
+            _messageService = messageService;
+            _playerRepository = playerRepository;
+        }
+
+        public override async Task Execute(Message message)
         {
             if (!IsBotOwner(message))
                 return;
@@ -19,20 +28,20 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
 
             if (!TryParse(message, out playerName, out rating))
             {
-                await messageService.SendMessageAsync(message.Chat.Id, "Wrong rating string. Example: /rate playerName rating");
+                await _messageService.SendMessageAsync(message.Chat.Id, "Wrong rating string. Example: /rate playerName rating");
                 return;
             }
 
-            var player = await FindPlayer(messageService.PlayerRepository, playerName);
+            var player = await FindPlayer(_playerRepository, playerName);
             if (player == null)
             {
-                await messageService.SendMessageAsync(message.Chat.Id, "Player not found");
+                await _messageService.SendMessageAsync(message.Chat.Id, "Player not found");
                 return;
             }
 
             player.Rating = rating;
-            await messageService.PlayerRepository.UpdateAsync(player);
-            await messageService.SendMessageAsync(message.Chat.Id, $"{player.Name} - {player.Rating}");
+            await _playerRepository.UpdateAsync(player);
+            await _messageService.SendMessageAsync(message.Chat.Id, $"{player.Name} - {player.Rating}");
         }
 
         private bool TryParse(Message message, out string name, out int rating)

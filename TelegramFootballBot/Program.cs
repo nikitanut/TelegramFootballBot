@@ -8,24 +8,29 @@ using TelegramFootballBot.Models;
 
 namespace TelegramFootballBot
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             var logger = new LoggerConfiguration()
                 .WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
-
+            
+            var botClient = Bot.CreateBotClient();
+            
             try
             {
                 logger.Information("Bot started");
 
                 var playerRepository = new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options);
-                var teamSet = new TeamsService(playerRepository);
-                var messageService = new MessageService(playerRepository, teamSet, logger);
-                var scheduler = new Scheduler(messageService, teamSet, playerRepository, logger);
+                var teamService = new TeamsService(playerRepository);
+                var messageService = new MessageService(botClient, playerRepository, teamService, logger);
+                
+                var bot = new Bot(messageService, playerRepository);
+                var scheduler = new Scheduler(messageService, teamService, playerRepository, logger);
+                var messageWorker = new MessageWorker(bot, botClient, messageService, playerRepository, teamService, logger);
 
-                messageService.Run();
+                messageWorker.Run();
                 scheduler.Run();
 
                 Thread.Sleep(Timeout.Infinite);
@@ -33,8 +38,6 @@ namespace TelegramFootballBot
             catch (Exception ex)
             {
                 logger.Fatal(ex, "FATAL ERROR");
-                try { new MessageService(null, null, logger).SendTextMessageToBotOwnerAsync($"Ошибка приложения: {ex.Message}").Wait(); }
-                catch { }
                 throw;
             }
         }

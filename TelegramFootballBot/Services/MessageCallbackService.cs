@@ -2,7 +2,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -15,14 +14,14 @@ namespace TelegramFootballBot.Services
 {
     public class MessageCallbackService
     {
-        private readonly TelegramBotClient _client;
+        private readonly IMessageService _messageService;
         private readonly TeamsService _teamsService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
 
-        public MessageCallbackService(TelegramBotClient client, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
+        public MessageCallbackService(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
         {
-            _client = client;
+            _messageService = messageService;
             _teamsService = teamsService;
             _playerRepository = playerRepository;
             _logger = logger;
@@ -57,7 +56,7 @@ namespace TelegramFootballBot.Services
 
             try
             {
-                await _client.DeleteMessageWithTokenAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+                await _messageService.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
             }
             catch (Exception ex)
             {
@@ -93,17 +92,17 @@ namespace TelegramFootballBot.Services
             {
                 try
                 {
-                    await _client.EditMessageTextWithTokenAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                    await _messageService.EditMessageTextAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
                     return player.ApprovedPlayersMessageId;
                 }
                 catch (Exception ex) // Telegram API doesn't allow to check if user deleted message
                 {
                     _logger.Error(ex, $"Error on editing message for user {player.Name}");
-                    return (await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage)).MessageId;
+                    return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
                 }
             }
 
-            return (await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage)).MessageId;
+            return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
         }
 
         private async Task DetermineIfUserLikesTeamAsync(CallbackQuery callbackQuery)
@@ -119,7 +118,7 @@ namespace TelegramFootballBot.Services
         private async Task<int> SendTeamPollMessageAsync(ChatId chatId)
         {
             var message = _teamsService.LikesMessage();
-            return (await _client.SendTextMessageWithTokenAsync(chatId, message)).MessageId;
+            return (await _messageService.SendMessageAsync(chatId, message)).MessageId;
         }
 
         private string GetApproveCellValue(string userAnswer)
@@ -144,7 +143,7 @@ namespace TelegramFootballBot.Services
             try
             {
                 var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: cancellationToken);
+                await _messageService.ClearReplyMarkupAsync(chatId, messageId);
             }
             catch (Exception ex)
             {
@@ -199,10 +198,10 @@ namespace TelegramFootballBot.Services
 
         private async Task NotifyAboutError(ChatId chatId, string messageForUser, string messageForBotOwner)
         {
-            await _client.SendTextMessageWithTokenAsync(chatId, messageForUser);
+            await _messageService.SendMessageAsync(chatId, messageForUser);
 
             if (AppSettings.NotifyOwner)
-                await _client.SendTextMessageToBotOwnerAsync(messageForBotOwner);
+                await _messageService.SendTextMessageToBotOwnerAsync(messageForBotOwner);
         }
     }
 }

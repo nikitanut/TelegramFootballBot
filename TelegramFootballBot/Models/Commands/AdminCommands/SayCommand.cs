@@ -8,7 +8,14 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/say";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+
+        public SayCommand(IMessageService messageService)
+        {
+            _messageService = messageService;
+        }
+
+        public override async Task Execute(Message message)
         {
             if (!IsBotOwner(message))
                 return;
@@ -18,7 +25,7 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
                 : string.Empty;
 
             if (text != string.Empty)
-                await messageService.SendMessageToAllUsersAsync(text);
+                await _messageService.SendMessageToAllUsersAsync(text);
         }
     }
 }

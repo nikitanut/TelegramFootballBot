@@ -9,9 +9,16 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/info";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+
+        public InfoCommand(IMessageService messageService)
         {
-            await messageService.SendMessageAsync(message.Chat.Id, Text(message));
+            _messageService = messageService;
+        }
+
+        public override async Task Execute(Message message)
+        {
+            await _messageService.SendMessageAsync(message.Chat.Id, Text(message));
         }
 
         private string Text(Message message)

@@ -9,17 +9,17 @@ using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
 
-namespace TelegramFootballBot.App.Services
+namespace TelegramFootballBot.App.Worker
 {
-    public class SchedulerService : BackgroundService
+    public class SchedulerWorker : BackgroundService
     {
-        private readonly MessageService _messageService;
+        private readonly IMessageService _messageService;
         private readonly TeamsService _teamsService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ILogger _logger;
         private bool _firstLaunch = true;
 
-        public SchedulerService(MessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
+        public SchedulerWorker(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
         {
             _messageService = messageService;
             _teamsService = teamsService;

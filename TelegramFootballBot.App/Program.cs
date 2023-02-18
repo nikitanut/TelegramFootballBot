@@ -4,10 +4,10 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
 using System.Threading.Tasks;
-using TelegramFootballBot.App.Services;
 using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Models;
+using TelegramFootballBot.App.Worker;
 
 namespace TelegramFootballBot.App
 {
@@ -30,8 +30,9 @@ namespace TelegramFootballBot.App
                         var logger = s.GetRequiredService<ILogger>();
                         var teamSet = new TeamsService(s.GetRequiredService<IPlayerRepository>());
                         var playerRepository = s.GetRequiredService<IPlayerRepository>();
-                        var messageService = new MessageService(playerRepository, teamSet, logger);
-                        return new SchedulerService(messageService, teamSet, playerRepository, logger);
+                        var botClient = Bot.CreateBotClient();
+                        var messageService = new MessageService(botClient, playerRepository, teamSet, logger);
+                        return new SchedulerWorker(messageService, teamSet, playerRepository, logger);
                     });
                 })
                 .Build();

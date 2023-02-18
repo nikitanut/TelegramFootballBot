@@ -9,20 +9,29 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/unregister";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
+
+        public UnregisterCommand(IMessageService messageService, IPlayerRepository playerRepository)
         {
-            var playerName = await DeletePlayer(messageService.PlayerRepository, message.From.Id);
-            var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
-            await messageService.SendMessageAsync(message.Chat.Id, messageForUser);
-            await messageService.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
+            _messageService = messageService;
+            _playerRepository = playerRepository;
         }
 
-        private async Task<string> DeletePlayer(IPlayerRepository playerRepository, int playerId)
+        public override async Task Execute(Message message)
+        {
+            var playerName = await DeletePlayer(message.From.Id);
+            var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
+            await _messageService.SendMessageAsync(message.Chat.Id, messageForUser);
+            await _messageService.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
+        }
+
+        private async Task<string> DeletePlayer(int playerId)
         {
             try
             {
-                var player = await playerRepository.GetAsync(playerId);
-                await playerRepository.RemoveAsync(player.Id);
+                var player = await _playerRepository.GetAsync(playerId);
+                await _playerRepository.RemoveAsync(player.Id);
                 return player.Name;
             }
             catch (UserNotFoundException)

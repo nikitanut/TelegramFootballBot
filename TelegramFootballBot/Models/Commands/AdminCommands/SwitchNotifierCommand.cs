@@ -8,13 +8,20 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/switch";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+
+        public SwitchNotifierCommand(IMessageService messageService)
+        {
+            _messageService = messageService;
+        }
+
+        public override async Task Execute(Message message)
         {
             if (!IsBotOwner(message))
                 return;
 
             AppSettings.NotifyOwner = !AppSettings.NotifyOwner;
-            await messageService.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
+            await _messageService.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
         }
     }
 }

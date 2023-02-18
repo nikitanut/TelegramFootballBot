@@ -8,9 +8,16 @@ namespace TelegramFootballBot.Models.Commands
     {
         public override string Name => "/start";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+
+        public StartCommand(IMessageService messageService)
         {
-            await messageService.SendMessageAsync(message.Chat.Id, "Для регистрации введите /reg Фамилия Имя");
+            _messageService = messageService;
+        }
+
+        public override async Task Execute(Message message)
+        {
+            await _messageService.SendMessageAsync(message.Chat.Id, "Для регистрации введите /reg Фамилия Имя");
         }
     }
 }

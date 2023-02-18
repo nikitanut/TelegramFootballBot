@@ -8,12 +8,19 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
     {
         public override string Name => "/distribute";
 
-        public override async Task Execute(Message message, MessageService messageService)
+        private readonly IMessageService _messageService;
+
+        public DistributeCommand(IMessageService messageService)
+        {
+            _messageService = messageService;
+        }
+
+        public override async Task Execute(Message message)
         {
             if (!IsBotOwner(message))
                 return;
 
-            await messageService.SendDistributionQuestionAsync();
+            await _messageService.SendDistributionQuestionAsync();
         }
     }
 }
