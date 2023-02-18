@@ -30,7 +30,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void ProcessPollChoise_ReturnsCorrectAmountOfLikes()
         {
-            var teamSet = new TeamsService(_playerRepository);
+            var teamSet = new TeamService(_playerRepository);
 
             var pollId = teamSet.GetActivePollId();
             var callBacks = new[]

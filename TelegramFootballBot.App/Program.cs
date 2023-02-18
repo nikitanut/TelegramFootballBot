@@ -6,9 +6,10 @@ using Serilog.Core;
 using System.Threading.Tasks;
 using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
-using TelegramFootballBot.Models;
-using TelegramFootballBot.App.Worker;
+using TelegramFootballBot.App.Workers;
 using System.IO;
+using Telegram.Bot;
+using TelegramFootballBot.Helpers;
 
 namespace TelegramFootballBot.App
 {
@@ -33,17 +34,15 @@ namespace TelegramFootballBot.App
                             return new SheetService(credentialsFile);
                         };
                     });
+                                        
+                    services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(AppSettings.BotToken));
+                    services.AddSingleton<ITeamService, TeamService>();
+                    services.AddSingleton<IMessageService, MessageService>();
+                    services.AddSingleton<CommandFactory>();
+                    services.AddSingleton<MessageCallbackService>();
 
-                    services.AddHostedService(s => 
-                    {
-                        var logger = s.GetRequiredService<ILogger>();
-                        var teamSet = new TeamsService(s.GetRequiredService<IPlayerRepository>());
-                        var playerRepository = s.GetRequiredService<IPlayerRepository>();
-                        var sheetService = s.GetRequiredService<ISheetService>();
-                        var botClient = Bot.CreateBotClient();
-                        var messageService = new MessageService(botClient, playerRepository, teamSet, sheetService, logger);
-                        return new SchedulerWorker(messageService, teamSet, playerRepository, sheetService, logger);
-                    });
+                    services.AddHostedService<SchedulerWorker>();
+                    services.AddHostedService<MessageProcessingWorker>();
                 })
                 .Build();
 

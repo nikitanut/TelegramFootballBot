@@ -1,6 +1,5 @@
 ﻿using Serilog;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Args;
@@ -14,18 +13,18 @@ namespace TelegramFootballBot.Services
 {
     public class MessageCallbackService
     {
-        private readonly Bot _bot;
+        private readonly CommandFactory _commandFactory;
         private readonly IMessageService _messageService;
-        private readonly TeamsService _teamsService;
+        private readonly ITeamService _teamService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
-        public MessageCallbackService(Bot bot, IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
+        public MessageCallbackService(CommandFactory commandFactory, IMessageService messageService, ITeamService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
-            _bot = bot;
+            _commandFactory = commandFactory;
             _messageService = messageService;
-            _teamsService = teamsService;
+            _teamService = teamsService;
             _playerRepository = playerRepository;
             _sheetService = sheetService;
             _logger = logger;
@@ -33,7 +32,7 @@ namespace TelegramFootballBot.Services
 
         public async void OnMessageRecievedAsync(object sender, MessageEventArgs e)
         {
-            var command = _bot.Commands.FirstOrDefault(c => c.StartsWith(e.Message));
+            var command = _commandFactory.Create(e.Message);
             if (command == null)
                 return;
 
@@ -145,7 +144,7 @@ namespace TelegramFootballBot.Services
         private async Task DetermineIfUserLikesTeamAsync(CallbackQuery callbackQuery)
         {
             await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
-            _teamsService.ProcessPollChoice(new TeamPollCallback(callbackQuery.Data));
+            _teamService.ProcessPollChoice(new TeamPollCallback(callbackQuery.Data));
             
             var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
             player.PollMessageId = await SendTeamPollMessageAsync(callbackQuery.Message.Chat.Id);
@@ -154,7 +153,7 @@ namespace TelegramFootballBot.Services
 
         private async Task<int> SendTeamPollMessageAsync(ChatId chatId)
         {
-            var message = _teamsService.LikesMessage();
+            var message = _teamService.GetMessageWithLikes();
             return (await _messageService.SendMessageAsync(chatId, message)).MessageId;
         }
 

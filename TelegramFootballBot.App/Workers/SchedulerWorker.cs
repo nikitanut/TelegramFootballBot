@@ -9,18 +9,18 @@ using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
 
-namespace TelegramFootballBot.App.Worker
+namespace TelegramFootballBot.App.Workers
 {
     public class SchedulerWorker : BackgroundService
     {
         private readonly IMessageService _messageService;
-        private readonly TeamsService _teamsService;
+        private readonly ITeamService _teamsService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
         private bool _firstLaunch = true;
 
-        public SchedulerWorker(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
+        public SchedulerWorker(IMessageService messageService, ITeamService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
             _messageService = messageService;
             _teamsService = teamsService;
