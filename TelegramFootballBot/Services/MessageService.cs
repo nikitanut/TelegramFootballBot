@@ -23,7 +23,6 @@ namespace TelegramFootballBot.Services
         private readonly ISheetService _sheetService;
         private string _approvedPlayersMessage = null;
         private string _likesMessage = null;
-        private readonly CancellationTokenSource _cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
 
         public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, ITeamService teamsService, ISheetService sheetService, ILogger logger)
         {
@@ -97,7 +96,8 @@ namespace TelegramFootballBot.Services
 
         public async Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null)
         {
-            return await _client.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: _cts.Token);
+            using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
+            return await _client.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cts.Token);
         }
 
         private async Task SendMessageAsync(IEnumerable<Player> players, string text, IReplyMarkup replyMarkup = null, Action<Player, Message> actionOnSuccess = null)
@@ -144,7 +144,8 @@ namespace TelegramFootballBot.Services
         {
             try
             {
-                await _client.DeleteMessageAsync(chatId, messageId, cancellationToken: _cts.Token);
+                using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
+                await _client.DeleteMessageAsync(chatId, messageId, cancellationToken: cts.Token);
             }
             catch (Exception ex)
             {
@@ -185,12 +186,14 @@ namespace TelegramFootballBot.Services
 
         public async Task<Message> EditMessageTextAsync(ChatId chatId, int messageId, string text)
         {
-            return await _client.EditMessageTextAsync(chatId, messageId, text, cancellationToken: _cts.Token);
+            using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
+            return await _client.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cts.Token);
         }
 
         public async Task ClearReplyMarkupAsync(ChatId chatId, int messageId)
         {
-            await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: _cts.Token);
+            using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
+            await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: cts.Token);
         }
     }
 }
