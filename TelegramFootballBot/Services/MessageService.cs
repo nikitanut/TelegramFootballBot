@@ -20,15 +20,17 @@ namespace TelegramFootballBot.Services
         private readonly ILogger _logger;
         private readonly ITelegramBotClient _client;
         private readonly TeamsService _teamsService;
+        private readonly ISheetService _sheetService;
         private string _approvedPlayersMessage = null;
         private string _likesMessage = null;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
 
-        public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, TeamsService teamsService, ILogger logger)
+        public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, TeamsService teamsService, ISheetService sheetService, ILogger logger)
         {
             _client = botClient;
             _playerRepository = playerRepository;
             _teamsService = teamsService;
+            _sheetService = sheetService;
             _logger = logger;            
         }
 
@@ -47,7 +49,7 @@ namespace TelegramFootballBot.Services
 
         public async Task UpdateTotalPlayersMessagesAsync()
         {
-            var approvedPlayersMessage = await SheetService.GetInstance().GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await _sheetService.GetApprovedPlayersMessageAsync();
             if (approvedPlayersMessage == _approvedPlayersMessage)
                 return;
 

@@ -12,25 +12,16 @@ using ValueRange = Google.Apis.Sheets.v4.Data.ValueRange;
 
 namespace TelegramFootballBot.Services
 {
-    public class SheetService
+    public class SheetService : ISheetService
     {
-        private static SheetService _sheetService;    
-        
         private readonly SheetsService _sheetsService;        
 
-        private SheetService()
+        public SheetService(Stream credentialsFile)
         {
-            _sheetsService = GetSheetsService();
+            _sheetsService = CreateSheetsService(credentialsFile);
         }
 
-        public static SheetService GetInstance()
-        {
-            if (_sheetService == null)
-                _sheetService = new SheetService();
-            return _sheetService;
-        }
-
-        private SheetsService GetSheetsService()
+        private SheetsService CreateSheetsService(Stream credentialsFile)
         {
             GoogleCredential credential;
 
@@ -91,7 +82,7 @@ namespace TelegramFootballBot.Services
             return SheetHelper.GetApprovedPlayersString(players);            
         }
 
-        public async Task<List<string>> GetPlayersReadyToPlay()
+        public async Task<List<string>> GetPlayersReadyToPlayAsync()
         {
             var sheet = await GetSheetAsync();
             return SheetHelper.GetPlayersReadyToPlay(sheet.Values);

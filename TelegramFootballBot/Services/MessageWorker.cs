@@ -11,25 +11,25 @@ namespace TelegramFootballBot.Services
 {
     public class MessageWorker
     {
-        public IPlayerRepository PlayerRepository { get; }
-
-        private readonly ILogger _logger;
-        private readonly ITelegramBotClient _client;
         private readonly Bot _bot;
-        private readonly IMessageService _messageService;  
+        private readonly ITelegramBotClient _client;
+        private readonly IMessageService _messageService; 
+        private readonly IPlayerRepository _playerRepository;
         private readonly TeamsService _teamsService;
+        private readonly ILogger _logger;
         private readonly MessageCallbackService _messageCallbackService;
+
         private bool _isRunning = false;
         
-        public MessageWorker(Bot bot, ITelegramBotClient client, IMessageService messageService, IPlayerRepository playerRepository, TeamsService teamsServiceSet, ILogger logger)
-        {            
-            PlayerRepository = playerRepository;
+        public MessageWorker(Bot bot, ITelegramBotClient client, IMessageService messageService, IPlayerRepository playerRepository, TeamsService teamsService, ISheetService sheetService, ILogger logger)
+        {
             _bot = bot;
             _client = client;
-            _teamsService = teamsServiceSet;
-            _logger = logger;
-            _messageService = messageService;            
-            _messageCallbackService = new MessageCallbackService(_messageService, _teamsService, PlayerRepository, _logger);
+            _messageService = messageService;
+            _playerRepository = playerRepository;
+            _teamsService = teamsService;
+            _logger = logger;                   
+            _messageCallbackService = new MessageCallbackService(_messageService, _teamsService, _playerRepository, sheetService, _logger);
         }
 
         public void Run()
@@ -76,7 +76,7 @@ namespace TelegramFootballBot.Services
         {
             try
             {
-                return (await PlayerRepository.GetAsync(userId)).Name;
+                return (await _playerRepository.GetAsync(userId)).Name;
             }
             catch (UserNotFoundException)
             {

@@ -12,11 +12,13 @@ namespace TelegramFootballBot.Models.Commands
 
         private readonly IMessageService _messageService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly ISheetService _sheetService;
 
-        public RegisterCommand(IMessageService messageService, IPlayerRepository playerRepository)
+        public RegisterCommand(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService)
         {
             _messageService = messageService;
             _playerRepository = playerRepository;
+            _sheetService = sheetService;
         }
 
         public override async Task Execute(Message message)
@@ -29,7 +31,7 @@ namespace TelegramFootballBot.Models.Commands
 
             var messageForUser = await RegisterPlayer(message);
             await _messageService.SendMessageAsync(message.Chat.Id, messageForUser);
-            await SheetService.GetInstance().UpsertPlayerAsync(PlayerName(message));
+            await _sheetService.UpsertPlayerAsync(PlayerName(message));
             await _messageService.SendTextMessageToBotOwnerAsync($"{PlayerName(message)} зарегистрировался");
         }
 

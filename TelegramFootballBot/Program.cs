@@ -5,6 +5,7 @@ using System.Threading;
 using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Models;
+using System.IO;
 
 namespace TelegramFootballBot
 {
@@ -24,11 +25,17 @@ namespace TelegramFootballBot
 
                 var playerRepository = new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options);
                 var teamService = new TeamsService(playerRepository);
-                var messageService = new MessageService(botClient, playerRepository, teamService, logger);
                 
-                var bot = new Bot(messageService, playerRepository);
-                var scheduler = new Scheduler(messageService, teamService, playerRepository, logger);
-                var messageWorker = new MessageWorker(bot, botClient, messageService, playerRepository, teamService, logger);
+                SheetService sheetService;
+                using (var credentialsFile = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+                {
+                    sheetService = new SheetService(credentialsFile);
+                };
+
+                var messageService = new MessageService(botClient, playerRepository, teamService, sheetService, logger);                
+                var bot = new Bot(messageService, playerRepository, sheetService);
+                var scheduler = new Scheduler(messageService, teamService, playerRepository, sheetService, logger);
+                var messageWorker = new MessageWorker(bot, botClient, messageService, playerRepository, teamService, sheetService, logger);
 
                 messageWorker.Run();
                 scheduler.Run();

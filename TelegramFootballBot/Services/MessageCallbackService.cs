@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Helpers;
 using TelegramFootballBot.Models;
@@ -17,13 +16,15 @@ namespace TelegramFootballBot.Services
         private readonly IMessageService _messageService;
         private readonly TeamsService _teamsService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
-        public MessageCallbackService(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
+        public MessageCallbackService(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
             _messageService = messageService;
             _teamsService = teamsService;
             _playerRepository = playerRepository;
+            _sheetService = sheetService;
             _logger = logger;
         }
 
@@ -70,7 +71,7 @@ namespace TelegramFootballBot.Services
             }
 
             var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
-            await SheetService.GetInstance().UpdateApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
+            await _sheetService.UpdateApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
 
             player.IsGoingToPlay = playerSetCallback.UserAnswer == Constants.YES_ANSWER;
             player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(callbackQuery.Message.Chat.Id, player);
@@ -86,7 +87,7 @@ namespace TelegramFootballBot.Services
         /// <returns>Sent message id</returns>
         private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
         {
-            var approvedPlayersMessage = await SheetService.GetInstance().GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await _sheetService.GetApprovedPlayersMessageAsync();
 
             if (player.ApprovedPlayersMessageId != 0)
             {

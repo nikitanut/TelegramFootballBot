@@ -8,6 +8,7 @@ using TelegramFootballBot.Services;
 using TelegramFootballBot.Data;
 using TelegramFootballBot.Models;
 using TelegramFootballBot.App.Worker;
+using System.IO;
 
 namespace TelegramFootballBot.App
 {
@@ -22,17 +23,26 @@ namespace TelegramFootballBot.App
                         .WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
                         .CreateLogger());
 
-                    services.AddSingleton<IPlayerRepository, PlayerRepository>(s => 
+                    services.AddSingleton<IPlayerRepository>(s => 
                         new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options));
+
+                    services.AddSingleton<ISheetService>(s =>
+                    {
+                        using (var credentialsFile = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+                        {
+                            return new SheetService(credentialsFile);
+                        };
+                    });
 
                     services.AddHostedService(s => 
                     {
                         var logger = s.GetRequiredService<ILogger>();
                         var teamSet = new TeamsService(s.GetRequiredService<IPlayerRepository>());
                         var playerRepository = s.GetRequiredService<IPlayerRepository>();
+                        var sheetService = s.GetRequiredService<ISheetService>();
                         var botClient = Bot.CreateBotClient();
-                        var messageService = new MessageService(botClient, playerRepository, teamSet, logger);
-                        return new SchedulerWorker(messageService, teamSet, playerRepository, logger);
+                        var messageService = new MessageService(botClient, playerRepository, teamSet, sheetService, logger);
+                        return new SchedulerWorker(messageService, teamSet, playerRepository, sheetService, logger);
                     });
                 })
                 .Build();

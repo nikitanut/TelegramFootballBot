@@ -13,11 +13,13 @@ namespace TelegramFootballBot.Models
 
         private readonly IMessageService _messageService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly ISheetService _sheetService;
 
-        public Bot(IMessageService messageService, IPlayerRepository playerRepository)
+        public Bot(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService)
         {
             _messageService = messageService;
             _playerRepository = playerRepository;
+            _sheetService = sheetService;
             InitializeCommands();
         }
 
@@ -30,7 +32,7 @@ namespace TelegramFootballBot.Models
         {
             Commands = new List<Command>
             {
-                new RegisterCommand(_messageService, _playerRepository),
+                new RegisterCommand(_messageService, _playerRepository, _sheetService),
                 new UnregisterCommand(_messageService, _playerRepository),
                 new GoCommand(_messageService, _playerRepository),
                 new SwitchNotifierCommand(_messageService),

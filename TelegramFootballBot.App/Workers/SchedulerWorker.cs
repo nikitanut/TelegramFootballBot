@@ -16,14 +16,16 @@ namespace TelegramFootballBot.App.Worker
         private readonly IMessageService _messageService;
         private readonly TeamsService _teamsService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
         private bool _firstLaunch = true;
 
-        public SchedulerWorker(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ILogger logger)
+        public SchedulerWorker(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
             _messageService = messageService;
             _teamsService = teamsService;
             _playerRepository = playerRepository;
+            _sheetService = sheetService;
             _logger = logger;            
         }
 
@@ -50,7 +52,7 @@ namespace TelegramFootballBot.App.Worker
 
             if (DateHelper.TeamsGenerationTimeHasCome(now) || _teamsService.IsActiveDisliked)
             {
-                var players = await SheetService.GetInstance().GetPlayersReadyToPlay();
+                var players = await _sheetService.GetPlayersReadyToPlayAsync();
                 await _teamsService.GenerateNewTeams(players);
                 await SendGeneratedTeamsMessageAsync();
             }
@@ -70,7 +72,7 @@ namespace TelegramFootballBot.App.Worker
         {
             try
             {
-                await SheetService.GetInstance().ClearApproveCellsAsync();
+                await _sheetService.ClearApproveCellsAsync();
                 await ClearPlayersMessages();
             }
             catch (Exception ex)
@@ -156,7 +158,7 @@ namespace TelegramFootballBot.App.Worker
         private async Task SetPlayersReadyToPlayBySheet()
         {
             var playersUpdate = new List<Player>();
-            var playersReadyFromSheet = await SheetService.GetInstance().GetPlayersReadyToPlay();
+            var playersReadyFromSheet = await _sheetService.GetPlayersReadyToPlayAsync();
             var playersRecievedMessages = await _playerRepository.GetRecievedMessageAsync();
 
             foreach (var player in playersRecievedMessages)
