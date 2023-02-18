@@ -24,7 +24,7 @@ namespace TelegramFootballBot
                 logger.Information("Bot started");
 
                 var playerRepository = new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options);
-                var teamService = new TeamsService(playerRepository);
+                var teamsService = new TeamsService(playerRepository);
                 
                 SheetService sheetService;
                 using (var credentialsFile = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
@@ -32,10 +32,11 @@ namespace TelegramFootballBot
                     sheetService = new SheetService(credentialsFile);
                 };
 
-                var messageService = new MessageService(botClient, playerRepository, teamService, sheetService, logger);                
+                var messageService = new MessageService(botClient, playerRepository, teamsService, sheetService, logger);                
                 var bot = new Bot(messageService, playerRepository, sheetService);
-                var scheduler = new Scheduler(messageService, teamService, playerRepository, sheetService, logger);
-                var messageWorker = new MessageWorker(bot, botClient, messageService, playerRepository, teamService, sheetService, logger);
+                var scheduler = new Scheduler(messageService, teamsService, playerRepository, sheetService, logger);
+                var messageCallbackService = new MessageCallbackService(bot, messageService, teamsService, playerRepository, sheetService, logger);
+                var messageWorker = new MessageWorker(botClient, messageCallbackService);
 
                 messageWorker.Run();
                 scheduler.Run();

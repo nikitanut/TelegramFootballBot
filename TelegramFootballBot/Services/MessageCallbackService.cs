@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Args;
@@ -13,19 +14,42 @@ namespace TelegramFootballBot.Services
 {
     public class MessageCallbackService
     {
+        private readonly Bot _bot;
         private readonly IMessageService _messageService;
         private readonly TeamsService _teamsService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
-        public MessageCallbackService(IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
+        public MessageCallbackService(Bot bot, IMessageService messageService, TeamsService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
+            _bot = bot;
             _messageService = messageService;
             _teamsService = teamsService;
             _playerRepository = playerRepository;
             _sheetService = sheetService;
             _logger = logger;
+        }
+
+        public async void OnMessageRecievedAsync(object sender, MessageEventArgs e)
+        {
+            var command = _bot.Commands.FirstOrDefault(c => c.StartsWith(e.Message));
+            if (command == null)
+                return;
+
+            try
+            {
+                await command.Execute(e.Message);
+                var playerName = await GetPlayerNameAsync(e.Message.From.Id);
+                _logger.Information($"Command {e.Message.Text} processed for user {playerName}");
+            }
+            catch (Exception ex)
+            {
+                var playerName = await GetPlayerNameAsync(e.Message.From.Id);
+                _logger.Error(ex, $"Error on processing {e.Message.Text} command for user {playerName}");
+                await _messageService.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+                await _messageService.SendErrorMessageToUserAsync(e.Message.Chat.Id, playerName);
+            }
         }
 
         public async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
@@ -47,6 +71,18 @@ namespace TelegramFootballBot.Services
             catch (Exception ex)
             {
                 await ProcessCallbackError(e.CallbackQuery, ex);
+            }
+        }
+
+        private async Task<string> GetPlayerNameAsync(int userId)
+        {
+            try
+            {
+                return (await _playerRepository.GetAsync(userId)).Name;
+            }
+            catch (UserNotFoundException)
+            {
+                return string.Empty;
             }
         }
 
