@@ -11,6 +11,7 @@ using System.IO;
 using Telegram.Bot;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core;
+using Microsoft.Extensions.Configuration;
 
 namespace TelegramFootballBot.App
 {
@@ -21,6 +22,8 @@ namespace TelegramFootballBot.App
             var host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+
                     services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
                         .WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
                         .CreateLogger());
@@ -32,11 +35,11 @@ namespace TelegramFootballBot.App
                     {
                         using (var credentialsFile = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
                         {
-                            return new SheetService(credentialsFile);
+                            return new SheetService(credentialsFile, configuration["googleDocSheetId"]);
                         };
                     });
                                         
-                    services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(AppSettings.BotToken));
+                    services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
                     services.AddSingleton<ITeamService, TeamService>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();

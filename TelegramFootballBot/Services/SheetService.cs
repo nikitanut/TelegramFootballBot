@@ -14,11 +14,13 @@ namespace TelegramFootballBot.Core.Services
 {
     public class SheetService : ISheetService
     {
-        private readonly SheetsService _sheetsService;        
+        private readonly SheetsService _sheetsService;
+        private readonly string _googleDocSheetId;
 
-        public SheetService(Stream credentialsFile)
+        public SheetService(Stream credentialsFile, string googleDocSheetId)
         {
             _sheetsService = CreateSheetsService(credentialsFile);
+            _googleDocSheetId = googleDocSheetId;
         }
 
         private static SheetsService CreateSheetsService(Stream credentialsFile)
@@ -40,7 +42,7 @@ namespace TelegramFootballBot.Core.Services
                 userRow = await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
 
             var range = SheetHelper.GetUserRange(userRow);
-            var request = _sheetsService.Spreadsheets.Values.Update(SheetHelper.GetValueRange(range, cellValue), AppSettings.GoogleDocSheetId, range);
+            var request = _sheetsService.Spreadsheets.Values.Update(SheetHelper.GetValueRange(range, cellValue), _googleDocSheetId, range);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
@@ -86,7 +88,7 @@ namespace TelegramFootballBot.Core.Services
 
         private async Task<ValueRange> GetSheetAsync()
         {
-            var request = _sheetsService.Spreadsheets.Values.Get(AppSettings.GoogleDocSheetId, SheetHelper.GetAllUsersRange());
+            var request = _sheetsService.Spreadsheets.Values.Get(_googleDocSheetId, SheetHelper.GetAllUsersRange());
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
             return await request.ExecuteAsync(cts.Token);
         }
@@ -115,7 +117,7 @@ namespace TelegramFootballBot.Core.Services
                 return;
 
             var cutPasteStyleRequest = SheetHelper.GetMoveCellsStyleRequest(oldTotalsRowIndex, newTotalsRowIndex);
-            var updateRequest = _sheetsService.Spreadsheets.BatchUpdate(cutPasteStyleRequest, AppSettings.GoogleDocSheetId);
+            var updateRequest = _sheetsService.Spreadsheets.BatchUpdate(cutPasteStyleRequest, _googleDocSheetId);
 
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
             await updateRequest.ExecuteAsync(cts.Token);
@@ -124,7 +126,7 @@ namespace TelegramFootballBot.Core.Services
         private async Task<BatchUpdateValuesResponse> UpdateSheetAsync(IList<IList<object>> values, string range)
         {
             var updateDataRequest = SheetHelper.GetBatchUpdateRequest(values, range);
-            var request = _sheetsService.Spreadsheets.Values.BatchUpdate(updateDataRequest, AppSettings.GoogleDocSheetId);
+            var request = _sheetsService.Spreadsheets.Values.BatchUpdate(updateDataRequest, _googleDocSheetId);
 
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
             return await request.ExecuteAsync(cts.Token);
