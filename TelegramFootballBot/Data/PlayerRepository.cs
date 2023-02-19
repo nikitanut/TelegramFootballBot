@@ -85,13 +85,19 @@ namespace TelegramFootballBot.Core.Data
         public async Task<List<Player>> GetRecievedMessageAsync()
         {
             using var db = new FootballBotDbContext(_options);
-            return (await db.Players.ToListAsync()).Where(p => p.ApprovedPlayersMessageId != 0).ToList();
+            return await db.Players.Where(p => p.ApprovedPlayersMessageId != 0).ToListAsync();
         }
 
         public async Task<List<Player>> GetReadyToPlayAsync()
         {
             using var db = new FootballBotDbContext(_options);
-            return (await db.Players.ToListAsync()).Where(p => p.IsGoingToPlay == true).ToList();
+            return await db.Players.Where(p => p.IsGoingToPlay).ToListAsync();
+        }
+
+        public async Task<List<Player>> GetVotedAsync()
+        {
+            using var db = new FootballBotDbContext(_options);
+            return await db.Players.Where(p => p.PollMessageId != 0).ToListAsync();
         }
     }
 }

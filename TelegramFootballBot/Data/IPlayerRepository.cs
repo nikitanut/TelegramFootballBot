@@ -23,5 +23,7 @@ namespace TelegramFootballBot.Core.Data
         Task<List<Player>> GetRecievedMessageAsync();
 
         Task<List<Player>> GetReadyToPlayAsync();
+
+        Task<List<Player>> GetVotedAsync();
     }
 }

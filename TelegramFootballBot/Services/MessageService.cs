@@ -63,7 +63,7 @@ namespace TelegramFootballBot.Core.Services
                 return;
 
             _likesMessage = likesMessage;
-            var playersVoted = (await _playerRepository.GetAllAsync()).Where(p => p.PollMessageId != 0);
+            var playersVoted = await _playerRepository.GetVotedAsync();
             await EditMessageAsync(playersVoted, _likesMessage, Constants.TEAM_POLL_MESSAGE_TYPE);
         }
 
