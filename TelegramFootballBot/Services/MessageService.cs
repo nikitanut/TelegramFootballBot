@@ -167,7 +167,7 @@ namespace TelegramFootballBot.Core.Services
 
         private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds, Action<Player, Message> actionOnSuccess = null)
         {
-            while (requests.Count > 0)
+            while (requests.Any())
             {
                 var response = await Task.WhenAny(requests);
                 requests.Remove(response);

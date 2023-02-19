@@ -43,7 +43,6 @@ namespace TelegramFootballBot.App
                     services.AddSingleton<ITeamService, TeamService>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();
-                    services.AddSingleton<MessageCallbackService>();
 
                     services.AddHostedService<SchedulerWorker>();
                     services.AddHostedService<MessageProcessingWorker>();
