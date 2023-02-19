@@ -33,13 +33,13 @@ namespace TelegramFootballBot.Core.Data
             return await db.Players.ToListAsync();
         }
 
-        public async Task<Player> GetAsync(int id)
+        public async Task<Player> GetAsync(long id)
         {
             using var db = new FootballBotDbContext(_options);
             return await GetAsync(id, db);
         }
 
-        private static async Task<Player> GetAsync(int id, FootballBotDbContext context)
+        private static async Task<Player> GetAsync(long id, FootballBotDbContext context)
         {
             var player = await context.Players.FindAsync(id);
             return player ?? throw new UserNotFoundException();
@@ -52,7 +52,7 @@ namespace TelegramFootballBot.Core.Data
             return player ?? throw new UserNotFoundException();
         }
 
-        public async Task RemoveAsync(int id)
+        public async Task RemoveAsync(long id)
         {
             using var db = new FootballBotDbContext(_options);
             var player = await GetAsync(id, db);

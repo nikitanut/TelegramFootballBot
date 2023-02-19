@@ -2,7 +2,7 @@
 {
     public class Player
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         public string Name { get; set; }
 
@@ -23,7 +23,7 @@
             Name = name;
         }
 
-        public Player(int id, string name, long chatid)
+        public Player(long id, string name, long chatid)
         {
             Id = id;
             Name = name;

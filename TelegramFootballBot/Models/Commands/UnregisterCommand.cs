@@ -26,7 +26,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             await _messageService.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
         }
 
-        private async Task<string> DeletePlayer(int playerId)
+        private async Task<string> DeletePlayer(long playerId)
         {
             try
             {

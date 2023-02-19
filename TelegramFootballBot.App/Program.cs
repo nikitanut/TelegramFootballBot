@@ -10,8 +10,8 @@ using TelegramFootballBot.App.Workers;
 using System.IO;
 using Telegram.Bot;
 using TelegramFootballBot.Core.Helpers;
-using TelegramFootballBot.Core;
 using Microsoft.Extensions.Configuration;
+using Telegram.Bot.Polling;
 
 namespace TelegramFootballBot.App
 {
@@ -43,7 +43,9 @@ namespace TelegramFootballBot.App
                     services.AddSingleton<ITeamService, TeamService>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();
-
+                    services.AddScoped<IUpdateHandler, UpdateHandler>();
+                    services.AddScoped<IReceiverService, ReceiverService>();
+                    
                     services.AddHostedService<SchedulerWorker>();
                     services.AddHostedService<MessageProcessingWorker>();
                 })

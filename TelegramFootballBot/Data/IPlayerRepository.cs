@@ -6,7 +6,7 @@ namespace TelegramFootballBot.Core.Data
 {
     public interface IPlayerRepository
     {
-        Task<Player> GetAsync(int id);
+        Task<Player> GetAsync(long id);
 
         Task<Player> GetAsync(string name);
 
@@ -16,7 +16,7 @@ namespace TelegramFootballBot.Core.Data
 
         Task UpdateMultipleAsync(IEnumerable<Player> players);
 
-        Task RemoveAsync(int id);
+        Task RemoveAsync(long id);
 
         Task<List<Player>> GetAllAsync();
 

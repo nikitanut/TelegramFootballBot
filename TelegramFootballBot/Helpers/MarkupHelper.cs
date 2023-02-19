@@ -17,9 +17,8 @@ namespace TelegramFootballBot.Core.Helpers
 
             for (var i = 0; i < keyBoard[0].Length; i++)
             {
-                keyBoard[0][i] = new InlineKeyboardButton
-                {
-                    Text = buttonsLabels[i],                    
+                keyBoard[0][i] = new InlineKeyboardButton(buttonsLabels[i])
+                {                  
                     CallbackData = Callback.ToCallbackText(callbackPrefix, buttonValues[i])
                 };
             }
