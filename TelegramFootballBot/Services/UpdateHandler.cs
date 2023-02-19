@@ -36,15 +36,15 @@ namespace TelegramFootballBot.Core.Services
         {
             var handler = update switch
             {
-                { Message: { } message } => BotOnMessageReceived(message, cancellationToken),
-                { CallbackQuery: { } callbackQuery } => BotOnCallbackQueryReceived(callbackQuery, cancellationToken),
-                _ => UnknownUpdateHandlerAsync(update, cancellationToken)
+                { Message: { } message } => BotOnMessageReceived(message),
+                { CallbackQuery: { } callbackQuery } => BotOnCallbackQueryReceived(callbackQuery),
+                _ => UnknownUpdateHandlerAsync(update)
             };
 
             await handler;
         }
 
-        private async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
+        private async Task BotOnMessageReceived(Message message)
         {
             var command = _commandFactory.Create(message);
             if (command == null)
@@ -65,7 +65,7 @@ namespace TelegramFootballBot.Core.Services
             }
         }
 
-        private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationToken cancellationToken)
+        private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace TelegramFootballBot.Core.Services
             }
         }
 
-        private Task UnknownUpdateHandlerAsync(Update update, CancellationToken cancellationToken)
+        private Task UnknownUpdateHandlerAsync(Update update)
         {
             _logger.Information("Unknown update type: {UpdateType}", update.Type);
             return Task.CompletedTask;
