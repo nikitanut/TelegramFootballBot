@@ -23,10 +23,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             if (!IsBotOwner(message))
                 return;
 
-            string playerName;
-            int rating;
-
-            if (!TryParse(message, out playerName, out rating))
+            if (!TryParse(message, out string playerName, out int rating))
             {
                 await _messageService.SendMessageAsync(message.Chat.Id, "Wrong rating string. Example: /rate playerName rating");
                 return;
@@ -50,17 +47,17 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             rating = 0;
 
             var ratingString = message.Text.Length > Name.Length
-                ? message.Text.Substring(Name.Length).Trim()
+                ? message.Text[Name.Length..].Trim()
                 : string.Empty;
 
             var ratingSeparatorIndex = ratingString.LastIndexOf(' ');
             if (ratingSeparatorIndex == -1) return false;
 
             name = ratingString.Substring(0, ratingSeparatorIndex);
-            return int.TryParse(ratingString.Substring(ratingSeparatorIndex + 1), out rating);
+            return int.TryParse(ratingString[(ratingSeparatorIndex + 1)..], out rating);
         }
 
-        private async Task<Player> FindPlayer(IPlayerRepository playerRepository, string playerName)
+        private static async Task<Player> FindPlayer(IPlayerRepository playerRepository, string playerName)
         {
             try
             {

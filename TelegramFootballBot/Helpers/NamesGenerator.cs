@@ -7,7 +7,7 @@ namespace TelegramFootballBot.Core.Helpers
     public static class NamesGenerator
     {
         
-        private static Random _random = new Random();
+        private static readonly Random _random = new();
 
         public static string[] Generate(int numberOfNames)
         {
@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Core.Helpers
         private static string Generate(IEnumerable<string> namesToIgnore)
         {
             var remainingNames = _names.Where(n => !namesToIgnore.Contains(n)).ToArray();
-            return remainingNames[_random.Next(remainingNames.Count())];
+            return remainingNames[_random.Next(remainingNames.Length)];
         }
         
         private static readonly string[] _names = new[] {

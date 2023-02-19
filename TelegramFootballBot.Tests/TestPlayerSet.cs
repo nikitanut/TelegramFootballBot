@@ -5,7 +5,7 @@ namespace TelegramFootballBot.Tests
 {
     public static class TestPlayerSet
     {
-        private static List<Player> _players;
+        private static readonly List<Player> _players;
 
         static TestPlayerSet()
         {

@@ -10,7 +10,7 @@ namespace TelegramFootballBot.Core.Helpers
 {
     public class CommandFactory
     {
-        private List<Command> _commands;
+        private readonly List<Command> _commands;
 
         public CommandFactory(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService)
         {

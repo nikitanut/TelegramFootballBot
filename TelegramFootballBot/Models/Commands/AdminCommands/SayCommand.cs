@@ -21,7 +21,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
                 return;
 
             var text = message.Text.Length > Name.Length
-                ? message.Text.Substring(Name.Length).Trim()
+                ? message.Text[Name.Length..].Trim()
                 : string.Empty;
 
             if (text != string.Empty)

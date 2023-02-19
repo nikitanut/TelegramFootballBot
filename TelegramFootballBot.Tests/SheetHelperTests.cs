@@ -91,7 +91,7 @@ namespace TelegramFootballBot.Tests
             var orderedPlayers = SheetHelper.GetOrderedPlayers(_values);
             var expectedPlayers = _players.OrderBy(p => p[0]).ToList();
             
-            Assert.Equal(expectedPlayers.Count, orderedPlayers.Count());
+            Assert.Equal(expectedPlayers.Count, orderedPlayers.Count);
 
             for (var i = 0; i < expectedPlayers.Count; i++)
             {
@@ -123,7 +123,7 @@ namespace TelegramFootballBot.Tests
         {
             var totalsRow = SheetHelper.GetTotalsRow(_values);
 
-            Assert.Equal(2, totalsRow.Count());
+            Assert.Equal(2, totalsRow.Count);
             Assert.Equal("Всего", totalsRow[0]);
             Assert.Equal("=SUM(B3:B22)", totalsRow[1]);
         }
@@ -181,7 +181,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void NewValues_Get_ThrowsTotalsRowNotFound()
         {
-            Action actual = () => { SheetHelper.GetNewValues(_values.Take(_values.Count - 1).ToList(), _players); };
+            void actual() { SheetHelper.GetNewValues(_values.Take(_values.Count - 1).ToList(), _players); }
 
             Assert.Throws<TotalsRowNotFoundExeption>(actual);
         }

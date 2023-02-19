@@ -18,7 +18,7 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
             return Name + Constants.CALLBACK_PREFIX_DATA_SEPARATOR + activePollId;
         }
 
-        private Guid GetPollId(string callbackData)
+        private static Guid GetPollId(string callbackData)
         {
             var pollString = Prefix(callbackData).Split(Constants.CALLBACK_PREFIX_DATA_SEPARATOR)[1];
             if (!Guid.TryParse(pollString, out Guid pollId))

@@ -5,7 +5,7 @@ namespace TelegramFootballBot.Core.Helpers
 {
     public static class DateHelper
     {
-        private static readonly Dictionary<int, string> _russianMonthNames = new Dictionary<int, string> { { 1, "января" }, { 2, "февраля" }, { 3, "марта" }, { 4, "апреля" }, { 5, "мая" }, { 6, "июня" }, { 7, "июля" }, { 8, "августа" }, { 9, "сентября" }, { 10, "октября" }, { 11, "ноября" }, { 12, "декабря" } };
+        private static readonly Dictionary<int, string> _russianMonthNames = new() { { 1, "января" }, { 2, "февраля" }, { 3, "марта" }, { 4, "апреля" }, { 5, "мая" }, { 6, "июня" }, { 7, "июля" }, { 8, "августа" }, { 9, "сентября" }, { 10, "октября" }, { 11, "ноября" }, { 12, "декабря" } };
 
         public static bool DistributionTimeHasCome(DateTime currentDate)
         {

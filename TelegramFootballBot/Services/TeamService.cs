@@ -17,9 +17,9 @@ namespace TelegramFootballBot.Core.Services
         public bool IsActiveDisliked { get; private set;}
 
         private readonly IPlayerRepository _playerRepository;
-        private List<List<Team>> _teamSets = new List<List<Team>>();
-        private List<Team> _currentTeamSet = new List<Team>();
-        private List<List<Team>> _dislikedTeams = new List<List<Team>>();
+        private List<List<Team>> _teamSets = new();
+        private List<Team> _currentTeamSet = new();
+        private readonly List<List<Team>> _dislikedTeams = new();
         private Guid _activePollId;
         private int _likesForCurrentTeam;
         private int _dislikesForActive;

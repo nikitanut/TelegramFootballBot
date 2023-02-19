@@ -21,7 +21,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             await _messageService.SendMessageAsync(message.Chat.Id, Text(message));
         }
 
-        private string Text(Message message)
+        private static string Text(Message message)
         {
             if (IsBotOwner(message))
             {

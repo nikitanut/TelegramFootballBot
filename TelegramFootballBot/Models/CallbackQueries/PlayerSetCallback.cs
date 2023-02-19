@@ -23,7 +23,7 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
             return Name + Constants.CALLBACK_PREFIX_DATA_SEPARATOR + gameDate.ToString("yyyy-MM-dd");
         }
 
-        private DateTime GetGameDate(string callbackData)
+        private static DateTime GetGameDate(string callbackData)
         {
             var gameDateString = Prefix(callbackData).Split(Constants.CALLBACK_PREFIX_DATA_SEPARATOR)[1];
             if (!DateTime.TryParse(gameDateString, out DateTime gameDate))

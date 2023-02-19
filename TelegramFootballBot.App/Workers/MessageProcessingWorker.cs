@@ -21,7 +21,7 @@ namespace TelegramFootballBot.App.Workers
         {
             _client.OnMessage += _messageCallbackService.OnMessageRecievedAsync;
             _client.OnCallbackQuery += _messageCallbackService.OnCallbackQueryAsync;
-            _client.StartReceiving();
+            _client.StartReceiving(cancellationToken: stoppingToken);
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
 

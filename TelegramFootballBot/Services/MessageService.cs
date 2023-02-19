@@ -130,14 +130,14 @@ namespace TelegramFootballBot.Core.Services
             await ProcessRequests(requests, playersRequestsIds);
         }
 
-        private int MessageId(string messageType, Player player)
+        private static int MessageId(string messageType, Player player)
         {
-            switch (messageType)
+            return messageType switch
             {
-                case Constants.APPROVED_PLAYERS_MESSAGE_TYPE: return player.ApprovedPlayersMessageId;
-                case Constants.TEAM_POLL_MESSAGE_TYPE: return player.PollMessageId;
-                default: throw new ArgumentOutOfRangeException(nameof(messageType));
-            }
+                Constants.APPROVED_PLAYERS_MESSAGE_TYPE => player.ApprovedPlayersMessageId,
+                Constants.TEAM_POLL_MESSAGE_TYPE => player.PollMessageId,
+                _ => throw new ArgumentOutOfRangeException(nameof(messageType)),
+            };
         }
 
         public async Task DeleteMessageAsync(ChatId chatId, int messageId)
@@ -193,7 +193,7 @@ namespace TelegramFootballBot.Core.Services
         public async Task ClearReplyMarkupAsync(ChatId chatId, int messageId)
         {
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-            await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: cts.Token);
+            await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { Array.Empty<InlineKeyboardButton>() }, cancellationToken: cts.Token);
         }
     }
 }

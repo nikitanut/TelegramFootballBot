@@ -31,9 +31,9 @@ namespace TelegramFootballBot.Core.Helpers
             var generatingSets = DefaultSet();
             var playersToDistribute = players.OrderByDescending(p => p.Rating).Take(MAX_PLAYERS).ToList();
             if (playersToDistribute.Count < MIN_PLAYERS)
-                return new KeyValuePair<List<Team>, double?>[0];
+                return Array.Empty<KeyValuePair<List<Team>, double?>>();
             
-            foreach (var line in File.ReadLines($"Variants for {playersToDistribute.Count()}"))
+            foreach (var line in File.ReadLines($"Variants for {playersToDistribute.Count}"))
                 AnalyzeTeamSetRating(generatingSets, SetFromFileLine(playersToDistribute, line));
 
             return generatingSets.Where(v => v.Key != null).ToArray();

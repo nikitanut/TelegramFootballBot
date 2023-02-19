@@ -157,19 +157,18 @@ namespace TelegramFootballBot.Core.Services
             return (await _messageService.SendMessageAsync(chatId, message)).MessageId;
         }
 
-        private string GetApproveCellValue(string userAnswer)
+        private static string GetApproveCellValue(string userAnswer)
         {
-            switch (userAnswer)
+            return userAnswer switch
             {
-                case Constants.YES_ANSWER: return "1";
-                case Constants.NO_ANSWER: return "0";
-                case Constants.MAYBE_ANSWER: return "0.5";
-                default:
-                    throw new ArgumentOutOfRangeException($"userAnswer: {userAnswer}");
-            }
+                Constants.YES_ANSWER => "1",
+                Constants.NO_ANSWER => "0",
+                Constants.MAYBE_ANSWER => "0.5",
+                _ => throw new ArgumentOutOfRangeException($"userAnswer: {userAnswer}"),
+            };
         }
 
-        private bool IsButtonPressedAfterGame(DateTime gameDate)
+        private static bool IsButtonPressedAfterGame(DateTime gameDate)
         {
             return gameDate.Date < DateTime.Now.Date;
         }
@@ -178,7 +177,6 @@ namespace TelegramFootballBot.Core.Services
         {
             try
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
                 await _messageService.ClearReplyMarkupAsync(chatId, messageId);
             }
             catch (Exception ex)
@@ -215,9 +213,9 @@ namespace TelegramFootballBot.Core.Services
                 messageForBotOwner = $"Операция обработки ответа отменена для пользователя {player.Name}";
             }
 
-            if (ex is ArgumentOutOfRangeException)
+            if (ex is ArgumentOutOfRangeException exception)
             {
-                _logger.Error($"Unexpected response for user {player.Name}: {((ArgumentOutOfRangeException)ex).ParamName}");
+                _logger.Error($"Unexpected response for user {player.Name}: {exception.ParamName}");
                 messageForUser = "Непредвиденный вариант ответа.";
                 messageForBotOwner = $"Непредвиденный вариант ответа для пользователя {player.Name}";
             }

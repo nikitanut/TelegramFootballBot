@@ -37,7 +37,7 @@ namespace TelegramFootballBot.Core.Models.Commands
 
         private string PlayerName(Message message)
         {
-            return message.Text.Length > Name.Length ? message.Text.Substring(Name.Length).Trim() : string.Empty;
+            return message.Text.Length > Name.Length ? message.Text[Name.Length..].Trim() : string.Empty;
         }
 
         private async Task<string> RegisterPlayer(Message message)

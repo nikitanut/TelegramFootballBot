@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace TelegramFootballBot.Core.Models.Commands
 {
@@ -11,12 +12,11 @@ namespace TelegramFootballBot.Core.Models.Commands
 
         public bool StartsWith(Message message)
         {
-            return message.Type == Telegram.Bot.Types.Enums.MessageType.Text
-                ? message.Text.StartsWith(Name)
-                : false;
+            return message.Type == MessageType.Text
+                && message.Text.StartsWith(Name);
         }
 
-        public bool IsBotOwner(Message message)
+        public static bool IsBotOwner(Message message)
         {
             return message.Chat.Id == AppSettings.BotOwnerChatId;
         }
