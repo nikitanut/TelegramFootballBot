@@ -18,7 +18,6 @@ namespace TelegramFootballBot.App.Workers
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
-        private bool _firstLaunch = true;
 
         public SchedulerWorker(IMessageService messageService, ITeamService teamsService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
@@ -40,12 +39,6 @@ namespace TelegramFootballBot.App.Workers
 
         private async Task DoWorkAsync()
         {
-            if (_firstLaunch)
-            {
-                _firstLaunch = false;
-                await DeletePlayersDataAsync();
-            }
-
             var now = DateTime.UtcNow;
             if (DateHelper.IsTimeToAskPlayers(now))
                 await SendQuestionToAllUsersAsync();
