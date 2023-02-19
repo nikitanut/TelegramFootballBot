@@ -43,14 +43,14 @@ namespace TelegramFootballBot.App.Workers
             if (_firstLaunch)
             {
                 _firstLaunch = false;
-                await ClearPlayersMessages();
+                await DeletePlayersDataAsync();
             }
 
             var now = DateTime.UtcNow;
-            if (DateHelper.DistributionTimeHasCome(now))
+            if (DateHelper.IsTimeToAskPlayers(now))
                 await SendQuestionToAllUsersAsync();
 
-            if (DateHelper.TeamsGenerationTimeHasCome(now) || _teamsService.IsActiveDisliked)
+            if (DateHelper.IsTimeToGenerateTeams(now) || _teamsService.IsActiveDisliked)
             {
                 var players = await _sheetService.GetPlayersReadyToPlayAsync();
                 await _teamsService.GenerateNewTeams(players);
@@ -59,30 +59,30 @@ namespace TelegramFootballBot.App.Workers
 
             if (DateHelper.GameStarted(now))
             {
-                await ClearGameAttrsAsync();
+                await ClearGameDataAsync();
                 _teamsService.ClearGeneratedTeams();
             }
 
-            await UpdateTotalPlayersMessagesAsync();
-            await UpdateTeamPollMessagesAsync();
-            await SetPlayersReadyToPlayBySheet();
+            await RefreshTotalPlayersMessagesAsync();
+            await RefreshTeamPollMessagesAsync();
+            await SetPlayersReadyToPlayAccordingToSheet();
         }
 
-        private async Task ClearGameAttrsAsync()
+        private async Task ClearGameDataAsync()
         {
             try
             {
-                await _sheetService.ClearApproveCellsAsync();
-                await ClearPlayersMessages();
+                await _sheetService.ClearGameCellsAsync();
+                await DeletePlayersDataAsync();
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Clearing game attrs error");
-                await _messageService.SendTextMessageToBotOwnerAsync("Ошибка при очищении полей");
+                await _messageService.SendMessageToBotOwnerAsync("Ошибка при очищении полей");
             }
         }
 
-        private async Task ClearPlayersMessages()
+        private async Task DeletePlayersDataAsync()
         {
             var playersToUpdate = await _playerRepository.GetAllAsync();
             foreach (var player in playersToUpdate)
@@ -95,37 +95,37 @@ namespace TelegramFootballBot.App.Workers
             await _playerRepository.UpdateMultipleAsync(playersToUpdate);
         }
 
-        private async Task UpdateTotalPlayersMessagesAsync()
+        private async Task RefreshTotalPlayersMessagesAsync()
         {
             try
             {
-                await _messageService.UpdateTotalPlayersMessagesAsync();
+                await _messageService.RefreshTotalPlayersMessageAsync();
             }
             catch (TaskCanceledException)
             {
-                _logger.Error($"The operation was canceled for {nameof(UpdateTotalPlayersMessagesAsync)}.");
+                _logger.Error($"The operation was canceled for {nameof(RefreshTotalPlayersMessagesAsync)}.");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error on updating total players messages, {nameof(UpdateTotalPlayersMessagesAsync)}");
-                await _messageService.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
+                _logger.Error(ex, $"Error on updating total players messages, {nameof(RefreshTotalPlayersMessagesAsync)}");
+                await _messageService.SendMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
             }
         }
 
-        private async Task UpdateTeamPollMessagesAsync()
+        private async Task RefreshTeamPollMessagesAsync()
         {
             try
             {
-                await _messageService.UpdatePollMessagesAsync();
+                await _messageService.RefreshPollMessageAsync();
             }
             catch (TaskCanceledException)
             {
-                _logger.Error($"The operation was canceled for {nameof(UpdateTeamPollMessagesAsync)}.");
+                _logger.Error($"The operation was canceled for {nameof(RefreshTeamPollMessagesAsync)}.");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error on updating total players messages, {nameof(UpdateTeamPollMessagesAsync)}");
-                await _messageService.SendTextMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
+                _logger.Error(ex, $"Error on updating total players messages, {nameof(RefreshTeamPollMessagesAsync)}");
+                await _messageService.SendMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
             }
         }
 
@@ -133,12 +133,15 @@ namespace TelegramFootballBot.App.Workers
         {
             try
             {
-                await _messageService.SendDistributionQuestionAsync();
+                var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
+                var message = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
+                var markup = MarkupHelper.GetUserReadyToPlayQuestion(gameDate);
+                await _messageService.SendMessageToAllPlayersAsync(message, markup);
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on {nameof(SendQuestionToAllUsersAsync)}");
-                await _messageService.SendTextMessageToBotOwnerAsync($"Ошибка при определении списка игроков: {ex.Message}");
+                await _messageService.SendMessageToBotOwnerAsync($"Ошибка при определении списка игроков: {ex.Message}");
             }
         }
 
@@ -146,16 +149,16 @@ namespace TelegramFootballBot.App.Workers
         {
             try
             {
-                await _messageService.SendTeamPollMessageAsync();
+                await _messageService.SendGeneratedTeamsMessageAsync();
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on {nameof(SendGeneratedTeamsMessageAsync)}");
-                await _messageService.SendTextMessageToBotOwnerAsync($"Ошибка при отправке сообщения с командами: {ex.Message}");
+                await _messageService.SendMessageToBotOwnerAsync($"Ошибка при отправке сообщения с командами: {ex.Message}");
             }
         }
 
-        private async Task SetPlayersReadyToPlayBySheet()
+        private async Task SetPlayersReadyToPlayAccordingToSheet()
         {
             var playersUpdate = new List<Player>();
             var playersReadyFromSheet = await _sheetService.GetPlayersReadyToPlayAsync();

@@ -6,17 +6,15 @@ namespace TelegramFootballBot.Core.Services
 {
     public interface IMessageService
     {
-        Task SendMessageToAllUsersAsync(string text, IReplyMarkup replyMarkup = null);
+        Task SendMessageToAllPlayersAsync(string text, IReplyMarkup replyMarkup = null);
 
-        Task SendDistributionQuestionAsync();
+        Task RefreshTotalPlayersMessageAsync();
 
-        Task UpdateTotalPlayersMessagesAsync();
+        Task RefreshPollMessageAsync();
 
-        Task UpdatePollMessagesAsync();
+        Task SendGeneratedTeamsMessageAsync();
 
-        Task SendTeamPollMessageAsync();
-
-        Task<Message> SendTextMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null);
+        Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null);
 
         Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null);
 
@@ -24,7 +22,7 @@ namespace TelegramFootballBot.Core.Services
 
         Task<Message> SendErrorMessageToUserAsync(ChatId chatId, string playerName);
 
-        Task<Message> EditMessageTextAsync(ChatId chatId, int messageId, string text);
+        Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text);
 
         Task ClearReplyMarkupAsync(ChatId chatId, int messageId);
     }

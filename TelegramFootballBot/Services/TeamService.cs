@@ -12,17 +12,15 @@ namespace TelegramFootballBot.Core.Services
 {
     public class TeamService : ITeamService
     {
-        public int ActiveLikes => _likesForCurrentTeam;
-        public int ActiveDislikes => _dislikesForActive;
         public bool IsActiveDisliked { get; private set;}
 
         private readonly IPlayerRepository _playerRepository;
         private List<List<Team>> _teamSets = new();
         private List<Team> _currentTeamSet = new();
         private readonly List<List<Team>> _dislikedTeams = new();
-        private Guid _activePollId;
-        private int _likesForCurrentTeam;
-        private int _dislikesForActive;
+        private Guid _currentPollId;
+        internal int _likesForCurrentTeam;
+        internal int _dislikesForCurrentTeam;
 
         public TeamService(IPlayerRepository playerRepository)
         {
@@ -34,7 +32,7 @@ namespace TelegramFootballBot.Core.Services
             IsActiveDisliked = false;
             GeneratePollId();
             _likesForCurrentTeam = 0;
-            _dislikesForActive = 0;
+            _dislikesForCurrentTeam = 0;
             
             var playersReadyToPlay = (await _playerRepository.GetAllAsync())
                 .Where(p => playersNames.Contains(p.Name)).ToList();
@@ -49,7 +47,7 @@ namespace TelegramFootballBot.Core.Services
 
         public Guid GeneratePollId()
         {
-            _activePollId = Guid.NewGuid();
+            _currentPollId = Guid.NewGuid();
             return GetActivePollId();
         }
 
@@ -58,20 +56,20 @@ namespace TelegramFootballBot.Core.Services
             return _currentTeamSet;
         }
 
-        public string GenerateMessageWithTeamSet()
+        public string BuildMessageWithGeneratedTeams()
         {
             return string.Join(Environment.NewLine + Environment.NewLine, CurrentTeamSet().Select(t => string.Join(Environment.NewLine, t)));
         }
 
         public string GetMessageWithLikes()
         {
-            return $"{Constants.LIKE_EMOJI} - {_likesForCurrentTeam}   {Constants.DISLIKE_EMOJI} - {_dislikesForActive}";
+            return $"{Constants.LIKE_EMOJI} - {_likesForCurrentTeam}   {Constants.DISLIKE_EMOJI} - {_dislikesForCurrentTeam}";
         }
 
         public void ClearGeneratedTeams()
         {
             _likesForCurrentTeam = 0;
-            _dislikesForActive = 0;
+            _dislikesForCurrentTeam = 0;
             _dislikedTeams.Clear();
             _teamSets.Clear();
             SetActiveTeamSet(GetRandomTeamSet());
@@ -101,7 +99,7 @@ namespace TelegramFootballBot.Core.Services
 
         public void DislikeCurrentTeam()
         {
-            var activeDislikes = Interlocked.Increment(ref _dislikesForActive);
+            var activeDislikes = Interlocked.Increment(ref _dislikesForCurrentTeam);
 
             if (activeDislikes == Constants.TEAM_DISLIKES_LIMIT)
             {
@@ -119,7 +117,7 @@ namespace TelegramFootballBot.Core.Services
 
         public Guid GetActivePollId()
         {
-            return _activePollId != default ? _activePollId : GeneratePollId();
+            return _currentPollId != default ? _currentPollId : GeneratePollId();
         }
     }
 }

@@ -3,7 +3,7 @@
     public static class Constants
     {
         public const char CALLBACK_PREFIX_SEPARATOR = '_';
-        public const char CALLBACK_PREFIX_DATA_SEPARATOR = '|';
+        public const char CALLBACK_DATA_SEPARATOR = '|';
         
         public const string YES_ANSWER = "Да";
         public const string NO_ANSWER = "Нет";

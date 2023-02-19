@@ -15,13 +15,13 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             _messageService = messageService;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;
 
             AppSettings.NotifyOwner = !AppSettings.NotifyOwner;
-            await _messageService.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
+            await _messageService.SendMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
         }
     }
 }

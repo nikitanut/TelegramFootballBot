@@ -15,70 +15,64 @@ namespace TelegramFootballBot.Core.Services
 {
     public class MessageService : IMessageService
     {
+        private readonly ITelegramBotClient _botClient;
         private readonly IPlayerRepository _playerRepository;
-
-        private readonly ILogger _logger;
-        private readonly ITelegramBotClient _client;
         private readonly ITeamService _teamService;
         private readonly ISheetService _sheetService;
+        private readonly ILogger _logger;
+
         private string _approvedPlayersMessage = null;
-        private string _likesMessage = null;
+        private string _messageWithLikes = null;
 
         public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, ITeamService teamsService, ISheetService sheetService, ILogger logger)
         {
-            _client = botClient;
+            _botClient = botClient;
             _playerRepository = playerRepository;
             _teamService = teamsService;
             _sheetService = sheetService;
             _logger = logger;            
         }
 
-        public async Task SendMessageToAllUsersAsync(string text, IReplyMarkup replyMarkup = null)
+        public async Task SendMessageToAllPlayersAsync(string text, IReplyMarkup replyMarkup = null)
         {
-            await SendMessageAsync(await _playerRepository.GetAllAsync(), text, replyMarkup);
+            var players = await _playerRepository.GetAllAsync();
+            await SendMessageToPlayersAsync(players, text, replyMarkup);
         }
 
-        public async Task SendDistributionQuestionAsync()
+        public async Task RefreshTotalPlayersMessageAsync()
         {
-            var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
-            var message = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
-            var markup = MarkupHelper.GetUserDeterminationMarkup(gameDate);
-            await SendMessageToAllUsersAsync(message, markup);
-        }
-
-        public async Task UpdateTotalPlayersMessagesAsync()
-        {
-            var approvedPlayersMessage = await _sheetService.GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await _sheetService.BuildApprovedPlayersMessageAsync();
             if (approvedPlayersMessage == _approvedPlayersMessage)
                 return;
 
             _approvedPlayersMessage = approvedPlayersMessage;
-            await EditMessageAsync(await _playerRepository.GetRecievedMessageAsync(), _approvedPlayersMessage, Constants.APPROVED_PLAYERS_MESSAGE_TYPE);
+            var playersReceivedMessage = await _playerRepository.GetRecievedMessageAsync();
+            await EditMessageAsync(playersReceivedMessage, _approvedPlayersMessage, Constants.APPROVED_PLAYERS_MESSAGE_TYPE);
         }
 
-        public async Task UpdatePollMessagesAsync()
+        public async Task RefreshPollMessageAsync()
         {
-            var likesMessage = _teamService.GetMessageWithLikes();
-            if (likesMessage == _likesMessage)
+            var messageWithLikes = _teamService.GetMessageWithLikes();
+            if (messageWithLikes == _messageWithLikes)
                 return;
 
-            _likesMessage = likesMessage;
+            _messageWithLikes = messageWithLikes;
             var playersVoted = await _playerRepository.GetVotedAsync();
-            await EditMessageAsync(playersVoted, _likesMessage, Constants.TEAM_POLL_MESSAGE_TYPE);
+            await EditMessageAsync(playersVoted, _messageWithLikes, Constants.TEAM_POLL_MESSAGE_TYPE);
         }
 
-        public async Task SendTeamPollMessageAsync()
+        public async Task SendGeneratedTeamsMessageAsync()
         {
-            var pollMessage = _teamService.GenerateMessageWithTeamSet();
+            var pollMessage = _teamService.BuildMessageWithGeneratedTeams();
             if (string.IsNullOrEmpty(pollMessage))
                 return;
 
-            _likesMessage = _teamService.GetMessageWithLikes();
+            _messageWithLikes = _teamService.GetMessageWithLikes();
             var players = await _playerRepository.GetReadyToPlayAsync();
-            await SendMessageAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamService.GetActivePollId()));
+            await SendMessageToPlayersAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamService.GetActivePollId()));
         }
 
-        public async Task<Message> SendTextMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
+        public async Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
         {
             if (AppSettings.NotifyOwner)
             {
@@ -86,8 +80,9 @@ namespace TelegramFootballBot.Core.Services
                 {
                     return await SendMessageAsync(AppSettings.BotOwnerChatId, text, replyMarkup: replyMarkup);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    _logger.Error("An error occured while sending a message to the bot owner", ex);
                 }
             }
 
@@ -97,10 +92,10 @@ namespace TelegramFootballBot.Core.Services
         public async Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null)
         {
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-            return await _client.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cts.Token);
+            return await _botClient.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cts.Token);
         }
 
-        private async Task SendMessageAsync(IEnumerable<Player> players, string text, IReplyMarkup replyMarkup = null, Action<Player, Message> actionOnSuccess = null)
+        private async Task SendMessageToPlayersAsync(IEnumerable<Player> players, string text, IReplyMarkup replyMarkup = null)
         {
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, Player>();
@@ -112,7 +107,7 @@ namespace TelegramFootballBot.Core.Services
                 playersRequestsIds.Add(request.Id, player);
             }
 
-            await ProcessRequests(requests, playersRequestsIds, actionOnSuccess);
+            await ExecuteRequests(requests, playersRequestsIds);
         }
 
         private async Task EditMessageAsync(IEnumerable<Player> players, string text, string messageType)
@@ -122,12 +117,12 @@ namespace TelegramFootballBot.Core.Services
 
             foreach (var player in players)
             {
-                var request = EditMessageTextAsync(player.ChatId, MessageId(messageType, player), text);
+                var request = EditMessageAsync(player.ChatId, MessageId(messageType, player), text);
                 requests.Add(request);
                 playersRequestsIds.Add(request.Id, player);
             }
 
-            await ProcessRequests(requests, playersRequestsIds);
+            await ExecuteRequests(requests, playersRequestsIds);
         }
 
         private static int MessageId(string messageType, Player player)
@@ -145,7 +140,7 @@ namespace TelegramFootballBot.Core.Services
             try
             {
                 using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-                await _client.DeleteMessageAsync(chatId, messageId, cancellationToken: cts.Token);
+                await _botClient.DeleteMessageAsync(chatId, messageId, cancellationToken: cts.Token);
             }
             catch (Exception ex)
             {
@@ -161,39 +156,37 @@ namespace TelegramFootballBot.Core.Services
             }
             catch (Exception ex)
             {
-                return await SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+                return await SendMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
             }
         }
 
-        private async Task ProcessRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds, Action<Player, Message> actionOnSuccess = null)
+        private async Task ExecuteRequests(List<Task<Message>> requests, Dictionary<int, Player> playersRequestsIds)
         {
             while (requests.Any())
             {
                 var response = await Task.WhenAny(requests);
-                requests.Remove(response);
-                var player = playersRequestsIds.First(r => r.Key == response.Id).Value;
+                requests.Remove(response);                
 
                 if (response.IsFaulted || response.IsCanceled)
                 {
                     var errorMessage = response.IsFaulted ? response.Exception.Message : $"Тайм-аут {Constants.ASYNC_OPERATION_TIMEOUT} мс";
+                    var player = playersRequestsIds.First(r => r.Key == response.Id).Value;
                     _logger.Error($"Error for user {player.Name}: {errorMessage}");
                     return;
                 }
-
-                actionOnSuccess?.Invoke(player, response.Result);
             }
         }
 
-        public async Task<Message> EditMessageTextAsync(ChatId chatId, int messageId, string text)
+        public async Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text)
         {
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-            return await _client.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cts.Token);
+            return await _botClient.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cts.Token);
         }
 
         public async Task ClearReplyMarkupAsync(ChatId chatId, int messageId)
         {
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-            await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { Array.Empty<InlineKeyboardButton>() }, cancellationToken: cts.Token);
+            await _botClient.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { Array.Empty<InlineKeyboardButton>() }, cancellationToken: cts.Token);
         }
     }
 }

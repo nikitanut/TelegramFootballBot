@@ -4,6 +4,7 @@ using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Services;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 
 namespace TelegramFootballBot.Core.Models.Commands
 {
@@ -20,7 +21,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             _playerRepository = playerRepository;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             Player player;
             try
@@ -37,7 +38,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
 
             await _messageService.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-            await _messageService.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserDeterminationMarkup(gameDate));
+            await _messageService.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserReadyToPlayQuestion(gameDate));
         }
     }
 }

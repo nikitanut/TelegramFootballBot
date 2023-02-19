@@ -7,7 +7,7 @@ namespace TelegramFootballBot.Core.Helpers
     {
         private static readonly Dictionary<int, string> _russianMonthNames = new() { { 1, "января" }, { 2, "февраля" }, { 3, "марта" }, { 4, "апреля" }, { 5, "мая" }, { 6, "июня" }, { 7, "июля" }, { 8, "августа" }, { 9, "сентября" }, { 10, "октября" }, { 11, "ноября" }, { 12, "декабря" } };
 
-        public static bool DistributionTimeHasCome(DateTime currentDate)
+        public static bool IsTimeToAskPlayers(DateTime currentDate)
         {
             var distributionDate = GetNearestDistributionDateMoscowTime(currentDate);
             return GetDayOfWeek(currentDate.ToMoscowTime()) == GetDayOfWeek(distributionDate)
@@ -15,7 +15,7 @@ namespace TelegramFootballBot.Core.Helpers
                 && currentDate.ToMoscowTime().TimeOfDay.Minutes == distributionDate.TimeOfDay.Minutes;
         }
 
-        public static bool TeamsGenerationTimeHasCome(DateTime currentDate)
+        public static bool IsTimeToGenerateTeams(DateTime currentDate)
         {
             var gameDate = GetNearestGameDateMoscowTime(currentDate);
             return currentDate.ToMoscowTime().Year == gameDate.Year

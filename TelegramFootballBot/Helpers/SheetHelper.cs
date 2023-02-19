@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Core.Helpers
@@ -20,12 +21,12 @@ namespace TelegramFootballBot.Core.Helpers
         private const int DEFAULT_STYLE_ROW_INDEX = 5;
         private const int START_ROWS_COUNT = 2;
         
-        public static IEnumerable<IList<object>> GetStartRows(IList<IList<object>> values)
+        public static IEnumerable<IList<object>> GetHeaderRows(IList<IList<object>> values)
         {
             return values.Take(START_ROWS_COUNT);
         }
 
-        public static ValueRange GetValueRange(string range, params object[] values)
+        public static ValueRange ToValueRange(string range, params object[] values)
         {
             return new ValueRange()
             {
@@ -34,25 +35,25 @@ namespace TelegramFootballBot.Core.Helpers
             };
         }
 
-        public static List<IList<object>> GetNewValues(IList<IList<object>> values, IList<IList<object>> players)
+        public static List<IList<object>> ApplyPlayers(IList<IList<object>> currentSheet, IList<IList<object>> players)
         {
-            var startRowsToIgnore = GetStartRows(values);
-            var newValues = new List<IList<object>>(startRowsToIgnore);
-            newValues.AddRange(players);
+            var rowsToIgnore = GetHeaderRows(currentSheet);
+            var updatedSheet = new List<IList<object>>(rowsToIgnore);
+            updatedSheet.AddRange(players);
 
-            var totalsRow = GetTotalsRow(values);
-            var firstPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + 1}";
-            var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore.Count() + players.Count}";
+            var totalsRow = GetTotalsRow(currentSheet);
+            var firstPlayerCell = $"{APPROVE_COLUMN}{rowsToIgnore.Count() + 1}";
+            var lastPlayerCell = $"{APPROVE_COLUMN}{rowsToIgnore.Count() + players.Count}";
 
             totalsRow[(int)APPROVE_COLUMN] = $"=SUM({firstPlayerCell}:{lastPlayerCell})";
-            newValues.Add(totalsRow);
+            updatedSheet.Add(totalsRow);
 
-            return newValues;
+            return updatedSheet;
         }
 
         public static IList<object> GetTotalsRow(IList<IList<object>> values)
         {
-            var totalsRow = values.FirstOrDefault(v => CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL));
+            var totalsRow = values.FirstOrDefault(v => AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL));
 
             if (totalsRow == null)
                 throw new TotalsRowNotFoundExeption();
@@ -65,44 +66,46 @@ namespace TelegramFootballBot.Core.Helpers
 
         public static IList<IList<object>> GetOrderedPlayers(IList<IList<object>> values, string newPlayerName = null)
         {
-            var startRowsToIgnore = GetStartRows(values).Count();
+            var rowsToIgnore = GetHeaderRows(values).Count();
 
             var players = values
-                .Skip(startRowsToIgnore)
-                .Where(v => v.Count > 0 && !string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()))
-                .TakeWhile(v => !CellEqualsValue(v, (int)NAME_COLUMN, TOTAL_LABEL))
+                .Skip(rowsToIgnore)
+                .Where(v => v.Any() && !string.IsNullOrWhiteSpace(v[(int)NAME_COLUMN]?.ToString()))
+                .TakeWhile(v => !AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL))
                 .ToList();
 
             if (newPlayerName != null)
                 players.Add(new List<object> { newPlayerName, string.Empty });
 
-            // Set empty string for approve cells to clear data
-            foreach (var player in players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null))
+            var rowsWithEmptyApproveColumn = players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null);
+            foreach (var playerRow in rowsWithEmptyApproveColumn)
             {
-                if (player.Count <= (int)APPROVE_COLUMN)
-                    player.Add(string.Empty);
+                if (playerRow.Count <= (int)APPROVE_COLUMN)
+                    playerRow.Add(string.Empty);
                 else
-                    player[(int)APPROVE_COLUMN] = string.Empty;
+                    playerRow[(int)APPROVE_COLUMN] = string.Empty;
             }
 
-            return players.OrderBy(v => v[(int)NAME_COLUMN]).ToList();
+            players.Sort((a, b) => a[(int)NAME_COLUMN].ToString().CompareTo(b[(int)NAME_COLUMN].ToString()));
+            return players;
         }
 
-        public static string GetApprovedPlayersString(IList<IList<object>> players)
+        public static string BuildApprovedPlayersMessage(IList<IList<object>> players)
         {            
-            var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {GetTotalApprovedPlayers(players)}.";
-            var markedPlayers = GetMarkedPlayers(players);
+            var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {CountPlayersReadyToGo(players)}.";
+            var likelyToGoPlayers = FilterPlayersLikelyToGo(players);
 
             var playersMessage = new StringBuilder(headerMessage);
             playersMessage.AppendLine();
-            playersMessage.AppendLine(MarkupHelper.GetDashedString());
-            playersMessage.AppendLine(string.Join(Environment.NewLine, markedPlayers.Where(p => p.Value == '+').Select(p => p.Key)));
+            playersMessage.AppendLine(MarkupHelper.DashedString);
+            playersMessage.AppendLine(string.Join(Environment.NewLine, likelyToGoPlayers.Where(p => p.Value == '+').Select(p => p.Key)));
 
-            if (GetTotalMaybePlayers(players) > 0)
+            var notSurePlayers = CountNotSurePlayers(players);
+            if (notSurePlayers > 0)
             {
-                playersMessage.AppendLine(MarkupHelper.GetDashedString());
-                playersMessage.AppendLine($"Под вопросом: {GetTotalMaybePlayers(players)}.");
-                playersMessage.AppendLine(string.Join(Environment.NewLine, markedPlayers.Where(p => p.Value == '?').Select(p => p.Key)));
+                playersMessage.AppendLine(MarkupHelper.DashedString);
+                playersMessage.AppendLine($"Под вопросом: {notSurePlayers}.");
+                playersMessage.AppendLine(string.Join(Environment.NewLine, likelyToGoPlayers.Where(p => p.Value == '?').Select(p => p.Key)));
             }
 
             return playersMessage.ToString();
@@ -120,7 +123,7 @@ namespace TelegramFootballBot.Core.Helpers
             .ToList();
         }
 
-        private static IEnumerable<KeyValuePair<string, char>> GetMarkedPlayers(IList<IList<object>> players)
+        private static IEnumerable<KeyValuePair<string, char>> FilterPlayersLikelyToGo(IList<IList<object>> players)
         {
             return players.Where(p =>
             {
@@ -138,7 +141,7 @@ namespace TelegramFootballBot.Core.Helpers
             });
         }
 
-        private static int GetTotalApprovedPlayers(IList<IList<object>> players)
+        private static int CountPlayersReadyToGo(IList<IList<object>> players)
         {
             return players.Sum(p =>
             {
@@ -148,7 +151,7 @@ namespace TelegramFootballBot.Core.Helpers
             });
         }
 
-        private static int GetTotalMaybePlayers(IList<IList<object>> players)
+        private static int CountNotSurePlayers(IList<IList<object>> players)
         {
             return players.Sum(p =>
             {
@@ -164,7 +167,7 @@ namespace TelegramFootballBot.Core.Helpers
             return value;
         }
 
-        public static int GetUserRowNumber(IList<IList<object>> values, string playerName)
+        public static int GetPlayerRowNumber(IList<IList<object>> values, string playerName)
         {
             if (playerName == null)
                 return -1;
@@ -191,23 +194,23 @@ namespace TelegramFootballBot.Core.Helpers
         
         public static string GetApproveColumnRange(IList<IList<object>> values, int totalPlayers)
         {
-            var startRowsToIgnore = GetStartRows(values).Count();
+            var startRowsToIgnore = GetHeaderRows(values).Count();
             var dateOfGameCell = $"{APPROVE_COLUMN}{startRowsToIgnore}";
             var lastPlayerCell = $"{APPROVE_COLUMN}{startRowsToIgnore + totalPlayers}";
             return $"{dateOfGameCell}:{lastPlayerCell}";
         }
 
-        public static string GetUserRange(int userRow)
+        public static string GetPlayerRange(int playerRowNumber)
         {
-            return $"{SHEET_NAME}!{APPROVE_COLUMN}{userRow}";
+            return $"{SHEET_NAME}!{APPROVE_COLUMN}{playerRowNumber}";
         }
 
-        public static string GetAllUsersRange()
+        public static string GetAllPlayersRange()
         {
             return $"{SHEET_NAME}!{NAME_COLUMN}:{APPROVE_COLUMN}";
         }
         
-        private static bool CellEqualsValue(IList<object> row, int columnIndex, string value)
+        private static bool AreEqual(IList<object> row, int columnIndex, string value)
         {
             return row.Count > columnIndex
                 && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;

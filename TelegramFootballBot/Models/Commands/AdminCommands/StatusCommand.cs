@@ -21,7 +21,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             _playerRepository = playerRepository;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;

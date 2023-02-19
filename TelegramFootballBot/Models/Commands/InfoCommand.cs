@@ -16,7 +16,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             _messageService = messageService;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             await _messageService.SendMessageAsync(message.Chat.Id, Text(message));
         }
@@ -25,8 +25,7 @@ namespace TelegramFootballBot.Core.Models.Commands
         {
             if (IsBotOwner(message))
             {
-                return $"/distribute - run distribution{Environment.NewLine}" +
-                       $"/list - list of registered players{Environment.NewLine}" +
+                return $"/list - list of registered players{Environment.NewLine}" +
                        $"/rate - set player rating{Environment.NewLine}" +
                        $"/say - send text to all players{Environment.NewLine}" +
                        $"/status - get statistics{Environment.NewLine}" +
@@ -34,7 +33,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             }
             
             return $"/reg - зарегистрироваться{Environment.NewLine}" +
-                   $"/unregister - отписаться от рассылки{Environment.NewLine}" +
+                   $"/unreg - отписаться от рассылки{Environment.NewLine}" +
                    $"/go - отметиться";
         }
     }

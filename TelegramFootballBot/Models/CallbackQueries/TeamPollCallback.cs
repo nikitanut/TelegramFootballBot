@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using TelegramFootballBot.Core.Helpers;
 
 namespace TelegramFootballBot.Core.Models.CallbackQueries
@@ -15,12 +16,12 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
 
         public static string GetCallbackPrefix(Guid activePollId)
         {
-            return Name + Constants.CALLBACK_PREFIX_DATA_SEPARATOR + activePollId;
+            return Name + Constants.CALLBACK_DATA_SEPARATOR + activePollId;
         }
 
         private static Guid GetPollId(string callbackData)
         {
-            var pollString = Prefix(callbackData).Split(Constants.CALLBACK_PREFIX_DATA_SEPARATOR)[1];
+            var pollString = Prefix(callbackData).Split(Constants.CALLBACK_DATA_SEPARATOR).Last();
             if (!Guid.TryParse(pollString, out Guid pollId))
                 throw new ArgumentException($"Poll id was not provided for callback data: {callbackData}");
             return pollId;

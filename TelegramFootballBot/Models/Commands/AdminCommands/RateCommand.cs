@@ -2,6 +2,7 @@
 using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Services;
 using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 
 namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
 {
@@ -18,7 +19,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             _playerRepository = playerRepository;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;

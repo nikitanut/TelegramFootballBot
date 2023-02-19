@@ -16,7 +16,7 @@ namespace TelegramFootballBot.Core.Services
 
         IReadOnlyCollection<Team> CurrentTeamSet();
 
-        string GenerateMessageWithTeamSet();
+        string BuildMessageWithGeneratedTeams();
 
         string GetMessageWithLikes();
 

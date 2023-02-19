@@ -6,11 +6,6 @@ namespace TelegramFootballBot.Core.Helpers
 {
     public static class MarkupHelper
     {
-        /// <summary>
-        /// Gets custom InlineKeyboardMarkup with buttons
-        /// </summary>
-        /// <param name="callbackPrefix">Callback prefix for message</param>
-        /// <param name="buttonsLabels">Array of buttons texts</param>
         public static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, string [] buttonsLabels, string [] buttonValues)
         {
             var keyBoard = new[] { new InlineKeyboardButton[buttonsLabels.Length] };
@@ -26,12 +21,7 @@ namespace TelegramFootballBot.Core.Helpers
             return new InlineKeyboardMarkup(keyBoard);
         }
 
-        /// <summary>
-        /// Gets markup for determination question
-        /// </summary>
-        /// <param name="gameDate">Date of game</param>
-        /// <returns></returns>
-        public static InlineKeyboardMarkup GetUserDeterminationMarkup(DateTime gameDate)
+        public static InlineKeyboardMarkup GetUserReadyToPlayQuestion(DateTime gameDate)
         {
             var labels = new[] { Constants.YES_ANSWER, Constants.NO_ANSWER, Constants.MAYBE_ANSWER };
             var values = labels;
@@ -45,9 +35,6 @@ namespace TelegramFootballBot.Core.Helpers
             return GetKeyBoardMarkup(TeamPollCallback.GetCallbackPrefix(activePollId), labels, values);
         }
 
-        public static string GetDashedString()
-        {
-            return new string('-', 30);
-        }
+        public static string DashedString => new('-', 30);
     }
 }

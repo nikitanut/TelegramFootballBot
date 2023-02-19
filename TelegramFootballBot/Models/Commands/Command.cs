@@ -8,7 +8,7 @@ namespace TelegramFootballBot.Core.Models.Commands
     {
         public abstract string Name { get; }
 
-        public abstract Task Execute(Message message);
+        public abstract Task ExecuteAsync(Message message);
 
         public bool StartsWith(Message message)
         {

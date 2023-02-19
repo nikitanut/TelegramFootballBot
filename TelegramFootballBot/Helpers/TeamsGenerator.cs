@@ -22,8 +22,9 @@ namespace TelegramFootballBot.Core.Helpers
 
         private static void SetUnknownPlayersDefaultRating(IEnumerable<Player> players)
         {
-            foreach (var playerWithoutRating in players.Where(p => p.Rating == 0))
-                playerWithoutRating.Rating = Constants.DEFAULT_PLAYER_RATING;
+            var playersWithoutRating = players.Where(p => p.Rating == 0);
+            foreach (var player in playersWithoutRating)
+                player.Rating = Constants.DEFAULT_PLAYER_RATING;
         }
         
         private static KeyValuePair<List<Team>, double?>[] GenerateTeamSets(IEnumerable<Player> players)
@@ -34,12 +35,12 @@ namespace TelegramFootballBot.Core.Helpers
                 return Array.Empty<KeyValuePair<List<Team>, double?>>();
             
             foreach (var line in File.ReadLines($"Variants for {playersToDistribute.Count}"))
-                AnalyzeTeamSetRating(generatingSets, SetFromFileLine(playersToDistribute, line));
+                UpdateTeamSetRatings(TeamSetFromFile(playersToDistribute, line), ref generatingSets);
 
             return generatingSets.Where(v => v.Key != null).ToArray();
         }
 
-        private static IEnumerable<Team> SetFromFileLine(List<Player> playersToDistribute, string fileLine)
+        private static IEnumerable<Team> TeamSetFromFile(List<Player> playersToDistribute, string fileLine)
         {
             return fileLine.Split(',')
                 .Select(set => set.Split(' ').Select(indexString => Convert.ToInt32(indexString)))
@@ -90,7 +91,7 @@ namespace TelegramFootballBot.Core.Helpers
             return generatingSets;
         }
 
-        private static void AnalyzeTeamSetRating(KeyValuePair<List<Team>, double?>[] generatedSets, IEnumerable<Team> currentSet)
+        private static void UpdateTeamSetRatings(IEnumerable<Team> currentSet, ref KeyValuePair<List<Team>, double?>[] generatedSets)
         {
             var index = 0;
             var maxDeltaVariant = new KeyValuePair<List<Team>, double?>(null, double.MinValue);

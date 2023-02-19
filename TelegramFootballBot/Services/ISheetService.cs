@@ -5,13 +5,13 @@ namespace TelegramFootballBot.Core.Services
 {
     public interface ISheetService
     {
-        Task UpdateApproveCellAsync(string playerName, string cellValue);
+        Task SetApproveCellAsync(string playerName, string cellValue);
 
         Task UpsertPlayerAsync(string playerName);
 
-        Task ClearApproveCellsAsync();
+        Task ClearGameCellsAsync();
 
-        Task<string> GetApprovedPlayersMessageAsync();
+        Task<string> BuildApprovedPlayersMessageAsync();
 
         Task<List<string>> GetPlayersReadyToPlayAsync();
     }

@@ -6,6 +6,7 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Models;
 using TelegramFootballBot.Core.Models.CallbackQueries;
@@ -51,7 +52,7 @@ namespace TelegramFootballBot.Core.Services
 
             try
             {
-                await command.Execute(message);
+                await command.ExecuteAsync(message);
                 var playerName = await GetPlayerNameAsync(message.From.Id);
                 _logger.Information($"Command {message.Text} processed for user {playerName}");
             }
@@ -59,7 +60,7 @@ namespace TelegramFootballBot.Core.Services
             {
                 var playerName = await GetPlayerNameAsync(message.From.Id);
                 _logger.Error(ex, $"Error on processing {message.Text} command for user {playerName}");
-                await _messageService.SendTextMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+                await _messageService.SendMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
                 await _messageService.SendErrorMessageToUserAsync(message.Chat.Id, playerName);
             }
         }
@@ -125,7 +126,7 @@ namespace TelegramFootballBot.Core.Services
             }
 
             var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
-            await _sheetService.UpdateApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
+            await _sheetService.SetApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
 
             player.IsGoingToPlay = playerSetCallback.UserAnswer == Constants.YES_ANSWER;
             player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(callbackQuery.Message.Chat.Id, player);
@@ -141,13 +142,13 @@ namespace TelegramFootballBot.Core.Services
         /// <returns>Sent message id</returns>
         private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
         {
-            var approvedPlayersMessage = await _sheetService.GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await _sheetService.BuildApprovedPlayersMessageAsync();
 
             if (player.ApprovedPlayersMessageId != 0)
             {
                 try
                 {
-                    await _messageService.EditMessageTextAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                    await _messageService.EditMessageAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
                     return player.ApprovedPlayersMessageId;
                 }
                 catch (Exception ex) // Telegram API doesn't allow to check if user deleted message
@@ -254,7 +255,7 @@ namespace TelegramFootballBot.Core.Services
             await _messageService.SendMessageAsync(chatId, messageForUser);
 
             if (AppSettings.NotifyOwner)
-                await _messageService.SendTextMessageToBotOwnerAsync(messageForBotOwner);
+                await _messageService.SendMessageToBotOwnerAsync(messageForBotOwner);
         }
 
         public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)

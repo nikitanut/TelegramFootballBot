@@ -15,7 +15,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             _messageService = messageService;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             await _messageService.SendMessageAsync(message.Chat.Id, "Для регистрации введите /reg Фамилия Имя");
         }

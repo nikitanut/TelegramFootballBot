@@ -44,8 +44,8 @@ namespace TelegramFootballBot.Tests
             foreach (var callBack in callBacks)
                 teamSet.ProcessPollChoice(callBack);
 
-            Assert.Equal(3, teamSet.ActiveLikes);
-            Assert.Equal(1, teamSet.ActiveDislikes);
+            Assert.Equal(3, teamSet._likesForCurrentTeam);
+            Assert.Equal(1, teamSet._dislikesForCurrentTeam);
         }
     }
 }

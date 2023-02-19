@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Core.Data

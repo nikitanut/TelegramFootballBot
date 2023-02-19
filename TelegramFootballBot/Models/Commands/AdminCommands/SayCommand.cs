@@ -15,7 +15,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             _messageService = messageService;
         }
 
-        public override async Task Execute(Message message)
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;
@@ -25,7 +25,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
                 : string.Empty;
 
             if (text != string.Empty)
-                await _messageService.SendMessageToAllUsersAsync(text);
+                await _messageService.SendMessageToAllPlayersAsync(text);
         }
     }
 }

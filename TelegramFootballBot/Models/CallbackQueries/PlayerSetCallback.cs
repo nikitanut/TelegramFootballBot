@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using TelegramFootballBot.Core.Helpers;
 
 namespace TelegramFootballBot.Core.Models.CallbackQueries
@@ -6,6 +7,7 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
     public class PlayerSetCallback : Callback
     {
         public static string Name => "PlayersSetDetermination";
+
         public DateTime GameDate { get; private set; }
 
         public PlayerSetCallback(string callbackData) : base(callbackData)
@@ -20,14 +22,14 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
         /// <returns>Callback data text</returns>
         public static string GetCallbackPrefix(DateTime gameDate)
         {
-            return Name + Constants.CALLBACK_PREFIX_DATA_SEPARATOR + gameDate.ToString("yyyy-MM-dd");
+            return Name + Constants.CALLBACK_DATA_SEPARATOR + gameDate.ToString("yyyy-MM-dd");
         }
 
         private static DateTime GetGameDate(string callbackData)
         {
-            var gameDateString = Prefix(callbackData).Split(Constants.CALLBACK_PREFIX_DATA_SEPARATOR)[1];
+            var gameDateString = Prefix(callbackData).Split(Constants.CALLBACK_DATA_SEPARATOR).Last();
             if (!DateTime.TryParse(gameDateString, out DateTime gameDate))
-                throw new ArgumentException($"Game date was not provided for callback data: {callbackData}");
+                throw new ArgumentException($"Game date was not provided for callback data: {callbackData}", nameof(callbackData));
             return gameDate;
         }
     }
