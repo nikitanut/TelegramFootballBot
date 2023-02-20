@@ -3,61 +3,111 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
-using TelegramFootballBot.Data;
-using TelegramFootballBot.Helpers;
-using TelegramFootballBot.Models;
-using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
+using TelegramFootballBot.Core.Models.CallbackQueries;
 
-namespace TelegramFootballBot.Controllers
+namespace TelegramFootballBot.Core.Services
 {
-    public class MessageCallbackController
+    public class UpdateHandler : IUpdateHandler
     {
-        private readonly TelegramBotClient _client;
-        private readonly TeamsController _teamsController;
+        private readonly CommandFactory _commandFactory;
+        private readonly IMessageService _messageService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
-        public MessageCallbackController(TelegramBotClient client, TeamsController teamsController, IPlayerRepository playerRepository, ILogger logger)
+        public UpdateHandler(CommandFactory commandFactory, IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
-            _client = client;
-            _teamsController = teamsController;
+            _commandFactory = commandFactory;
+            _messageService = messageService;
             _playerRepository = playerRepository;
+            _sheetService = sheetService;
             _logger = logger;
         }
 
-        public async void OnCallbackQueryAsync(object sender, CallbackQueryEventArgs e)
+        public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
+        {
+            var handler = update switch
+            {
+                { Message: { } message } => BotOnMessageReceived(message),
+                { CallbackQuery: { } callbackQuery } => BotOnCallbackQueryReceived(callbackQuery),
+                _ => UnknownUpdateHandlerAsync(update)
+            };
+
+            await handler;
+        }
+
+        private async Task BotOnMessageReceived(Message message)
+        {
+            var command = _commandFactory.Create(message);
+            if (command == null)
+                return;
+
+            try
+            {
+                await command.ExecuteAsync(message);
+                var playerName = await GetPlayerNameAsync(message.From.Id);
+                _logger.Information($"Command {message.Text} processed for user {playerName}");
+            }
+            catch (Exception ex)
+            {
+                var playerName = await GetPlayerNameAsync(message.From.Id);
+                _logger.Error(ex, $"Error on processing {message.Text} command for user {playerName}");
+                await _messageService.SendMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
+                await _messageService.SendErrorMessageToUserAsync(message.Chat.Id, playerName);
+            }
+        }
+
+        private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
             try
             {
-                var callbackData = e.CallbackQuery.Data;
+                var callbackData = callbackQuery.Data;
                 if (string.IsNullOrEmpty(callbackData))
                     return;
 
                 if (Callback.GetCallbackName(callbackData) == PlayerSetCallback.Name)
-                    await DetermineIfUserIsReadyToPlayAsync(e.CallbackQuery);
+                    await DetermineIfPlayerIsReadyToPlayAsync(callbackQuery);
 
-                if (Callback.GetCallbackName(callbackData) == TeamPollCallback.Name)
-                    await DetermineIfUserLikesTeamAsync(e.CallbackQuery);
-
-                _logger.Information($"Processed callback: {e.CallbackQuery.Data}");
+                _logger.Information($"Processed callback: {callbackQuery.Data}");
             }
             catch (Exception ex)
             {
-                await ProcessCallbackError(e.CallbackQuery, ex);
+                await ProcessCallbackError(callbackQuery, ex);
             }
         }
 
-        private async Task DetermineIfUserIsReadyToPlayAsync(CallbackQuery callbackQuery)
+        private Task UnknownUpdateHandlerAsync(Update update)
+        {
+            _logger.Information("Unknown update type: {UpdateType}", update.Type);
+            return Task.CompletedTask;
+        }
+
+        private async Task<string> GetPlayerNameAsync(long userId)
+        {
+            try
+            {
+                return (await _playerRepository.GetAsync(userId)).Name;
+            }
+            catch (UserNotFoundException)
+            {
+                return string.Empty;
+            }
+        }
+
+        private async Task DetermineIfPlayerIsReadyToPlayAsync(CallbackQuery callbackQuery)
         {
             var playerSetCallback = new PlayerSetCallback(callbackQuery.Data);
             await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
 
             try
             {
-                await _client.DeleteMessageWithTokenAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+                await _messageService.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
             }
             catch (Exception ex)
             {
@@ -71,7 +121,7 @@ namespace TelegramFootballBot.Controllers
             }
 
             var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
-            await SheetController.GetInstance().UpdateApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
+            await _sheetService.SetApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
 
             player.IsGoingToPlay = playerSetCallback.UserAnswer == Constants.YES_ANSWER;
             player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(callbackQuery.Message.Chat.Id, player);
@@ -87,54 +137,37 @@ namespace TelegramFootballBot.Controllers
         /// <returns>Sent message id</returns>
         private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
         {
-            var approvedPlayersMessage = await SheetController.GetInstance().GetApprovedPlayersMessageAsync();
+            var approvedPlayersMessage = await _sheetService.BuildApprovedPlayersMessageAsync();
 
             if (player.ApprovedPlayersMessageId != 0)
             {
                 try
                 {
-                    await _client.EditMessageTextWithTokenAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                    await _messageService.EditMessageAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
                     return player.ApprovedPlayersMessageId;
                 }
                 catch (Exception ex) // Telegram API doesn't allow to check if user deleted message
                 {
                     _logger.Error(ex, $"Error on editing message for user {player.Name}");
-                    return (await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage)).MessageId;
+                    return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
                 }
             }
 
-            return (await _client.SendTextMessageWithTokenAsync(chatId, approvedPlayersMessage)).MessageId;
+            return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
         }
 
-        private async Task DetermineIfUserLikesTeamAsync(CallbackQuery callbackQuery)
+        private static string GetApproveCellValue(string userAnswer)
         {
-            await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
-            _teamsController.ProcessPollChoice(new TeamPollCallback(callbackQuery.Data));
-            
-            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
-            player.PollMessageId = await SendTeamPollMessageAsync(callbackQuery.Message.Chat.Id);
-            await _playerRepository.UpdateAsync(player);
-        }
-
-        private async Task<int> SendTeamPollMessageAsync(ChatId chatId)
-        {
-            var message = _teamsController.LikesMessage();
-            return (await _client.SendTextMessageWithTokenAsync(chatId, message)).MessageId;
-        }
-
-        private string GetApproveCellValue(string userAnswer)
-        {
-            switch (userAnswer)
+            return userAnswer switch
             {
-                case Constants.YES_ANSWER: return "1";
-                case Constants.NO_ANSWER: return "0";
-                case Constants.MAYBE_ANSWER: return "0.5";
-                default:
-                    throw new ArgumentOutOfRangeException($"userAnswer: {userAnswer}");
-            }
+                Constants.YES_ANSWER => "1",
+                Constants.NO_ANSWER => "0",
+                Constants.MAYBE_ANSWER => "0.5",
+                _ => throw new ArgumentOutOfRangeException($"userAnswer: {userAnswer}"),
+            };
         }
 
-        private bool IsButtonPressedAfterGame(DateTime gameDate)
+        private static bool IsButtonPressedAfterGame(DateTime gameDate)
         {
             return gameDate.Date < DateTime.Now.Date;
         }
@@ -143,8 +176,7 @@ namespace TelegramFootballBot.Controllers
         {
             try
             {
-                var cancellationToken = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT).Token;
-                await _client.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup: new[] { new InlineKeyboardButton[0] }, cancellationToken: cancellationToken);
+                await _messageService.ClearReplyMarkupAsync(chatId, messageId);
             }
             catch (Exception ex)
             {
@@ -180,9 +212,9 @@ namespace TelegramFootballBot.Controllers
                 messageForBotOwner = $"Операция обработки ответа отменена для пользователя {player.Name}";
             }
 
-            if (ex is ArgumentOutOfRangeException)
+            if (ex is ArgumentOutOfRangeException exception)
             {
-                _logger.Error($"Unexpected response for user {player.Name}: {((ArgumentOutOfRangeException)ex).ParamName}");
+                _logger.Error($"Unexpected response for user {player.Name}: {exception.ParamName}");
                 messageForUser = "Непредвиденный вариант ответа.";
                 messageForBotOwner = $"Непредвиденный вариант ответа для пользователя {player.Name}";
             }
@@ -199,10 +231,16 @@ namespace TelegramFootballBot.Controllers
 
         private async Task NotifyAboutError(ChatId chatId, string messageForUser, string messageForBotOwner)
         {
-            await _client.SendTextMessageWithTokenAsync(chatId, messageForUser);
+            await _messageService.SendMessageAsync(chatId, messageForUser);
 
             if (AppSettings.NotifyOwner)
-                await _client.SendTextMessageToBotOwnerAsync(messageForBotOwner);
+                await _messageService.SendMessageToBotOwnerAsync(messageForBotOwner);
+        }
+
+        public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        {
+            _logger.Error("Polling failed with exception: {Exception}", exception);
+            return Task.CompletedTask;
         }
     }
 }

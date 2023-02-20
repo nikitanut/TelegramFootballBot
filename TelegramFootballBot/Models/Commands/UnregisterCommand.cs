@@ -1,28 +1,42 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
-using TelegramFootballBot.Data;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class UnregisterCommand : Command
     {
-        public override string Name => "/unregister";
+        public override string Name => "/unreg";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
+
+        public UnregisterCommand(IMessageService messageService, IPlayerRepository playerRepository)
         {
-            var playerName = await DeletePlayer(messageController.PlayerRepository, message.From.Id);
-            var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
-            await messageController.SendMessageAsync(message.Chat.Id, messageForUser);
-            await messageController.SendTextMessageToBotOwnerAsync($"{playerName} отписался от рассылки");
+            _messageService = messageService;
+            _playerRepository = playerRepository;
         }
 
-        private async Task<string> DeletePlayer(IPlayerRepository playerRepository, int playerId)
+        public override async Task ExecuteAsync(Message message)
+        {
+            var playerName = await DeletePlayer(message.From.Id);
+            var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
+            
+            await Task.WhenAll(new[] 
+            { 
+                _messageService.SendMessageAsync(message.Chat.Id, messageForUser),
+                _messageService.SendMessageToBotOwnerAsync($"{playerName} отписался от рассылки")
+            });
+        }
+
+        private async Task<string> DeletePlayer(long playerId)
         {
             try
             {
-                var player = await playerRepository.GetAsync(playerId);
-                await playerRepository.RemoveAsync(player.Id);
+                var player = await _playerRepository.GetAsync(playerId);
+                await _playerRepository.RemoveAsync(player.Id);
                 return player.Name;
             }
             catch (UserNotFoundException)

@@ -1,7 +1,8 @@
 ﻿using System;
-using TelegramFootballBot.Helpers;
+using System.Linq;
+using TelegramFootballBot.Core.Helpers;
 
-namespace TelegramFootballBot.Models.CallbackQueries
+namespace TelegramFootballBot.Core.Models.CallbackQueries
 {
     public abstract class Callback
     {
@@ -24,20 +25,20 @@ namespace TelegramFootballBot.Models.CallbackQueries
                 throw new ArgumentException($"Prefix was not provided for callback data: {callbackData}");
         }
 
-        private string GetUserAnswer(string callbackData)
+        private static string GetUserAnswer(string callbackData)
         {
-            return callbackData.Split(Constants.CALLBACK_PREFIX_SEPARATOR)[1];
+            return callbackData.Split(Constants.CALLBACK_PREFIX_SEPARATOR).Last();
         }
                         
         public static string GetCallbackName(string callbackData)
         {
             Validate(callbackData);
-            return Prefix(callbackData).Split(Constants.CALLBACK_PREFIX_DATA_SEPARATOR)[0];
+            return Prefix(callbackData).Split(Constants.CALLBACK_DATA_SEPARATOR).First();
         }
 
         protected static string Prefix(string callbackData)
         {
-            return callbackData.Split(Constants.CALLBACK_PREFIX_SEPARATOR)[0];
+            return callbackData.Split(Constants.CALLBACK_PREFIX_SEPARATOR).First();
         }
     }
 }

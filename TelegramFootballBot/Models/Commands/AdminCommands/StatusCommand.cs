@@ -2,21 +2,31 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
-using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Data;
 
-namespace TelegramFootballBot.Models.Commands.AdminCommands
+namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
 {
     public class StatusCommand : Command
     {
         public override string Name => "/status";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
+
+        public StatusCommand(IMessageService messageService, IPlayerRepository playerRepository)
+        {
+            _messageService = messageService;
+            _playerRepository = playerRepository;
+        }
+
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;
 
-            var players = await messageController.PlayerRepository.GetAllAsync();
+            var players = await _playerRepository.GetAllAsync();
             var text = $"Now: {DateTime.Now.ToMoscowTime()}{Environment.NewLine}" +
                        $"Distribution: {AppSettings.DistributionTime}{Environment.NewLine}" +
                        $"GameDate: {AppSettings.GameDay}{Environment.NewLine}" +
@@ -25,7 +35,7 @@ namespace TelegramFootballBot.Models.Commands.AdminCommands
                        $"Players: {players.Count}{Environment.NewLine}" +
                        $"Got message: {players.Count(p => p.ApprovedPlayersMessageId != 0)}";
 
-            await messageController.SendMessageAsync(message.Chat.Id, text);
+            await _messageService.SendMessageAsync(message.Chat.Id, text);
         }
     }
 }

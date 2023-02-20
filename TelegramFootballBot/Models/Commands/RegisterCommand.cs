@@ -1,47 +1,67 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
-using TelegramFootballBot.Data;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class RegisterCommand : Command
     {
         public override string Name => "/reg";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
+        private readonly ISheetService _sheetService;
+
+        public RegisterCommand(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService)
         {
-            if (PlayerName(message) == string.Empty)
+            _messageService = messageService;
+            _playerRepository = playerRepository;
+            _sheetService = sheetService;
+        }
+
+        public override async Task ExecuteAsync(Message message)
+        {
+            var playerName = GetPlayerNameFrom(message);
+            if (playerName == string.Empty)
             {
-                await messageController.SendMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /reg Фамилия Имя");
+                await _messageService.SendMessageAsync(message.Chat.Id, $"Вы не указали фамилию и имя{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
 
-            var messageForUser = await RegisterPlayer(message, messageController.PlayerRepository);
-            await messageController.SendMessageAsync(message.Chat.Id, messageForUser);
-            await SheetController.GetInstance().UpsertPlayerAsync(PlayerName(message));
-            await messageController.SendTextMessageToBotOwnerAsync($"{PlayerName(message)} зарегистрировался");
+            var messageForUser = await RegisterPlayer(message);
+
+            await Task.WhenAll(new[]
+            {
+                _messageService.SendMessageAsync(message.Chat.Id, messageForUser),
+                _sheetService.UpsertPlayerAsync(playerName),
+                _messageService.SendMessageToBotOwnerAsync($"{playerName} зарегистрировался")
+            });
         }
 
-        private string PlayerName(Message message)
+        private string GetPlayerNameFrom(Message message)
         {
-            return message.Text.Length > Name.Length ? message.Text.Substring(Name.Length).Trim() : string.Empty;
+            return message.Text.Length > Name.Length ? message.Text[Name.Length..].Trim() : string.Empty;
         }
 
-        private async Task<string> RegisterPlayer(Message message, IPlayerRepository playerRepository)
+        private async Task<string> RegisterPlayer(Message message)
         {
+            var playerName = GetPlayerNameFrom(message);
+
             try
             {
-                var existPlayer = await playerRepository.GetAsync(message.From.Id);
-                var messageForUser = existPlayer.Name == PlayerName(message) ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
-                existPlayer.Name = PlayerName(message);
-                await playerRepository.UpdateAsync(existPlayer);
+                var existingPlayer = await _playerRepository.GetAsync(message.From.Id);
+                var messageForUser = existingPlayer.Name == playerName ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
+                existingPlayer.Name = playerName;
+                await _playerRepository.UpdateAsync(existingPlayer);
                 return messageForUser;
             }
             catch (UserNotFoundException)
             {
-                await playerRepository.AddAsync(new Player(message.From.Id, PlayerName(message), message.Chat.Id));
+                var newPlayer = new Player(message.From.Id, playerName, message.Chat.Id);
+                await _playerRepository.AddAsync(newPlayer);
                 return "Регистрация прошла успешно";
             }
         }

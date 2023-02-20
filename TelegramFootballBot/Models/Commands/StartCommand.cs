@@ -1,16 +1,23 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class StartCommand : Command
     {
         public override string Name => "/start";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+
+        public StartCommand(IMessageService messageService)
         {
-            await messageController.SendMessageAsync(message.Chat.Id, "Для регистрации введите /reg Фамилия Имя");
+            _messageService = messageService;
+        }
+
+        public override async Task ExecuteAsync(Message message)
+        {
+            await _messageService.SendMessageAsync(message.Chat.Id, "Для регистрации введите /reg Фамилия Имя");
         }
     }
 }

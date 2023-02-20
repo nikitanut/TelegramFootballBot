@@ -1,24 +1,31 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Models.Commands.AdminCommands
+namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
 {
     public class SayCommand : Command
     {
         public override string Name => "/say";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+
+        public SayCommand(IMessageService messageService)
+        {
+            _messageService = messageService;
+        }
+
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;
 
             var text = message.Text.Length > Name.Length
-                ? message.Text.Substring(Name.Length).Trim()
+                ? message.Text[Name.Length..].Trim()
                 : string.Empty;
 
             if (text != string.Empty)
-                await messageController.SendMessageToAllUsersAsync(text);
+                await _messageService.SendMessageToAllPlayersAsync(text);
         }
     }
 }

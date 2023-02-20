@@ -1,20 +1,27 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Models.Commands.AdminCommands
+namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
 {
     public class SwitchNotifierCommand : Command
     {
         public override string Name => "/switch";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+
+        public SwitchNotifierCommand(IMessageService messageService)
+        {
+            _messageService = messageService;
+        }
+
+        public override async Task ExecuteAsync(Message message)
         {
             if (!IsBotOwner(message))
                 return;
 
             AppSettings.NotifyOwner = !AppSettings.NotifyOwner;
-            await messageController.SendTextMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
+            await _messageService.SendMessageToBotOwnerAsync(AppSettings.NotifyOwner ? "On" : "Off");
         }
     }
 }

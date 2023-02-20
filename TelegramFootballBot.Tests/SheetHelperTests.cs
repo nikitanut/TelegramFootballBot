@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TelegramFootballBot.Helpers;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Exceptions;
+using TelegramFootballBot.Core.Helpers;
 using Xunit;
 
 namespace TelegramFootballBot.Tests
@@ -51,7 +51,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void GetAllUsersRange_ReturnsCorrectRange()
         {
-            var range = SheetHelper.GetAllUsersRange();
+            var range = SheetHelper.GetAllPlayersRange();
             Assert.Equal("Участие в играх!A:B", range);
         }
 
@@ -65,10 +65,10 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void GetApprovedPlayersString_ReturnsCorrectString()
         {
-            var approvedPlayersString = SheetHelper.GetApprovedPlayersString(_players);
+            var approvedPlayersString = SheetHelper.BuildPlayersListMessage(_players);
 
             var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: 7.";
-            var dashedString = MarkupHelper.GetDashedString();
+            var dashedString = MarkupHelper.DashedString;
             var expectedString = $"{headerMessage}{Environment.NewLine}" +
                 $"{dashedString}{Environment.NewLine}" +
                 $"User3{Environment.NewLine}" +
@@ -91,7 +91,7 @@ namespace TelegramFootballBot.Tests
             var orderedPlayers = SheetHelper.GetOrderedPlayers(_values);
             var expectedPlayers = _players.OrderBy(p => p[0]).ToList();
             
-            Assert.Equal(expectedPlayers.Count, orderedPlayers.Count());
+            Assert.Equal(expectedPlayers.Count, orderedPlayers.Count);
 
             for (var i = 0; i < expectedPlayers.Count; i++)
             {
@@ -107,7 +107,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void GetStartRows_ReturnsCorrectRows()
         {
-            var startRows = SheetHelper.GetStartRows(_values);
+            var startRows = SheetHelper.GetHeaderRows(_values);
 
             Assert.Equal(2, startRows.Count());
             Assert.Equal(0, startRows.First().Count);
@@ -123,7 +123,7 @@ namespace TelegramFootballBot.Tests
         {
             var totalsRow = SheetHelper.GetTotalsRow(_values);
 
-            Assert.Equal(2, totalsRow.Count());
+            Assert.Equal(2, totalsRow.Count);
             Assert.Equal("Всего", totalsRow[0]);
             Assert.Equal("=SUM(B3:B22)", totalsRow[1]);
         }
@@ -131,9 +131,9 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void GetUserRange_ReturnsCorrectRange()
         {
-            var range1 = SheetHelper.GetUserRange(3);
-            var range2 = SheetHelper.GetUserRange(4);
-            var range3 = SheetHelper.GetUserRange(5);
+            var range1 = SheetHelper.GetPlayerRange(3);
+            var range2 = SheetHelper.GetPlayerRange(4);
+            var range3 = SheetHelper.GetPlayerRange(5);
 
             Assert.Equal("Участие в играх!B3", range1);
             Assert.Equal("Участие в играх!B4", range2);
@@ -143,9 +143,9 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void GetUserRowNumber_ReturnsCorrectRowNumber()
         {
-            var row1 = SheetHelper.GetUserRowNumber(_values, "User1");
-            var row2 = SheetHelper.GetUserRowNumber(_values, "User5");
-            var row3 = SheetHelper.GetUserRowNumber(_values, "User9");
+            var row1 = SheetHelper.GetPlayerRowNumber(_values, "User1");
+            var row2 = SheetHelper.GetPlayerRowNumber(_values, "User5");
+            var row3 = SheetHelper.GetPlayerRowNumber(_values, "User9");
 
             Assert.Equal(3, row1);
             Assert.Equal(7, row2);
@@ -160,7 +160,7 @@ namespace TelegramFootballBot.Tests
                 new List<object> { "User21" }
             };
 
-            var newValues = SheetHelper.GetNewValues(_values, newPlayers);
+            var newValues = SheetHelper.ApplyPlayers(_values, newPlayers);
             
             Assert.Equal(_values.Count + 1, newValues.Count);
             Assert.Equal("Всего", newValues.LastOrDefault()?[0]);
@@ -171,7 +171,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void NewValues_Get_ReturnsCorrectCollection()
         {
-            var newValues = SheetHelper.GetNewValues(_values, _players);
+            var newValues = SheetHelper.ApplyPlayers(_values, _players);
 
             Assert.Equal(_values.Count, newValues.Count);
             Assert.Equal("Всего", newValues.LastOrDefault()?[0]);
@@ -181,7 +181,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void NewValues_Get_ThrowsTotalsRowNotFound()
         {
-            Action actual = () => { SheetHelper.GetNewValues(_values.Take(_values.Count - 1).ToList(), _players); };
+            void actual() { SheetHelper.ApplyPlayers(_values.Take(_values.Count - 1).ToList(), _players); }
 
             Assert.Throws<TotalsRowNotFoundExeption>(actual);
         }

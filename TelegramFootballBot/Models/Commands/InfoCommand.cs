@@ -1,33 +1,37 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
+using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class InfoCommand : Command
     {
         public override string Name => "/info";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+
+        public InfoCommand(IMessageService messageService)
         {
-            await messageController.SendMessageAsync(message.Chat.Id, Text(message));
+            _messageService = messageService;
         }
 
-        private string Text(Message message)
+        public override async Task ExecuteAsync(Message message)
+        {
+            await _messageService.SendMessageAsync(message.Chat.Id, Text(message));
+        }
+
+        private static string Text(Message message)
         {
             if (IsBotOwner(message))
             {
-                return $"/distribute - run distribution{Environment.NewLine}" +
-                       $"/list - list of registered players{Environment.NewLine}" +
-                       $"/rate - set player rating{Environment.NewLine}" +
-                       $"/say - send text to all players{Environment.NewLine}" +
+                return $"/say - send text to all players{Environment.NewLine}" +
                        $"/status - get statistics{Environment.NewLine}" +
                        $"/switch - turn on / turn off notifications";                
             }
             
             return $"/reg - зарегистрироваться{Environment.NewLine}" +
-                   $"/unregister - отписаться от рассылки{Environment.NewLine}" +
+                   $"/unreg - отписаться от рассылки{Environment.NewLine}" +
                    $"/go - отметиться";
         }
     }

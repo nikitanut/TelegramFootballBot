@@ -268,3 +268,5 @@ AppSettings.cs
 *.db
 /TelegramFootballBot/published
 /TelegramFootballBot/Properties/PublishProfiles
+/TelegramFootballBot.App/credentials.json
+/TelegramFootballBot.App/logs.txt

@@ -1,5 +1,5 @@
 ﻿using System;
-using TelegramFootballBot.Models.CallbackQueries;
+using TelegramFootballBot.Core.Models.CallbackQueries;
 using Xunit;
 
 namespace TelegramFootballBot.Tests
@@ -10,7 +10,7 @@ namespace TelegramFootballBot.Tests
         public void GetGameStartCallbackText_ReturnsCorrectText()
         {
             var gameDate = new DateTime(2020, 07, 25);
-            var text = PlayerSetCallback.GetCallbackPrefix(gameDate);
+            var text = PlayerSetCallback.BuildCallbackPrefix(gameDate);
 
             Assert.Equal("PlayersSetDetermination|2020-07-25", text);
         }
@@ -21,14 +21,6 @@ namespace TelegramFootballBot.Tests
             var callBack = new PlayerSetCallback("PlayersSetDetermination|2020-07-25_Да");
 
             Assert.Equal(new DateTime(2020, 07, 25), callBack.GameDate);
-        }
-
-        [Fact]
-        public void GetCallbackPollId_ReturnsCorrectGuid()
-        {
-            var callBack = new TeamPollCallback("TeamPoll|84d7e364-a716-4d30-916a-478d88cd1a87_Да");
-
-            Assert.Equal(new Guid("84d7e364-a716-4d30-916a-478d88cd1a87"), callBack.PollId);
         }
 
         [Fact]

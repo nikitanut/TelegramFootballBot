@@ -1,33 +1,44 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Controllers;
-using TelegramFootballBot.Helpers;
+using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 
-namespace TelegramFootballBot.Models.Commands
+namespace TelegramFootballBot.Core.Models.Commands
 {
     public class GoCommand : Command
     {
         public override string Name => "/go";
 
-        public override async Task Execute(Message message, MessageController messageController)
+        private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
+
+        public GoCommand(IMessageService messageService, IPlayerRepository playerRepository)
+        {
+            _messageService = messageService;
+            _playerRepository = playerRepository;
+        }
+
+        public override async Task ExecuteAsync(Message message)
         {
             Player player;
             try
             {
-                player = await messageController.PlayerRepository.GetAsync(message.From.Id);
+                player = await _playerRepository.GetAsync(message.From.Id);
             }
             catch (UserNotFoundException)
             {
-                await messageController.SendMessageAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
+                await _messageService.SendMessageAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
 
             var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
 
-            await messageController.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-            await messageController.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserDeterminationMarkup(gameDate));
+            await _messageService.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            await _messageService.SendMessageAsync(player.ChatId, text, MarkupHelper.GetIfReadyToPlayQuestion(gameDate));
         }
     }
 }

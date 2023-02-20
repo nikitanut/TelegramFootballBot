@@ -1,19 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using TelegramFootballBot.Models;
+using TelegramFootballBot.Core.Models;
 
-namespace TelegramFootballBot.Data
+namespace TelegramFootballBot.Core.Data
 {
     public interface IPlayerRepository
     {
-        Task<Player> GetAsync(int id);
-        Task<Player> GetAsync(string name);
+        Task<Player> GetAsync(long id);
+
         Task AddAsync(Player player);
+
         Task UpdateAsync(Player player);
+
         Task UpdateMultipleAsync(IEnumerable<Player> players);
-        Task RemoveAsync(int id);
+
+        Task RemoveAsync(long id);
+
         Task<List<Player>> GetAllAsync();
+
         Task<List<Player>> GetRecievedMessageAsync();
-        Task<List<Player>> GetReadyToPlayAsync();
     }
 }
