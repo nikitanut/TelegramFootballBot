@@ -6,8 +6,6 @@
 
         public string Name { get; set; }
 
-        public int Rating { get; set; }
-
         public long ChatId { get; set; }
 
         public int ApprovedPlayersMessageId { get; set; }

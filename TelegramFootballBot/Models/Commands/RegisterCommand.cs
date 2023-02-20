@@ -48,17 +48,20 @@ namespace TelegramFootballBot.Core.Models.Commands
 
         private async Task<string> RegisterPlayer(Message message)
         {
+            var playerName = GetPlayerNameFrom(message);
+
             try
             {
-                var existPlayer = await _playerRepository.GetAsync(message.From.Id);
-                var messageForUser = existPlayer.Name == GetPlayerNameFrom(message) ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
-                existPlayer.Name = GetPlayerNameFrom(message);
-                await _playerRepository.UpdateAsync(existPlayer);
+                var existingPlayer = await _playerRepository.GetAsync(message.From.Id);
+                var messageForUser = existingPlayer.Name == playerName ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
+                existingPlayer.Name = playerName;
+                await _playerRepository.UpdateAsync(existingPlayer);
                 return messageForUser;
             }
             catch (UserNotFoundException)
             {
-                await _playerRepository.AddAsync(new Player(message.From.Id, GetPlayerNameFrom(message), message.Chat.Id));
+                var newPlayer = new Player(message.From.Id, playerName, message.Chat.Id);
+                await _playerRepository.AddAsync(newPlayer);
                 return "Регистрация прошла успешно";
             }
         }

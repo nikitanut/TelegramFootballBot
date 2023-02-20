@@ -10,10 +10,6 @@ namespace TelegramFootballBot.Core.Services
 
         Task RefreshTotalPlayersMessageAsync();
 
-        Task RefreshPollMessageAsync();
-
-        Task SendGeneratedTeamsMessageAsync();
-
         Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null);
 
         Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null);

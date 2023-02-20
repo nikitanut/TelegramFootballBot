@@ -78,7 +78,7 @@ namespace TelegramFootballBot.Core.Services
         {
             var sheet = await GetSheetAsync();            
             var players = SheetHelper.GetOrderedPlayers(sheet.Values);
-            return SheetHelper.BuildApprovedPlayersMessage(players);            
+            return SheetHelper.BuildPlayersListMessage(players);            
         }
 
         public async Task<List<string>> GetPlayersReadyToPlayAsync()

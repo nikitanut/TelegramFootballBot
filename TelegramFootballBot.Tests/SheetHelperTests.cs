@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
-using TelegramFootballBot.Core.Models;
 using Xunit;
 
 namespace TelegramFootballBot.Tests
@@ -66,7 +65,7 @@ namespace TelegramFootballBot.Tests
         [Fact]
         public void GetApprovedPlayersString_ReturnsCorrectString()
         {
-            var approvedPlayersString = SheetHelper.BuildApprovedPlayersMessage(_players);
+            var approvedPlayersString = SheetHelper.BuildPlayersListMessage(_players);
 
             var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: 7.";
             var dashedString = MarkupHelper.DashedString;

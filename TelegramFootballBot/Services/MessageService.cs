@@ -17,18 +17,15 @@ namespace TelegramFootballBot.Core.Services
     {
         private readonly ITelegramBotClient _botClient;
         private readonly IPlayerRepository _playerRepository;
-        private readonly ITeamService _teamService;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
         private string _approvedPlayersMessage = null;
-        private string _messageWithLikes = null;
 
-        public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, ITeamService teamsService, ISheetService sheetService, ILogger logger)
+        public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
             _botClient = botClient;
             _playerRepository = playerRepository;
-            _teamService = teamsService;
             _sheetService = sheetService;
             _logger = logger;            
         }
@@ -48,28 +45,6 @@ namespace TelegramFootballBot.Core.Services
             _approvedPlayersMessage = approvedPlayersMessage;
             var playersReceivedMessage = await _playerRepository.GetRecievedMessageAsync();
             await EditMessageAsync(playersReceivedMessage, _approvedPlayersMessage, Constants.APPROVED_PLAYERS_MESSAGE_TYPE);
-        }
-
-        public async Task RefreshPollMessageAsync()
-        {
-            var messageWithLikes = _teamService.GetMessageWithLikes();
-            if (messageWithLikes == _messageWithLikes)
-                return;
-
-            _messageWithLikes = messageWithLikes;
-            var playersVoted = await _playerRepository.GetVotedAsync();
-            await EditMessageAsync(playersVoted, _messageWithLikes, Constants.TEAM_POLL_MESSAGE_TYPE);
-        }
-
-        public async Task SendGeneratedTeamsMessageAsync()
-        {
-            var pollMessage = _teamService.BuildMessageWithGeneratedTeams();
-            if (string.IsNullOrEmpty(pollMessage))
-                return;
-
-            _messageWithLikes = _teamService.GetMessageWithLikes();
-            var players = await _playerRepository.GetReadyToPlayAsync();
-            await SendMessageToPlayersAsync(players, pollMessage, MarkupHelper.GetTeamPollMarkup(_teamService.GetActivePollId()));
         }
 
         public async Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
@@ -130,7 +105,6 @@ namespace TelegramFootballBot.Core.Services
             return messageType switch
             {
                 Constants.APPROVED_PLAYERS_MESSAGE_TYPE => player.ApprovedPlayersMessageId,
-                Constants.TEAM_POLL_MESSAGE_TYPE => player.PollMessageId,
                 _ => throw new ArgumentOutOfRangeException(nameof(messageType)),
             };
         }

@@ -40,7 +40,6 @@ namespace TelegramFootballBot.App
                     });
                                         
                     services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
-                    services.AddSingleton<ITeamService, TeamService>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();
                     services.AddScoped<IUpdateHandler, UpdateHandler>();

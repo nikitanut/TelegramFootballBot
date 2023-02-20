@@ -46,13 +46,6 @@ namespace TelegramFootballBot.Core.Data
             return player ?? throw new UserNotFoundException();
         }
 
-        public async Task<Player> GetAsync(string name)
-        {
-            using var db = new FootballBotDbContext(_options);
-            var player = await db.Players.FirstOrDefaultAsync(p => p.Name.Equals(name, System.StringComparison.InvariantCultureIgnoreCase));
-            return player ?? throw new UserNotFoundException();
-        }
-
         public async Task RemoveAsync(long id)
         {
             using var db = new FootballBotDbContext(_options);
@@ -87,18 +80,6 @@ namespace TelegramFootballBot.Core.Data
         {
             using var db = new FootballBotDbContext(_options);
             return await db.Players.Where(p => p.ApprovedPlayersMessageId != 0).ToListAsync();
-        }
-
-        public async Task<List<Player>> GetReadyToPlayAsync()
-        {
-            using var db = new FootballBotDbContext(_options);
-            return await db.Players.Where(p => p.IsGoingToPlay).ToListAsync();
-        }
-
-        public async Task<List<Player>> GetVotedAsync()
-        {
-            using var db = new FootballBotDbContext(_options);
-            return await db.Players.Where(p => p.PollMessageId != 0).ToListAsync();
         }
     }
 }

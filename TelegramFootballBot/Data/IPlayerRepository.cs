@@ -8,8 +8,6 @@ namespace TelegramFootballBot.Core.Data
     {
         Task<Player> GetAsync(long id);
 
-        Task<Player> GetAsync(string name);
-
         Task AddAsync(Player player);
 
         Task UpdateAsync(Player player);
@@ -21,9 +19,5 @@ namespace TelegramFootballBot.Core.Data
         Task<List<Player>> GetAllAsync();
 
         Task<List<Player>> GetRecievedMessageAsync();
-
-        Task<List<Player>> GetReadyToPlayAsync();
-
-        Task<List<Player>> GetVotedAsync();
     }
 }

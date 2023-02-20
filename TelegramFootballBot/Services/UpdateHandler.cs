@@ -17,16 +17,14 @@ namespace TelegramFootballBot.Core.Services
     {
         private readonly CommandFactory _commandFactory;
         private readonly IMessageService _messageService;
-        private readonly ITeamService _teamService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
-        public UpdateHandler(CommandFactory commandFactory, IMessageService messageService, ITeamService teamService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
+        public UpdateHandler(CommandFactory commandFactory, IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
             _commandFactory = commandFactory;
             _messageService = messageService;
-            _teamService = teamService;
             _playerRepository = playerRepository;
             _sheetService = sheetService;
             _logger = logger;
@@ -74,10 +72,7 @@ namespace TelegramFootballBot.Core.Services
                     return;
 
                 if (Callback.GetCallbackName(callbackData) == PlayerSetCallback.Name)
-                    await DetermineIfUserIsReadyToPlayAsync(callbackQuery);
-
-                if (Callback.GetCallbackName(callbackData) == TeamPollCallback.Name)
-                    await DetermineIfUserLikesTeamAsync(callbackQuery);
+                    await DetermineIfPlayerIsReadyToPlayAsync(callbackQuery);
 
                 _logger.Information($"Processed callback: {callbackQuery.Data}");
             }
@@ -105,7 +100,7 @@ namespace TelegramFootballBot.Core.Services
             }
         }
 
-        private async Task DetermineIfUserIsReadyToPlayAsync(CallbackQuery callbackQuery)
+        private async Task DetermineIfPlayerIsReadyToPlayAsync(CallbackQuery callbackQuery)
         {
             var playerSetCallback = new PlayerSetCallback(callbackQuery.Data);
             await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
@@ -159,22 +154,6 @@ namespace TelegramFootballBot.Core.Services
             }
 
             return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
-        }
-
-        private async Task DetermineIfUserLikesTeamAsync(CallbackQuery callbackQuery)
-        {
-            await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
-            _teamService.ProcessPollChoice(new TeamPollCallback(callbackQuery.Data));
-
-            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
-            player.PollMessageId = await SendTeamPollMessageAsync(callbackQuery.Message.Chat.Id);
-            await _playerRepository.UpdateAsync(player);
-        }
-
-        private async Task<int> SendTeamPollMessageAsync(ChatId chatId)
-        {
-            var message = _teamService.GetMessageWithLikes();
-            return (await _messageService.SendMessageAsync(chatId, message)).MessageId;
         }
 
         private static string GetApproveCellValue(string userAnswer)

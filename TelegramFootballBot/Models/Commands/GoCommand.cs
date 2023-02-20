@@ -38,7 +38,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
 
             await _messageService.DeleteMessageAsync(message.Chat.Id, message.MessageId);
-            await _messageService.SendMessageAsync(player.ChatId, text, MarkupHelper.GetUserReadyToPlayQuestion(gameDate));
+            await _messageService.SendMessageAsync(player.ChatId, text, MarkupHelper.GetIfReadyToPlayQuestion(gameDate));
         }
     }
 }

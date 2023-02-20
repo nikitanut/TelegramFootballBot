@@ -25,9 +25,7 @@ namespace TelegramFootballBot.Core.Models.Commands
         {
             if (IsBotOwner(message))
             {
-                return $"/list - list of registered players{Environment.NewLine}" +
-                       $"/rate - set player rating{Environment.NewLine}" +
-                       $"/say - send text to all players{Environment.NewLine}" +
+                return $"/say - send text to all players{Environment.NewLine}" +
                        $"/status - get statistics{Environment.NewLine}" +
                        $"/switch - turn on / turn off notifications";                
             }

@@ -24,8 +24,6 @@ namespace TelegramFootballBot.Core.Helpers
                 new StatusCommand(messageService, playerRepository),
                 new InfoCommand(messageService),
                 new StartCommand(messageService),
-                new ListCommand(messageService, playerRepository),
-                new RateCommand(messageService, playerRepository)
             };
         }
 

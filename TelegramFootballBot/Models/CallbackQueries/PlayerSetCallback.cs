@@ -12,20 +12,15 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
 
         public PlayerSetCallback(string callbackData) : base(callbackData)
         {            
-            GameDate = GetGameDate(callbackData);
+            GameDate = ParseGameDate(callbackData);
         }
 
-        /// <summary>
-        /// Get text for player set callback prefix
-        /// </summary>
-        /// <param name="gameDate">Date of game</param>
-        /// <returns>Callback data text</returns>
-        public static string GetCallbackPrefix(DateTime gameDate)
+        public static string BuildCallbackPrefix(DateTime gameDate)
         {
             return Name + Constants.CALLBACK_DATA_SEPARATOR + gameDate.ToString("yyyy-MM-dd");
         }
 
-        private static DateTime GetGameDate(string callbackData)
+        private static DateTime ParseGameDate(string callbackData)
         {
             var gameDateString = Prefix(callbackData).Split(Constants.CALLBACK_DATA_SEPARATOR).Last();
             if (!DateTime.TryParse(gameDateString, out DateTime gameDate))

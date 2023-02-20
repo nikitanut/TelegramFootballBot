@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using TelegramFootballBot.Core.Exceptions;
-using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Core.Helpers
 {
@@ -90,7 +89,7 @@ namespace TelegramFootballBot.Core.Helpers
             return players;
         }
 
-        public static string BuildApprovedPlayersMessage(IList<IList<object>> players)
+        public static string BuildPlayersListMessage(IList<IList<object>> players)
         {            
             var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {CountPlayersReadyToGo(players)}.";
             var likelyToGoPlayers = FilterPlayersLikelyToGo(players);
