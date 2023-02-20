@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.Linq;
 using TelegramFootballBot.Core.Exceptions;
@@ -39,20 +39,20 @@ namespace TelegramFootballBot.Tests
             _values = new List<IList<object>>
             {
                 new List<object>(),
-                new List<object> { null, "5 февраля", null, "Поле:" }
+                new List<object> { null, "5 С„РµРІСЂР°Р»СЏ", null, "РџРѕР»Рµ:" }
             };
 
             foreach (var player in _players)
                 _values.Add(new List<object>(player));
 
-            _values.Add(new List<object> { "Всего", $"=SUM(B3:B22)" });
+            _values.Add(new List<object> { "Р’СЃРµРіРѕ", $"=SUM(B3:B22)" });
         }
 
         [Fact]
         public void GetAllUsersRange_ReturnsCorrectRange()
         {
             var range = SheetHelper.GetAllPlayersRange();
-            Assert.Equal("Участие в играх!A:B", range);
+            Assert.Equal("РЈС‡Р°СЃС‚РёРµ РІ РёРіСЂР°С…!A:B", range);
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace TelegramFootballBot.Tests
         {
             var approvedPlayersString = SheetHelper.BuildPlayersListMessage(_players);
 
-            var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: 7.";
+            var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. РћС‚РјРµС‚РёР»РёСЃСЊ: 7.";
             var dashedString = MarkupHelper.DashedString;
             var expectedString = $"{headerMessage}{Environment.NewLine}" +
                 $"{dashedString}{Environment.NewLine}" +
@@ -77,7 +77,7 @@ namespace TelegramFootballBot.Tests
                 $"User16{Environment.NewLine}" +
                 $"User19{Environment.NewLine}" +
                 $"{dashedString}{Environment.NewLine}" +
-                $"Под вопросом: 3.{Environment.NewLine}" +
+                $"РџРѕРґ РІРѕРїСЂРѕСЃРѕРј: 3.{Environment.NewLine}" +
                 $"User7{Environment.NewLine}" +
                 $"User14{Environment.NewLine}" +
                 $"User15{Environment.NewLine}";
@@ -113,9 +113,9 @@ namespace TelegramFootballBot.Tests
             Assert.Equal(0, startRows.First().Count);
             Assert.Equal(4, startRows.Skip(1).First().Count);
             Assert.Null(startRows.Skip(1).First()[0]);
-            Assert.Equal("5 февраля", startRows.Skip(1).First()[1]);
+            Assert.Equal("5 С„РµРІСЂР°Р»СЏ", startRows.Skip(1).First()[1]);
             Assert.Null(startRows.Skip(1).First()[2]);
-            Assert.Equal("Поле:", startRows.Skip(1).First()[3]);
+            Assert.Equal("РџРѕР»Рµ:", startRows.Skip(1).First()[3]);
         }
 
         [Fact]
@@ -124,7 +124,7 @@ namespace TelegramFootballBot.Tests
             var totalsRow = SheetHelper.GetTotalsRow(_values);
 
             Assert.Equal(2, totalsRow.Count);
-            Assert.Equal("Всего", totalsRow[0]);
+            Assert.Equal("Р’СЃРµРіРѕ", totalsRow[0]);
             Assert.Equal("=SUM(B3:B22)", totalsRow[1]);
         }
 
@@ -135,9 +135,9 @@ namespace TelegramFootballBot.Tests
             var range2 = SheetHelper.GetPlayerRange(4);
             var range3 = SheetHelper.GetPlayerRange(5);
 
-            Assert.Equal("Участие в играх!B3", range1);
-            Assert.Equal("Участие в играх!B4", range2);
-            Assert.Equal("Участие в играх!B5", range3);
+            Assert.Equal("РЈС‡Р°СЃС‚РёРµ РІ РёРіСЂР°С…!B3", range1);
+            Assert.Equal("РЈС‡Р°СЃС‚РёРµ РІ РёРіСЂР°С…!B4", range2);
+            Assert.Equal("РЈС‡Р°СЃС‚РёРµ РІ РёРіСЂР°С…!B5", range3);
         }
 
         [Fact]
@@ -163,7 +163,7 @@ namespace TelegramFootballBot.Tests
             var newValues = SheetHelper.ApplyPlayers(_values, newPlayers);
             
             Assert.Equal(_values.Count + 1, newValues.Count);
-            Assert.Equal("Всего", newValues.LastOrDefault()?[0]);
+            Assert.Equal("Р’СЃРµРіРѕ", newValues.LastOrDefault()?[0]);
             Assert.Equal("=SUM(B3:B23)", newValues.LastOrDefault()?[1]);
             Assert.True(newValues.Count(v => v?.Count > 0 && v[0]?.ToString() == "User21") == 1);
         }
@@ -174,7 +174,7 @@ namespace TelegramFootballBot.Tests
             var newValues = SheetHelper.ApplyPlayers(_values, _players);
 
             Assert.Equal(_values.Count, newValues.Count);
-            Assert.Equal("Всего", newValues.LastOrDefault()?[0]);
+            Assert.Equal("Р’СЃРµРіРѕ", newValues.LastOrDefault()?[0]);
             Assert.Equal("=SUM(B3:B22)", newValues.LastOrDefault()?[1]);
         }
 
