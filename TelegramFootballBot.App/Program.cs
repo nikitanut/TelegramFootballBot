@@ -12,6 +12,7 @@ using Telegram.Bot;
 using TelegramFootballBot.Core.Helpers;
 using Microsoft.Extensions.Configuration;
 using Telegram.Bot.Polling;
+using TelegramFootballBot.Core.Clients;
 
 namespace TelegramFootballBot.App
 {
@@ -40,6 +41,7 @@ namespace TelegramFootballBot.App
                     });
                                         
                     services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
+                    services.AddSingleton<IBotClient, BotClient>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();
                     services.AddScoped<IUpdateHandler, UpdateHandler>();

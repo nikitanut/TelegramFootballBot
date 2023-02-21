@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Models;
@@ -15,14 +15,14 @@ namespace TelegramFootballBot.Core.Services
 {
     public class MessageService : IMessageService
     {
-        private readonly ITelegramBotClient _botClient;
+        private readonly IBotClient _botClient;
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
 
         private string _approvedPlayersMessage = null;
 
-        public MessageService(ITelegramBotClient botClient, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
+        public MessageService(IBotClient botClient, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
             _botClient = botClient;
             _playerRepository = playerRepository;
