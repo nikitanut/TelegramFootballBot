@@ -8,6 +8,8 @@ using TelegramFootballBot.Core.Services;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Models;
+using System.Linq;
+using Telegram.Bot.Types;
 
 namespace TelegramFootballBot.App.Workers
 {
@@ -17,6 +19,7 @@ namespace TelegramFootballBot.App.Workers
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
+        private string _approvedPlayersMessage = string.Empty;
 
         public SchedulerWorker(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
@@ -79,7 +82,13 @@ namespace TelegramFootballBot.App.Workers
         {
             try
             {
-                await _messageService.RefreshTotalPlayersMessageAsync();
+                var text = await _sheetService.BuildApprovedPlayersMessageAsync();
+                if (text == _approvedPlayersMessage)
+                    return;
+
+                _approvedPlayersMessage = text;
+                var messages = await _playerRepository.GetApprovedPlayersMessages();
+                await _messageService.EditMessagesAsync(text, messages);
             }
             catch (TaskCanceledException)
             {
@@ -99,7 +108,9 @@ namespace TelegramFootballBot.App.Workers
                 var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
                 var message = $"Èä¸øü íà ôóòáîë {gameDate.ToRussianDayMonthString()}?";
                 var markup = MarkupHelper.GetIfReadyToPlayQuestion(gameDate);
-                await _messageService.SendMessageToAllPlayersAsync(message, markup);
+                var players = await _playerRepository.GetAllAsync();
+                var chats = players.Select(p => (ChatId)p.ChatId);
+                await _messageService.SendMessagesAsync(message, chats, markup);
             }
             catch (Exception ex)
             {

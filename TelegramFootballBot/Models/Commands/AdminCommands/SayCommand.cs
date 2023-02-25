@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Types;
+using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
@@ -9,10 +11,12 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
         public override string Name => "/say";
 
         private readonly IMessageService _messageService;
+        private readonly IPlayerRepository _playerRepository;
 
-        public SayCommand(IMessageService messageService)
+        public SayCommand(IMessageService messageService, IPlayerRepository playerRepository)
         {
             _messageService = messageService;
+            _playerRepository = playerRepository;
         }
 
         public override async Task ExecuteAsync(Message message)
@@ -25,7 +29,11 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
                 : string.Empty;
 
             if (text != string.Empty)
-                await _messageService.SendMessageToAllPlayersAsync(text);
+            {
+                var players = await _playerRepository.GetAllAsync();
+                var chatIds = players.Select(p => (ChatId)p.ChatId);
+                await _messageService.SendMessagesAsync(text, chatIds);
+            }
         }
     }
 }
