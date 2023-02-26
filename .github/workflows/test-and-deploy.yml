@@ -34,7 +34,6 @@ jobs:
           else
             echo "ENVIRONMENT=Development" >> $GITHUB_ENV
           fi
-          echo "Environment: ${{ GITHUB_ENV }}"
 
   deploy:
     needs: ['test', 'set-environment']
