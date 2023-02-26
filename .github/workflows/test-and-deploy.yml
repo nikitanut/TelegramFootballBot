@@ -2,7 +2,7 @@ name: Test and deploy
 
 on:
   push:
-    branches: [ "master", "development", "debug_pipeline_master", "debug_pipeline"]
+    branches: [ "master", "development" ]
 env:
   releasepath: 'TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish'
   dotnetversion: 5.0.x
@@ -32,7 +32,7 @@ jobs:
     steps:
     - id: set-environment
       run: |
-          if [ ${{ github.ref }} == 'refs/heads/master' -o ${{ github.ref }} == 'refs/heads/debug_pipeline_master' ]
+          if [ ${{ github.ref }} == 'refs/heads/master' ]
           then
             echo "env=Production" >> $GITHUB_OUTPUT
           else
