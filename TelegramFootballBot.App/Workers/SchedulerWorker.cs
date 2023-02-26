@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Hosting;
+п»їusing Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -60,7 +60,7 @@ namespace TelegramFootballBot.App.Workers
             catch (Exception ex)
             {
                 _logger.Error(ex, "Clearing game attrs error");
-                await _messageService.SendMessageToBotOwnerAsync("Ошибка при очищении полей");
+                await _messageService.SendMessageToBotOwnerAsync("РћС€РёР±РєР° РїСЂРё РѕС‡РёС‰РµРЅРёРё РїРѕР»РµР№");
             }
         }
 
@@ -99,7 +99,7 @@ namespace TelegramFootballBot.App.Workers
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on updating total players messages, {nameof(RefreshTotalPlayersMessagesAsync)}");
-                await _messageService.SendMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
+                await _messageService.SendMessageToBotOwnerAsync($"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё СЃРѕРѕР±С‰РµРЅРёР№ СЃ РѕС‚РјРµС‚РёРІС€РёРјРёСЃСЏ РёРіСЂРѕРєР°РјРё: {ex.Message}");
             }
         }
 
@@ -118,7 +118,7 @@ namespace TelegramFootballBot.App.Workers
             try
             {
                 var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
-                var message = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
+                var message = $"РРґС‘С€СЊ РЅР° С„СѓС‚Р±РѕР» {gameDate.ToRussianDayMonthString()}?";
                 var markup = MarkupHelper.GetIfReadyToPlayQuestion(gameDate);
                 var players = await _playerRepository.GetAllAsync();
                 var chats = players.Select(p => (ChatId)p.ChatId);
@@ -127,7 +127,7 @@ namespace TelegramFootballBot.App.Workers
             catch (Exception ex)
             {
                 _logger.Error(ex, $"Error on {nameof(SendQuestionToAllUsersAsync)}");
-                await _messageService.SendMessageToBotOwnerAsync($"Ошибка при определении списка игроков: {ex.Message}");
+                await _messageService.SendMessageToBotOwnerAsync($"РћС€РёР±РєР° РїСЂРё РѕРїСЂРµРґРµР»РµРЅРёРё СЃРїРёСЃРєР° РёРіСЂРѕРєРѕРІ: {ex.Message}");
             }
         }
 
