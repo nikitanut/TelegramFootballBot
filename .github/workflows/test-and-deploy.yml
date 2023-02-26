@@ -2,7 +2,7 @@ name: Test and deploy
 
 on:
   push:
-    branches: [ "development", "debug_pipeline", "debug_pipeline_master" ]
+    branches: [ "master", "development", "debug_pipeline_master", "debug_pipeline"]
 env:
   releasepath: 'TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish'
   dotnetversion: 5.0.x
@@ -40,7 +40,6 @@ jobs:
           fi
     - id: show-environment
       run: echo "${{ steps.set-environment.outputs.env }}"
-
 
   deploy:
     needs: ['test', 'set-environment']
@@ -85,3 +84,8 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: ${{ vars.TARGET }}
+          SCRIPT_BEFORE: |
+            systemctl stop ${{ vars.SERVICE_FILE }}
+          SCRIPT_AFTER: |
+            systemctl daemon-reload
+            systemctl start ${{ vars.SERVICE_FILE }}
