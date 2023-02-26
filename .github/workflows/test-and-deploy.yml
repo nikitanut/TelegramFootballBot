@@ -27,16 +27,16 @@ jobs:
 
   set-environment:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-environment.outputs.env }}
     steps:
-    - name: Set development
+    - id: set-environment
       run: |
           if [[ ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/debug_pipeline_master' }} ]]; then
-            echo "ENVIRONMENT=Production" >> $GITHUB_ENV
+            echo "env=Production" >> $GITHUB_OUTPUT
           else
-            echo "ENVIRONMENT=Development" >> $GITHUB_ENV
-          fi
-      outputs:
-        environment: ${{ env.ENVIRONMENT }}
+            echo "env=Development" >> $GITHUB_OUTPUT
+          fi    
 
   deploy:
     needs: ['test', 'set-environment']
