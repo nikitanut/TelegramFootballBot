@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Core.Data
@@ -24,6 +23,6 @@ namespace TelegramFootballBot.Core.Data
 
         Task<List<Player>> GetRecievedMessageAsync();
 
-        Task<List<Message>> GetApprovedPlayersMessages();
+        Task<List<Player>> GetPlayersWithOutdatedMessage(string latestMessage);
     }
 }

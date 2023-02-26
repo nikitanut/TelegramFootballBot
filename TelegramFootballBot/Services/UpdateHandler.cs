@@ -120,11 +120,13 @@ namespace TelegramFootballBot.Core.Services
                 return;
             }
 
-            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
+            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);            
             await _sheetService.SetApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
 
+            var approvedPlayersMessage = await _sheetService.BuildApprovedPlayersMessageAsync();
             player.IsGoingToPlay = playerSetCallback.UserAnswer == Constants.YES_ANSWER;
-            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(callbackQuery.Message.Chat.Id, player);
+            player.ApprovedPlayersMessageId = await SendApprovedPlayersMessageAsync(approvedPlayersMessage, callbackQuery.Message.Chat.Id, player);
+            player.ApprovedPlayersMessage = approvedPlayersMessage;
 
             await _playerRepository.UpdateAsync(player);
         }
@@ -135,25 +137,23 @@ namespace TelegramFootballBot.Core.Services
         /// <param name="chatId">Player chat id</param>
         /// <param name="player">Player</param>
         /// <returns>Sent message id</returns>
-        private async Task<int> SendApprovedPlayersMessageAsync(ChatId chatId, Player player)
+        private async Task<int> SendApprovedPlayersMessageAsync(string message, ChatId chatId, Player player)
         {
-            var approvedPlayersMessage = await _sheetService.BuildApprovedPlayersMessageAsync();
-
             if (player.ApprovedPlayersMessageId != 0)
             {
                 try
                 {
-                    await _messageService.EditMessageAsync(chatId, player.ApprovedPlayersMessageId, approvedPlayersMessage);
+                    await _messageService.EditMessageAsync(chatId, player.ApprovedPlayersMessageId, message);
                     return player.ApprovedPlayersMessageId;
                 }
                 catch (Exception ex) // Telegram API doesn't allow to check if user deleted message
                 {
                     _logger.Error(ex, $"Error on editing message for user {player.Name}");
-                    return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
                 }
             }
 
-            return (await _messageService.SendMessageAsync(chatId, approvedPlayersMessage)).MessageId;
+            var messageResponse = await _messageService.SendMessageAsync(chatId, message);
+            return messageResponse.MessageId;
         }
 
         private static string GetApproveCellValue(string userAnswer)

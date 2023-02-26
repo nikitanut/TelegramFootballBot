@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Models;
 
@@ -90,14 +89,10 @@ namespace TelegramFootballBot.Core.Data
             return await db.Players.Where(p => p.ApprovedPlayersMessageId != 0).ToListAsync();
         }
 
-        public async Task<List<Message>> GetApprovedPlayersMessages()
+        public async Task<List<Player>> GetPlayersWithOutdatedMessage(string latestMessage)
         {
-            var playersReceivedMessages = await GetRecievedMessageAsync();
-            return playersReceivedMessages.Select(p => new Message
-            {
-                MessageId = p.ApprovedPlayersMessageId,
-                Chat = new Chat { Id = p.ChatId }
-            }).ToList();
+            using var db = new FootballBotDbContext(_options);
+            return await db.Players.Where(p => p.ApprovedPlayersMessageId > 0 && p.ApprovedPlayersMessage != latestMessage).ToListAsync();
         }
     }
 }

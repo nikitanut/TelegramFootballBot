@@ -10,6 +10,8 @@
 
         public int ApprovedPlayersMessageId { get; set; }
 
+        public string ApprovedPlayersMessage { get; set; }
+
         public bool IsGoingToPlay { get; set; }
         
         private Player() { }

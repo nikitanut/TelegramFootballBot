@@ -44,7 +44,7 @@ namespace TelegramFootballBot.Core.Services
 
             foreach (var message in messagesToEdit)
             {
-                var request = EditMessageAsync(message.Chat.Id, message.MessageId, text);
+                var request = EditMessageAsync(message, text);
                 requests.Add(request);
                 chatsRequestsIds.Add(request.Id, message.Chat.Id);
             }
@@ -56,6 +56,15 @@ namespace TelegramFootballBot.Core.Services
         {
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
             return await _botClient.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cts.Token);
+        }
+
+        private async Task<Message> EditMessageAsync(Message message, string text)
+        {
+            if (message.Text == text)
+                return message;
+
+            using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
+            return await _botClient.EditMessageTextAsync(message.Chat.Id, message.MessageId, text, cancellationToken: cts.Token);
         }
 
         public async Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)

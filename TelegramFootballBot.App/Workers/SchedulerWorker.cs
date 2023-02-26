@@ -19,7 +19,6 @@ namespace TelegramFootballBot.App.Workers
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
-        private string _approvedPlayersMessage = string.Empty;
 
         public SchedulerWorker(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
@@ -71,6 +70,7 @@ namespace TelegramFootballBot.App.Workers
             foreach (var player in playersToUpdate)
             {
                 player.ApprovedPlayersMessageId = 0;
+                player.ApprovedPlayersMessage = string.Empty;
                 player.IsGoingToPlay = false;
             };
 
@@ -82,12 +82,15 @@ namespace TelegramFootballBot.App.Workers
             try
             {
                 var text = await _sheetService.BuildApprovedPlayersMessageAsync();
-                if (text == _approvedPlayersMessage)
-                    return;
+                var playersWithOutdatedMessage = await _playerRepository.GetPlayersWithOutdatedMessage(text);
+                
+                var messagesToRefresh = GetMessagesToRefresh(playersWithOutdatedMessage);
+                await _messageService.EditMessagesAsync(text, messagesToRefresh);
 
-                _approvedPlayersMessage = text;
-                var messages = await _playerRepository.GetApprovedPlayersMessages();
-                await _messageService.EditMessagesAsync(text, messages);
+                foreach (var player in playersWithOutdatedMessage)
+                    player.ApprovedPlayersMessage = text;
+
+                await _playerRepository.UpdateMultipleAsync(playersWithOutdatedMessage);
             }
             catch (TaskCanceledException)
             {
@@ -98,6 +101,16 @@ namespace TelegramFootballBot.App.Workers
                 _logger.Error(ex, $"Error on updating total players messages, {nameof(RefreshTotalPlayersMessagesAsync)}");
                 await _messageService.SendMessageToBotOwnerAsync($"Ошибка при обновлении сообщений с отметившимися игроками: {ex.Message}");
             }
+        }
+
+        private static IEnumerable<Message> GetMessagesToRefresh(List<Player> playersWithOldMessage)
+        {
+            return playersWithOldMessage.Select(p => new Message
+            {
+                Text = p.ApprovedPlayersMessage,
+                MessageId = p.ApprovedPlayersMessageId,
+                Chat = new Chat { Id = p.ChatId }
+            });
         }
 
         private async Task SendQuestionToAllUsersAsync()
