@@ -32,7 +32,7 @@ jobs:
     steps:
     - id: set-environment
       run: |
-          if [ ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/debug_pipeline_master' }} ]
+          if [ ${{ github.ref }} == 'refs/heads/master' -o ${{ github.ref }} == 'refs/heads/debug_pipeline_master' ]
           then
             echo "env=Production" >> $GITHUB_OUTPUT
           else
