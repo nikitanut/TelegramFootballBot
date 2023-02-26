@@ -56,10 +56,8 @@ namespace TelegramFootballBot.Core.Helpers
 
         public static DateTime GetNearestDistributionDateMoscowTime(DateTime currentDate)
         {
-            return GetNearestDate(currentDate,
-                AppSettings.DistributionTime.Days,
-                AppSettings.DistributionTime.Hours,
-                AppSettings.DistributionTime.Minutes);
+            var distributionTime = AppSettings.DistributionTime;
+            return GetNearestDate(currentDate, distributionTime.Days, distributionTime.Hours, distributionTime.Minutes);
         }
 
         private static DateTime GetNearestDate(DateTime currentDate, int eventDayOfWeek, int eventHour, int eventMinutes)
