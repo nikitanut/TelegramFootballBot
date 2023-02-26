@@ -70,7 +70,6 @@ namespace TelegramFootballBot.App.Workers
             var playersToUpdate = await _playerRepository.GetAllAsync();
             foreach (var player in playersToUpdate)
             {
-                player.PollMessageId = 0;
                 player.ApprovedPlayersMessageId = 0;
                 player.IsGoingToPlay = false;
             };

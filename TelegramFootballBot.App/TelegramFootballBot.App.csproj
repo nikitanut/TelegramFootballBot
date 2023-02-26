@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="credentials.json" />
+    <Content Remove="sheetcredentials.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="credentials.json">
+    <None Include="sheetcredentials.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

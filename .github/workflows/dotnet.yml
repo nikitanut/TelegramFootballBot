@@ -2,15 +2,10 @@ name: .NET
 
 on:
   push:
-    branches: [ "master", "development" ]
-  pull_request:
-    branches: [ "master" ]
-
+    branches: [ "development" ]
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
@@ -23,3 +18,43 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: Development
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 5.0.x
+    - name: Publish
+      run: dotnet publish TelegramFootballBot.App --configuration Release --runtime linux-x64
+    - name: Sheet credentials variable substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: '${{ github.workspace }}/TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish/sheetcredentials.json'
+      env:
+        project_id: ${{ secrets.SHEET_PROJECT_ID }}
+        private_key_id: ${{ secrets.SHEET_PRIVATE_KEY_ID }}
+        private_key: ${{ secrets.SHEET_PRIVATE_KEY_ID }}
+        client_email: ${{ secrets.SHEET_CLIENT_EMAIL }}
+        client_id: ${{ secrets.SHEET_CLIENT_ID }}
+        client_x509_cert_url: ${{ secrets.SHEET_CLIENT_CERT_URL }}
+    - name: App Settings Variable Substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: '${{ github.workspace }}/TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish/appsettings.json'
+      env:
+        botToken: ${{ secrets.BOT_TOKEN }}
+        googleDocSheetId: ${{ secrets.GOOGLE_DOC_SHEET_ID }}
+        botOwnerChatId: ${{ secrets.BOT_OWNER_CHAT_ID }}
+    - name: Deploy to Server
+      uses: easingthemes/ssh-deploy@main
+      env:
+          SOURCE: "/TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish/"
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: ${{ secrets.TARGET }}

@@ -34,7 +34,7 @@ namespace TelegramFootballBot.App
 
                     services.AddSingleton<ISheetService>(s =>
                     {
-                        using (var credentialsFile = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+                        using (var credentialsFile = new FileStream("sheetcredentials.json", FileMode.Open, FileAccess.Read))
                         {
                             return new SheetService(credentialsFile, configuration["googleDocSheetId"]);
                         };
