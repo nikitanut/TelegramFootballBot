@@ -1,8 +1,11 @@
-name: .NET
+name: Test and deploy
 
 on:
   push:
-    branches: [ "development" ]
+    branches: [ "development", "debug_pipeline" ]
+env:
+  releasepath: 'TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish'
+  dotnetversion: 5.0.x
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -11,11 +14,14 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: ${{ env.dotnetversion }}
+
     - name: Restore dependencies
       run: dotnet restore
+
     - name: Build
       run: dotnet build --no-restore
+      
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
@@ -28,13 +34,15 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: ${{ env.dotnetversion }}
+
     - name: Publish
       run: dotnet publish TelegramFootballBot.App --configuration Release --runtime linux-x64
+
     - name: Sheet credentials variable substitution
       uses: microsoft/variable-substitution@v1
       with:
-        files: '${{ github.workspace }}/TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish/sheetcredentials.json'
+        files: '${{ github.workspace }}/${{ env.releasepath }}/sheetcredentials.json'
       env:
         project_id: ${{ secrets.SHEET_PROJECT_ID }}
         private_key_id: ${{ secrets.SHEET_PRIVATE_KEY_ID }}
@@ -42,14 +50,16 @@ jobs:
         client_email: ${{ secrets.SHEET_CLIENT_EMAIL }}
         client_id: ${{ secrets.SHEET_CLIENT_ID }}
         client_x509_cert_url: ${{ secrets.SHEET_CLIENT_CERT_URL }}
+
     - name: App Settings Variable Substitution
       uses: microsoft/variable-substitution@v1
       with:
-        files: '${{ github.workspace }}/TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish/appsettings.json'
+        files: '${{ github.workspace }}/${{ env.releasepath }}/appsettings.json'
       env:
         botToken: ${{ secrets.BOT_TOKEN }}
         googleDocSheetId: ${{ secrets.GOOGLE_DOC_SHEET_ID }}
         botOwnerChatId: ${{ secrets.BOT_OWNER_CHAT_ID }}
+
     - name: Deploy to Server
       uses: easingthemes/ssh-deploy@main
       env:
