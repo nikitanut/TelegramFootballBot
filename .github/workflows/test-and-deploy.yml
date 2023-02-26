@@ -26,6 +26,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal
 
   set-environment:
+  runs-on: ubuntu-latest
     steps:
     - name: Set development
       run: |
