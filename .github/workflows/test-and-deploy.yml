@@ -2,7 +2,7 @@ name: Test and deploy
 
 on:
   push:
-    branches: [ "development", "debug_pipeline" ]
+    branches: [ "development", "debug_pipeline", "debug_pipeline_master" ]
 env:
   releasepath: 'TelegramFootballBot.App/bin/Release/net5.0/linux-x64/publish'
   dotnetversion: 5.0.x
@@ -25,10 +25,21 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
+  set-environment:
+    steps:
+    - name: Set development
+      run: |
+          if [[ ${{ github.ref == 'refs/heads/master' || ${{ github.ref == 'refs/heads/debug_pipeline_master' }} ]]; then
+            echo "ENVIRONMENT=Production" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=Development" >> $GITHUB_ENV
+          fi
+          echo "Environment: ${{ GITHUB_ENV }}"
+
   deploy:
-    needs: test
+    needs: ['test', 'set-environment']
     runs-on: ubuntu-latest
-    environment: Development
+    environment: ${{ env.ENVIRONMENT }}
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
@@ -67,4 +78,4 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ secrets.TARGET }}
+          TARGET: ${{ vars.TARGET }}
