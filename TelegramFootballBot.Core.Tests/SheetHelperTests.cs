@@ -197,7 +197,7 @@ namespace TelegramFootballBot.Core.Tests
             Assert.ThrowsException<TotalsRowNotFoundExeption>(actual);
         }
 
-        private List<IList<object>> CreateCells()
+        private static List<IList<object>> CreateCells()
         {
             return new List<IList<object>>
             {
@@ -206,7 +206,7 @@ namespace TelegramFootballBot.Core.Tests
             };
         }
 
-        private List<IList<object>> CreatePlayersCells()
+        private static List<IList<object>> CreatePlayersCells()
         {
             return new List<IList<object>>
             {
