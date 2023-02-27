@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TelegramFootballBot.Core.Models;
 
@@ -18,6 +19,10 @@ namespace TelegramFootballBot.Core.Data
 
         Task<List<Player>> GetAllAsync();
 
+        Task<List<Player>> GetAllAsync(Func<Player, bool> predicate);
+
         Task<List<Player>> GetRecievedMessageAsync();
+
+        Task<List<Player>> GetPlayersWithOutdatedMessage(string latestMessage);
     }
 }

@@ -270,3 +270,4 @@ AppSettings.cs
 /TelegramFootballBot/Properties/PublishProfiles
 /TelegramFootballBot.App/credentials.json
 /TelegramFootballBot.App/logs.txt
+/TelegramFootballBot.App/Properties/PublishProfiles/FolderProfile.pubxml

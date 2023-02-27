@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,6 +33,12 @@ namespace TelegramFootballBot.Core.Data
         {
             using var db = new FootballBotDbContext(_options);
             return await db.Players.ToListAsync();
+        }
+
+        public async Task<List<Player>> GetAllAsync(Func<Player, bool> predicate)
+        {
+            using var db = new FootballBotDbContext(_options);
+            return await db.Players.Where(predicate).AsQueryable().ToListAsync();
         }
 
         public async Task<Player> GetAsync(long id)
@@ -80,6 +87,12 @@ namespace TelegramFootballBot.Core.Data
         {
             using var db = new FootballBotDbContext(_options);
             return await db.Players.Where(p => p.ApprovedPlayersMessageId != 0).ToListAsync();
+        }
+
+        public async Task<List<Player>> GetPlayersWithOutdatedMessage(string latestMessage)
+        {
+            using var db = new FootballBotDbContext(_options);
+            return await db.Players.Where(p => p.ApprovedPlayersMessageId > 0 && p.ApprovedPlayersMessage != latestMessage).ToListAsync();
         }
     }
 }

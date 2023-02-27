@@ -5,7 +5,7 @@ namespace TelegramFootballBot.Core
 {
     public static class AppSettings
     {
-        private static readonly IConfiguration _configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+        private static readonly IConfiguration _configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", false, true).Build();
 
         public static TimeSpan DistributionTime => TimeSpan.Parse(_configuration["distributionTime"]);
 

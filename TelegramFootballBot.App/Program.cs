@@ -12,6 +12,7 @@ using Telegram.Bot;
 using TelegramFootballBot.Core.Helpers;
 using Microsoft.Extensions.Configuration;
 using Telegram.Bot.Polling;
+using TelegramFootballBot.Core.Clients;
 
 namespace TelegramFootballBot.App
 {
@@ -25,7 +26,7 @@ namespace TelegramFootballBot.App
                     var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
 
                     services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
-                        .WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                        .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
                         .CreateLogger());
 
                     services.AddSingleton<IPlayerRepository>(s => 
@@ -33,13 +34,14 @@ namespace TelegramFootballBot.App
 
                     services.AddSingleton<ISheetService>(s =>
                     {
-                        using (var credentialsFile = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+                        using (var credentialsFile = new FileStream("sheetcredentials.json", FileMode.Open, FileAccess.Read))
                         {
                             return new SheetService(credentialsFile, configuration["googleDocSheetId"]);
                         };
                     });
                                         
                     services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
+                    services.AddSingleton<IBotClient, BotClient>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();
                     services.AddScoped<IUpdateHandler, UpdateHandler>();

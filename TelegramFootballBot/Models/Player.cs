@@ -10,7 +10,7 @@
 
         public int ApprovedPlayersMessageId { get; set; }
 
-        public int PollMessageId { get; set; }
+        public string ApprovedPlayersMessage { get; set; }
 
         public bool IsGoingToPlay { get; set; }
         

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -6,9 +7,9 @@ namespace TelegramFootballBot.Core.Services
 {
     public interface IMessageService
     {
-        Task SendMessageToAllPlayersAsync(string text, IReplyMarkup replyMarkup = null);
+        Task SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null);
 
-        Task RefreshTotalPlayersMessageAsync();
+        Task EditMessagesAsync(string text, IEnumerable<Message> messagesToRefresh);
 
         Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null);
 

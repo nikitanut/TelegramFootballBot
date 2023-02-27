@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.32802.440
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelegramFootballBot.Core", "TelegramFootballBot\TelegramFootballBot.Core.csproj", "{6C8D54C5-DE2E-4BCB-A444-CA2A50FEA5B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelegramFootballBot.Core.Tests", "TelegramFootballBot.Tests\TelegramFootballBot.Core.Tests.csproj", "{2860F8DE-083B-4FCC-9345-A1E3B7FA8061}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelegramFootballBot.App", "TelegramFootballBot.App\TelegramFootballBot.App.csproj", "{EA885588-0F73-49D5-BC7E-E9D7264055F3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelegramFootballBot.Core.Tests", "TelegramFootballBot.Core.Tests\TelegramFootballBot.Core.Tests.csproj", "{6AAB021D-55C5-4877-B641-B7227D979532}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +19,14 @@ Global
 		{6C8D54C5-DE2E-4BCB-A444-CA2A50FEA5B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C8D54C5-DE2E-4BCB-A444-CA2A50FEA5B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C8D54C5-DE2E-4BCB-A444-CA2A50FEA5B1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2860F8DE-083B-4FCC-9345-A1E3B7FA8061}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2860F8DE-083B-4FCC-9345-A1E3B7FA8061}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2860F8DE-083B-4FCC-9345-A1E3B7FA8061}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2860F8DE-083B-4FCC-9345-A1E3B7FA8061}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EA885588-0F73-49D5-BC7E-E9D7264055F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EA885588-0F73-49D5-BC7E-E9D7264055F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA885588-0F73-49D5-BC7E-E9D7264055F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA885588-0F73-49D5-BC7E-E9D7264055F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AAB021D-55C5-4877-B641-B7227D979532}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AAB021D-55C5-4877-B641-B7227D979532}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AAB021D-55C5-4877-B641-B7227D979532}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AAB021D-55C5-4877-B641-B7227D979532}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
