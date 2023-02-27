@@ -32,8 +32,8 @@ namespace TelegramFootballBot.App.Workers
 
         public async Task StartAsync(CancellationToken stoppingToken)
         {
-            _timer = new Timer();
-            _timer.Interval = TimeSpan.FromMinutes(1).TotalMilliseconds;
+            var interval = TimeSpan.FromMinutes(1).TotalMilliseconds;
+            _timer = new Timer(interval);
             _timer.Elapsed += async (sender, e) => await DoWorkAsync();
             _timer.Start();
             await DoWorkAsync();
@@ -161,6 +161,7 @@ namespace TelegramFootballBot.App.Workers
         public void Dispose()
         {
             _timer?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
