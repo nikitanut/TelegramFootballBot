@@ -26,7 +26,7 @@ namespace TelegramFootballBot.App
                     var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
 
                     services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
-                        .WriteTo.File("logs.txt", outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                        .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
                         .CreateLogger());
 
                     services.AddSingleton<IPlayerRepository>(s => 
