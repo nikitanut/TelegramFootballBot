@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Models;
 using TelegramFootballBot.Core.Services;
@@ -93,12 +94,16 @@ namespace TelegramFootballBot.App.Workers
                 var playersWithOutdatedMessage = await _playerRepository.GetPlayersWithOutdatedMessage(text);
                 
                 var messagesToRefresh = GetMessagesToRefresh(playersWithOutdatedMessage);
-                await _messageService.EditMessagesAsync(text, messagesToRefresh);
+                var responses = await _messageService.EditMessagesAsync(text, messagesToRefresh);
 
-                foreach (var player in playersWithOutdatedMessage)
-                    player.ApprovedPlayersMessage = text;
+                var errorResponses = responses.Where(r => r.Status == SendStatus.Error).ToList();
+                await UpdateApprovedPlayersMessage(playersWithOutdatedMessage, errorResponses, text);
 
-                await _playerRepository.UpdateMultipleAsync(playersWithOutdatedMessage);
+                if (errorResponses.Any())
+                {
+                    var message = string.Join(". ", errorResponses.Select(r => $"User error ({r.ChatId}) - {r.Message}"));
+                    throw new SendMessageException(message);
+                }
             }
             catch (TaskCanceledException)
             {
@@ -119,6 +124,17 @@ namespace TelegramFootballBot.App.Workers
                 MessageId = p.ApprovedPlayersMessageId,
                 Chat = new Chat { Id = p.ChatId }
             });
+        }
+
+        private async Task UpdateApprovedPlayersMessage(List<Player> players, List<SendMessageResponse> errorResponses, string message)
+        {
+            var playersDidNotGetMessage = players.Join(errorResponses, p => p.ChatId, r => r.ChatId, (p, r) => p);
+            var playersGotMessage = players.Except(playersDidNotGetMessage).ToList();
+
+            foreach (var player in playersGotMessage)
+                player.ApprovedPlayersMessage = message;
+
+            await _playerRepository.UpdateMultipleAsync(playersGotMessage);
         }
 
         private async Task SendQuestionToAllUsersAsync()

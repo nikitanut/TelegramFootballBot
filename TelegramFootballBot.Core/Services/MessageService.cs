@@ -8,6 +8,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Core.Services
 {
@@ -22,7 +23,7 @@ namespace TelegramFootballBot.Core.Services
             _logger = logger;            
         }
 
-        public async Task SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
+        public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
         {
             var requests = new List<Task<Message>>();
             var playersRequestsIds = new Dictionary<int, ChatId>();
@@ -34,10 +35,10 @@ namespace TelegramFootballBot.Core.Services
                 playersRequestsIds.Add(request.Id, chatId);
             }
 
-            await ExecuteRequests(requests, playersRequestsIds);
+            return await ExecuteRequests(requests, playersRequestsIds);
         }
 
-        public async Task EditMessagesAsync(string text, IEnumerable<Message> messagesToEdit)
+        public async Task<List<SendMessageResponse>> EditMessagesAsync(string text, IEnumerable<Message> messagesToEdit)
         {
             var requests = new List<Task<Message>>();
             var chatsRequestsIds = new Dictionary<int, ChatId>();
@@ -49,7 +50,7 @@ namespace TelegramFootballBot.Core.Services
                 chatsRequestsIds.Add(request.Id, message.Chat.Id);
             }
 
-            await ExecuteRequests(requests, chatsRequestsIds);
+            return await ExecuteRequests(requests, chatsRequestsIds);
         }
 
         public async Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text)
@@ -115,21 +116,29 @@ namespace TelegramFootballBot.Core.Services
             }
         }
 
-        private async Task ExecuteRequests(List<Task<Message>> requests, Dictionary<int, ChatId> chatsRequestsIds)
+        private async Task<List<SendMessageResponse>> ExecuteRequests(List<Task<Message>> requests, Dictionary<int, ChatId> chatsRequestsIds)
         {
+            var responses = new List<SendMessageResponse>();
+
             while (requests.Any())
             {
                 var response = await Task.WhenAny(requests);
-                requests.Remove(response);                
+                requests.Remove(response);
+                var chatId = chatsRequestsIds.First(r => r.Key == response.Id).Value;
+                var errorMessage = string.Empty;
 
                 if (response.IsFaulted || response.IsCanceled)
+                    errorMessage = response.IsFaulted ? response.Exception.Message : $"Timeout {Constants.ASYNC_OPERATION_TIMEOUT} ms";
+
+                responses.Add(new SendMessageResponse
                 {
-                    var errorMessage = response.IsFaulted ? response.Exception.Message : $"Тайм-аут {Constants.ASYNC_OPERATION_TIMEOUT} мс";
-                    var chatId = chatsRequestsIds.First(r => r.Key == response.Id).Value;
-                    _logger.Error($"Error for user {chatId}: {errorMessage}");
-                    return;
-                }
+                    ChatId = chatId,
+                    Status = errorMessage == string.Empty ? SendStatus.Success : SendStatus.Error,
+                    Message = errorMessage
+                });
             }
+
+            return responses;
         }
 
 
