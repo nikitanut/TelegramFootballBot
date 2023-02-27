@@ -2,23 +2,25 @@
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TelegramFootballBot.Core.Services;
+using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Models;
-using System.Linq;
-using Telegram.Bot.Types;
+using TelegramFootballBot.Core.Services;
+using Timer = System.Timers.Timer;
 
 namespace TelegramFootballBot.App.Workers
 {
-    public class SchedulerWorker : BackgroundService
+    public class SchedulerWorker : IHostedService, IDisposable
     {
         private readonly IMessageService _messageService;
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
+        private Timer _timer = null;
 
         public SchedulerWorker(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {
@@ -28,13 +30,19 @@ namespace TelegramFootballBot.App.Workers
             _logger = logger;            
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public async Task StartAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await DoWorkAsync();
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-            }
+            _timer = new Timer();
+            _timer.Interval = TimeSpan.FromMinutes(1).TotalMilliseconds;
+            _timer.Elapsed += async (sender, e) => await DoWorkAsync();
+            _timer.Start();
+            await DoWorkAsync();
+        }
+
+        public Task StopAsync(CancellationToken stoppingToken)
+        {
+            _timer?.Stop();
+            return Task.CompletedTask;
         }
 
         private async Task DoWorkAsync()
@@ -148,6 +156,11 @@ namespace TelegramFootballBot.App.Workers
             }
 
             await _playerRepository.UpdateMultipleAsync(playersUpdate);
+        }
+
+        public void Dispose()
+        {
+            _timer?.Dispose();
         }
     }
 }
