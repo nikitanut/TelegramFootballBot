@@ -25,32 +25,14 @@ namespace TelegramFootballBot.Core.Services
 
         public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
         {
-            var requests = new List<Task<Message>>();
-            var playersRequestsIds = new Dictionary<int, ChatId>();
-
-            foreach (var chatId in chats)
-            {
-                var request = SendMessageAsync(chatId, text, replyMarkup);
-                requests.Add(request);
-                playersRequestsIds.Add(request.Id, chatId);
-            }
-
-            return await ExecuteRequests(requests, playersRequestsIds);
+            var requests = chats.Select(chatId => SendMessageAsync(chatId, text, replyMarkup));
+            return await ExecuteRequests(requests);
         }
 
         public async Task<List<SendMessageResponse>> EditMessagesAsync(string text, IEnumerable<Message> messagesToEdit)
         {
-            var requests = new List<Task<Message>>();
-            var chatsRequestsIds = new Dictionary<int, ChatId>();
-
-            foreach (var message in messagesToEdit)
-            {
-                var request = EditMessageAsync(message, text);
-                requests.Add(request);
-                chatsRequestsIds.Add(request.Id, message.Chat.Id);
-            }
-
-            return await ExecuteRequests(requests, chatsRequestsIds);
+            var requests = messagesToEdit.Select(message => EditMessageAsync(message, text));
+            return await ExecuteRequests(requests);
         }
 
         public async Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text)
@@ -116,15 +98,15 @@ namespace TelegramFootballBot.Core.Services
             }
         }
 
-        private async Task<List<SendMessageResponse>> ExecuteRequests(List<Task<Message>> requests, Dictionary<int, ChatId> chatsRequestsIds)
+        private static async Task<List<SendMessageResponse>> ExecuteRequests(IEnumerable<Task<Message>> requests)
         {
             var responses = new List<SendMessageResponse>();
+            var requestsList = requests.ToList();
 
-            while (requests.Any())
+            while (requestsList.Any())
             {
-                var response = await Task.WhenAny(requests);
-                requests.Remove(response);
-                var chatId = chatsRequestsIds.First(r => r.Key == response.Id).Value;
+                var response = await Task.WhenAny(requestsList);
+                requestsList.Remove(response);
                 var errorMessage = string.Empty;
 
                 if (response.IsFaulted || response.IsCanceled)
@@ -132,7 +114,7 @@ namespace TelegramFootballBot.Core.Services
 
                 responses.Add(new SendMessageResponse
                 {
-                    ChatId = chatId,
+                    ChatId = response.Result.Chat.Id,
                     Status = errorMessage == string.Empty ? SendStatus.Success : SendStatus.Error,
                     Message = errorMessage
                 });

@@ -140,17 +140,7 @@ namespace TelegramFootballBot.Core.Services
         private async Task<int> SendApprovedPlayersMessageAsync(string message, ChatId chatId, Player player)
         {
             if (player.ApprovedPlayersMessageId != 0)
-            {
-                try
-                {
-                    await _messageService.EditMessageAsync(chatId, player.ApprovedPlayersMessageId, message);
-                    return player.ApprovedPlayersMessageId;
-                }
-                catch (Exception ex) // Telegram API doesn't allow to check if user deleted message
-                {
-                    _logger.Error(ex, $"Error on editing message for user {player.Name}");
-                }
-            }
+                await _messageService.DeleteMessageAsync(chatId, player.ApprovedPlayersMessageId);
 
             var messageResponse = await _messageService.SendMessageAsync(chatId, message);
             return messageResponse.MessageId;
