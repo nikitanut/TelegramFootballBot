@@ -25,13 +25,13 @@ namespace TelegramFootballBot.Core.Services
 
         public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
         {
-            var requests = chats.Select(chatId => SendMessageAsync(chatId, text, replyMarkup));
+            var requests = chats.ToDictionary(chatId => SendMessageAsync(chatId, text, replyMarkup), chatId => chatId);
             return await ExecuteRequests(requests);
         }
 
         public async Task<List<SendMessageResponse>> EditMessagesAsync(string text, IEnumerable<Message> messagesToEdit)
         {
-            var requests = messagesToEdit.Select(message => EditMessageAsync(message, text));
+            var requests = messagesToEdit.ToDictionary(m => EditMessageAsync(m, text), m => (ChatId)m.Chat.Id);
             return await ExecuteRequests(requests);
         }
 
@@ -98,15 +98,16 @@ namespace TelegramFootballBot.Core.Services
             }
         }
 
-        private static async Task<List<SendMessageResponse>> ExecuteRequests(IEnumerable<Task<Message>> requests)
+        private static async Task<List<SendMessageResponse>> ExecuteRequests(Dictionary<Task<Message>, ChatId> requests)
         {
             var responses = new List<SendMessageResponse>();
-            var requestsList = requests.ToList();
+            var requestsProcessing = new Dictionary<Task<Message>, ChatId>(requests);
 
-            while (requestsList.Any())
+            while (requestsProcessing.Any())
             {
-                var response = await Task.WhenAny(requestsList);
-                requestsList.Remove(response);
+                var response = await Task.WhenAny(requestsProcessing.Keys);
+                var chatId = requestsProcessing[response];
+                requestsProcessing.Remove(response);
                 var errorMessage = string.Empty;
 
                 if (response.IsFaulted || response.IsCanceled)
@@ -114,7 +115,7 @@ namespace TelegramFootballBot.Core.Services
 
                 responses.Add(new SendMessageResponse
                 {
-                    ChatId = response.Result.Chat.Id,
+                    ChatId = chatId,
                     Status = errorMessage == string.Empty ? SendStatus.Success : SendStatus.Error,
                     Message = errorMessage
                 });
