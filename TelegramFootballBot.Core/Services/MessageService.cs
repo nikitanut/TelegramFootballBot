@@ -35,12 +35,6 @@ namespace TelegramFootballBot.Core.Services
             return await ExecuteRequests(requests);
         }
 
-        public async Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text)
-        {
-            using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-            return await _botClient.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cts.Token);
-        }
-
         private async Task<Message> EditMessageAsync(Message message, string text)
         {
             if (message.Text == text)
