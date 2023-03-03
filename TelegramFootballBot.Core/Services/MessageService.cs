@@ -76,7 +76,7 @@ namespace TelegramFootballBot.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error on deleting message");
+                _logger.Error(ex, "An error occurred while deleting message");
             }
         }
 
@@ -84,7 +84,7 @@ namespace TelegramFootballBot.Core.Services
         {
             try
             {
-                return await SendMessageAsync(chatId, $"Неизвестная ошибка");
+                return await SendMessageAsync(chatId, "Неизвестная ошибка");
             }
             catch (Exception ex)
             {
@@ -117,7 +117,6 @@ namespace TelegramFootballBot.Core.Services
 
             return responses;
         }
-
 
         public async Task ClearReplyMarkupAsync(ChatId chatId, int messageId)
         {

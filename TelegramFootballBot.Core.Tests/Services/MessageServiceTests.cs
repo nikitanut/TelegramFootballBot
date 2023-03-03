@@ -15,7 +15,7 @@ namespace TelegramFootballBot.Core.Tests.Services
     public class MessageServiceTests
     {
         private Mock<IBotClient> _botClientMock;
-        private readonly Mock<ILogger> _loggerMock = new Mock<ILogger>();
+        private readonly Mock<ILogger> _loggerMock = new();
         private MessageService _messageService;
 
         [TestInitialize]
@@ -137,6 +137,118 @@ namespace TelegramFootballBot.Core.Tests.Services
 
             Assert.AreEqual(2, response[1].ChatId);
             Assert.AreEqual(SendStatus.Success, response[1].Status);
+        }
+
+        [TestMethod]
+        public async Task SendMessageToBotOwnerAsync_NotificationEnabled_ReturnsSentMessage()
+        {
+            // Arrange
+            AppSettings.NotifyOwner = true;
+            var text = "Hello";            
+            var messageId = 1;
+            _botClientMock
+                .Setup(m => m.SendTextMessageAsync(AppSettings.BotOwnerChatId, text, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Message { MessageId = messageId, Chat = new Chat { Id = AppSettings.BotOwnerChatId } });
+
+            // Act
+            var response = await _messageService.SendMessageToBotOwnerAsync(text);
+
+            // Assert
+            Assert.AreEqual(messageId, response.MessageId);
+            Assert.AreEqual(AppSettings.BotOwnerChatId, response.Chat?.Id);
+        }
+
+        [TestMethod]
+        public async Task SendMessageToBotOwnerAsync_NotificationDisabled_ReturnsEmptyMessage()
+        {
+            // Arrange
+            AppSettings.NotifyOwner = false;
+            var text = "Hello";            
+
+            // Act
+            var response = await _messageService.SendMessageToBotOwnerAsync(text);
+
+            // Assert
+            Assert.AreEqual(0, response.MessageId);
+            Assert.IsNull(response.Chat);
+        }
+
+        [TestMethod]
+        public async Task SendMessageAsync_NoErrors_ReturnsSuccessfulResponses()
+        {
+            // Arrange
+            var text = "Hello";
+            var chatId = 1;
+            var messageId = 1;
+            _botClientMock
+                .Setup(m => m.SendTextMessageAsync(chatId, text, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Message { MessageId = messageId, Chat = new Chat { Id = chatId } });
+
+            // Act
+            var response = await _messageService.SendMessageAsync(chatId, text, null);
+
+            // Assert
+            Assert.AreEqual(chatId, response.Chat?.Id);
+            Assert.AreEqual(messageId, response.MessageId);
+        }
+
+        [TestMethod]
+        public async Task DeleteMessageAsync_ErrorOccurs_DoesNotThrowExceptionAndLogsError()
+        {
+            // Arrange
+            var exception = new Exception("Something happened");
+            var chatId = 1;
+            var messageId = 1;
+            _botClientMock
+                .Setup(m => m.DeleteMessageAsync(chatId, messageId, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(exception);
+
+            // Act
+            await _messageService.DeleteMessageAsync(chatId, messageId);
+
+            // Assert
+            _loggerMock.Verify(m => m.Error(exception, "An error occurred while deleting message"), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task SendErrorMessageToUserAsync_NoErrors_ReturnsSentMessage()
+        {
+            // Arrange
+            var chatId = 1;
+            var messageId = 1;
+            var playerName = "John Smith";
+            _botClientMock
+                .Setup(m => m.SendTextMessageAsync(chatId, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Message { MessageId = messageId, Chat = new Chat { Id = chatId } });
+
+            // Act
+            var response = await _messageService.SendErrorMessageToUserAsync(chatId, playerName);
+
+            // Assert
+            Assert.AreEqual(chatId, response.Chat?.Id);
+            Assert.AreEqual(messageId, response.MessageId);
+        }
+
+        [TestMethod]
+        public async Task SendErrorMessageToUserAsync_ErrorsOccurs_SendsMessageToBotOwner()
+        {
+            // Arrange
+            var exception = new Exception("Something happened");
+            var chatId = 1;
+            var playerName = "John Smith";
+            _botClientMock
+                .Setup(m => m.SendTextMessageAsync(chatId, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(exception);
+
+            _botClientMock
+                .Setup(m => m.SendTextMessageAsync(AppSettings.BotOwnerChatId, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Message { MessageId = 1, Chat = new Chat { Id = AppSettings.BotOwnerChatId } });
+
+            // Act
+            var response = await _messageService.SendErrorMessageToUserAsync(chatId, playerName);
+
+            // Assert
+            Assert.AreEqual(AppSettings.BotOwnerChatId, response.Chat?.Id);
         }
     }
 }
