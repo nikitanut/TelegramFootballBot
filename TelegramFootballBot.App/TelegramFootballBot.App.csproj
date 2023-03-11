@@ -16,11 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.0.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TelegramFootballBot.Core\TelegramFootballBot.Core.csproj" />
+    <ProjectReference Include="..\TelegramFootballBot.Queue\TelegramFootballBot.Queue.csproj" />
   </ItemGroup>
 
   <ItemGroup>

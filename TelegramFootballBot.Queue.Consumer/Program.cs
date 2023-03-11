@@ -1,23 +1,19 @@
-using Confluent.Kafka;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
-using TelegramFootballBot.App.Workers;
 using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Services;
-using TelegramFootballBot.Queue;
 
-namespace TelegramFootballBot.App
+namespace TelegramFootballBot.Queue.Consumer
 {
     public class Program
     {
@@ -29,10 +25,10 @@ namespace TelegramFootballBot.App
                     var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
 
                     services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
-                        .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
+                        .WriteTo.File("logs-queue.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
                         .CreateLogger());
 
-                    services.AddSingleton<IPlayerRepository>(s => 
+                    services.AddSingleton<IPlayerRepository>(s =>
                         new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options));
 
                     services.AddSingleton<ISheetService>(s =>
@@ -42,7 +38,7 @@ namespace TelegramFootballBot.App
                             return new SheetService(credentialsFile, configuration["googleDocSheetId"]);
                         };
                     });
-                                        
+
                     services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
                     services.AddSingleton<IBotClient, BotClient>();
                     services.AddSingleton<IMessageService, MessageService>();
@@ -50,31 +46,15 @@ namespace TelegramFootballBot.App
                     services.AddScoped<IUpdateHandler, UpdateHandler>();
                     services.AddScoped<IReceiverService, ReceiverService>();
 
-                    var topic = "telegram-football-bot-events";
-
-                    services.AddSingleton(new ConsumerConfig
+                    services.AddSingleton(new ProducerConfig
                     {
-                        BootstrapServers = "localhost:9092"
+                        BootstrapServers = "host:9092"
                     });
 
-                    services.AddSingleton<IConsumer>(s => new KafkaConsumer(
-                        new ConsumerConfig
-                        {
-                            BootstrapServers = "localhost:9092",
-                            GroupId = "test"
-                        }, topic));
+                    services.AddSingleton<IProducerFactory, KafkaProducerFactory>();
 
-                    services.AddSingleton<IProducerFactory>(s => new KafkaProducerFactory(
-                        new ProducerConfig
-                        {
-                            BootstrapServers = "localhost:9092"
-                        }, 
-                        topic));
-
-                    services.AddMediatR(s => s.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
                     services.AddHostedService<SchedulerWorker>();
-                    //services.AddHostedService<MessageProcessingWorker>();
-                    services.AddHostedService<QueueConsumerWorker>();
+                    services.AddHostedService<MessageProcessingWorker>();
                 })
                 .Build();
 
