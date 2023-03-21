@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Models.Commands;
 using TelegramFootballBot.Core.Models.Commands.AdminCommands;

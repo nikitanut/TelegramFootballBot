@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using TelegramFootballBot.Core.Helpers;
+﻿using TelegramFootballBot.Core.Helpers;
 
 namespace TelegramFootballBot.Core.Models.CallbackQueries
 {

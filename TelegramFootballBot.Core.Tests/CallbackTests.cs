@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using TelegramFootballBot.Core.Models.CallbackQueries;
 
 namespace TelegramFootballBot.Core.Tests

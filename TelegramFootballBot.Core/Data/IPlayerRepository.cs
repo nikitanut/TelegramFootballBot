@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using TelegramFootballBot.Core.Models;
+﻿using TelegramFootballBot.Core.Models;
 
 namespace TelegramFootballBot.Core.Data
 {

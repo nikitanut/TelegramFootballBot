@@ -1,8 +1,5 @@
 ﻿using Google.Apis.Sheets.v4.Data;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using TelegramFootballBot.Core.Exceptions;
 
@@ -52,11 +49,7 @@ namespace TelegramFootballBot.Core.Helpers
 
         public static IList<object> GetTotalsRow(IList<IList<object>> values)
         {
-            var totalsRow = values.FirstOrDefault(v => AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL));
-
-            if (totalsRow == null)
-                throw new TotalsRowNotFoundExeption();
-
+            var totalsRow = values.FirstOrDefault(v => AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL)) ?? throw new TotalsRowNotFoundExeption();
             if (totalsRow.Count < 2)
                 totalsRow.Add(string.Empty);
 

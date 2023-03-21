@@ -1,5 +1,4 @@
-﻿using System;
-using Telegram.Bot.Types.ReplyMarkups;
+﻿using Telegram.Bot.Types.ReplyMarkups;
 using TelegramFootballBot.Core.Models.CallbackQueries;
 
 namespace TelegramFootballBot.Core.Helpers
