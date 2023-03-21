@@ -25,7 +25,7 @@ namespace TelegramFootballBot.Core.Helpers
             };
         }
 
-        public Command Create(Message name)
+        public Command? Create(Message name)
         {
             return _commands.FirstOrDefault(c => c.StartsWith(name));
         }

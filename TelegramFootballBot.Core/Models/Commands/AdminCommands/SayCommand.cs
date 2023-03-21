@@ -22,7 +22,7 @@ namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
             if (!IsBotOwner(message))
                 return;
 
-            var text = message.Text.Length > Name.Length
+            var text = message.Text!.Length > Name.Length
                 ? message.Text[Name.Length..].Trim()
                 : string.Empty;
 

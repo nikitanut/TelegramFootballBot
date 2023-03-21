@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-TelegramFootballBot.App-B7D76DF6-D988-4AF5-AB77-23C92A918525</UserSecretsId>
   </PropertyGroup>
 

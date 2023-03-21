@@ -8,11 +8,11 @@ namespace TelegramFootballBot.Core.Clients
     /// </summary>
     public interface IBotClient
     {
-        Task<Message> SendTextMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null, CancellationToken cancellationToken = default);
+        Task<Message> SendTextMessageAsync(ChatId chatId, string text, IReplyMarkup? replyMarkup = null, CancellationToken cancellationToken = default);
 
-        Task<Message> EditMessageTextAsync(ChatId chatId, int messageId, string text, InlineKeyboardMarkup replyMarkup = null, CancellationToken cancellationToken = default);
+        Task<Message> EditMessageTextAsync(ChatId chatId, int messageId, string text, InlineKeyboardMarkup? replyMarkup = null, CancellationToken cancellationToken = default);
 
-        Task<Message> EditMessageReplyMarkupAsync(ChatId chatId, int messageId, InlineKeyboardMarkup replyMarkup = null, CancellationToken cancellationToken = default);
+        Task<Message> EditMessageReplyMarkupAsync(ChatId chatId, int messageId, InlineKeyboardMarkup? replyMarkup = null, CancellationToken cancellationToken = default);
 
         Task DeleteMessageAsync(ChatId chatId, int messageId, CancellationToken cancellationToken = default);
 

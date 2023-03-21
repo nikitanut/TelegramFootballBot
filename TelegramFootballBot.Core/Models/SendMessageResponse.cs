@@ -4,11 +4,11 @@ namespace TelegramFootballBot.Core.Models
 {
     public class SendMessageResponse
     {
-        public ChatId ChatId { get; set; }
+        public ChatId? ChatId { get; set; }
 
         public SendStatus Status { get; set; }
 
-        public string Message { get; set; }
+        public string Message { get; set; } = default!;
     }
 
     public enum SendStatus

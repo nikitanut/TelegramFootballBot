@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Core.Models.Commands
 
         public override async Task ExecuteAsync(Message message)
         {
-            var playerName = await DeletePlayer(message.From.Id);
+            var playerName = await DeletePlayer(message.From!.Id);
             var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
 
             await Task.WhenAll(new[]
@@ -40,7 +40,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             }
             catch (UserNotFoundException)
             {
-                return null;
+                return string.Empty;
             }
         }
     }

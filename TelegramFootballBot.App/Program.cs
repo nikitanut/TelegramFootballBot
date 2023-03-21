@@ -31,11 +31,11 @@ namespace TelegramFootballBot.App
                     {
                         using (var credentialsFile = new FileStream("sheetcredentials.json", FileMode.Open, FileAccess.Read))
                         {
-                            return new SheetService(credentialsFile, configuration["googleDocSheetId"]);
+                            return new SheetService(credentialsFile, configuration["googleDocSheetId"] ?? throw new ApplicationException("googleDocSheetId is empty"));
                         };
                     });
 
-                    services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
+                    services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"] ?? throw new ApplicationException("botToken is empty")));
                     services.AddSingleton<IBotClient, BotClient>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();

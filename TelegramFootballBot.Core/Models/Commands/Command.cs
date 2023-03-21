@@ -12,7 +12,7 @@ namespace TelegramFootballBot.Core.Models.Commands
         public bool StartsWith(Message message)
         {
             return message.Type == MessageType.Text
-                && message.Text.StartsWith(Name);
+                && message.Text!.StartsWith(Name);
         }
 
         public static bool IsBotOwner(Message message)

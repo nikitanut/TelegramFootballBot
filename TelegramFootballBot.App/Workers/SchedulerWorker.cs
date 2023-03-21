@@ -14,7 +14,7 @@ namespace TelegramFootballBot.App.Workers
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
-        private Timer _timer = null;
+        private Timer? _timer = null;
 
         public SchedulerWorker(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {

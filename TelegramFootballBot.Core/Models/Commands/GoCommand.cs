@@ -24,7 +24,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             Player player;
             try
             {
-                player = await _playerRepository.GetAsync(message.From.Id);
+                player = await _playerRepository.GetAsync(message.From!.Id);
             }
             catch (UserNotFoundException)
             {
