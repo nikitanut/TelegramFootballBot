@@ -115,7 +115,7 @@ namespace TelegramFootballBot.Core.Services
                 });
             }
 
-            responses.Sort((a,b) => a.ChatId.Identifier.Value.CompareTo(b.ChatId.Identifier));
+            responses.Sort((a, b) => a.ChatId.Identifier.Value.CompareTo(b.ChatId.Identifier));
             return responses;
         }
 

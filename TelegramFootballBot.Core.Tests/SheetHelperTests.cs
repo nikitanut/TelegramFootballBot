@@ -83,7 +83,7 @@ namespace TelegramFootballBot.Core.Tests
             for (var i = 0; i < expectedPlayers.Count; i++)
             {
                 if (expectedPlayers[i].Count < 2) expectedPlayers[i].Add(string.Empty);
-                if (expectedPlayers[i][1] == null) expectedPlayers[i][1] = string.Empty;
+                if (expectedPlayers[i][1] is null) expectedPlayers[i][1] = string.Empty;
 
                 Assert.AreEqual(expectedPlayers[i].Count, orderedPlayers[i].Count);
                 Assert.AreEqual(expectedPlayers[i][0], orderedPlayers[i][0]);

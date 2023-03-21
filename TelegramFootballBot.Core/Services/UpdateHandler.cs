@@ -41,7 +41,7 @@ namespace TelegramFootballBot.Core.Services
         private async Task BotOnMessageReceived(Message message)
         {
             var command = _commandFactory.Create(message);
-            if (command == null)
+            if (command is null)
                 return;
 
             try

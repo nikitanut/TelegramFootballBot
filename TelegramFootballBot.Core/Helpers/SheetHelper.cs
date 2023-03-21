@@ -69,7 +69,7 @@ namespace TelegramFootballBot.Core.Helpers
             if (!string.IsNullOrEmpty(newPlayerName))
                 players.Add(new List<object> { newPlayerName, string.Empty });
 
-            var rowsWithEmptyApproveColumn = players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null);
+            var rowsWithEmptyApproveColumn = players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() is null);
             foreach (var playerRow in rowsWithEmptyApproveColumn)
             {
                 if (playerRow.Count <= (int)APPROVE_COLUMN)
@@ -161,7 +161,7 @@ namespace TelegramFootballBot.Core.Helpers
 
         public static int GetPlayerRowNumber(IList<IList<object>> values, string playerName)
         {
-            if (playerName == null)
+            if (playerName is null)
                 return -1;
 
             var userRow = values.FirstOrDefault(v => v.Count > 0
