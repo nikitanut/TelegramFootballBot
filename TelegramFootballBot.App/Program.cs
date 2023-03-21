@@ -1,18 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
-using System.Threading.Tasks;
-using TelegramFootballBot.Core.Services;
-using TelegramFootballBot.Core.Data;
-using TelegramFootballBot.App.Workers;
 using System.IO;
+using System.Threading.Tasks;
 using Telegram.Bot;
-using TelegramFootballBot.Core.Helpers;
-using Microsoft.Extensions.Configuration;
 using Telegram.Bot.Polling;
+using TelegramFootballBot.App.Workers;
 using TelegramFootballBot.Core.Clients;
+using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.App
 {
@@ -29,7 +29,7 @@ namespace TelegramFootballBot.App
                         .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
                         .CreateLogger());
 
-                    services.AddSingleton<IPlayerRepository>(s => 
+                    services.AddSingleton<IPlayerRepository>(s =>
                         new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options));
 
                     services.AddSingleton<ISheetService>(s =>
@@ -39,14 +39,14 @@ namespace TelegramFootballBot.App
                             return new SheetService(credentialsFile, configuration["googleDocSheetId"]);
                         };
                     });
-                                        
+
                     services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"]));
                     services.AddSingleton<IBotClient, BotClient>();
                     services.AddSingleton<IMessageService, MessageService>();
                     services.AddSingleton<CommandFactory>();
                     services.AddScoped<IUpdateHandler, UpdateHandler>();
                     services.AddScoped<IReceiverService, ReceiverService>();
-                    
+
                     services.AddHostedService<SchedulerWorker>();
                     services.AddHostedService<MessageProcessingWorker>();
                 })

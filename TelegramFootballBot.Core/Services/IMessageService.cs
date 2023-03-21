@@ -20,8 +20,6 @@ namespace TelegramFootballBot.Core.Services
 
         Task<Message> SendErrorMessageToUserAsync(ChatId chatId, string playerName);
 
-        Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text);
-
         Task ClearReplyMarkupAsync(ChatId chatId, int messageId);
     }
 }

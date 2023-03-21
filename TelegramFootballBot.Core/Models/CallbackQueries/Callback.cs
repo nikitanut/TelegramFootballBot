@@ -13,7 +13,7 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
             Validate(callbackData);
             UserAnswer = GetUserAnswer(callbackData);
         }
-        
+
         public static string ToCallbackText(string callbackPrefix, string text)
         {
             return $"{callbackPrefix}{Constants.CALLBACK_PREFIX_SEPARATOR}{text}";
@@ -29,7 +29,7 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
         {
             return callbackData.Split(Constants.CALLBACK_PREFIX_SEPARATOR).Last();
         }
-                        
+
         public static string GetCallbackName(string callbackData)
         {
             Validate(callbackData);

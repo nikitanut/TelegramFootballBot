@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Core.Services;
-using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Data;
+using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.Core.Models.Commands.AdminCommands
 {

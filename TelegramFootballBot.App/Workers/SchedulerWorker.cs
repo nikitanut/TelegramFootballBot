@@ -28,7 +28,7 @@ namespace TelegramFootballBot.App.Workers
             _messageService = messageService;
             _playerRepository = playerRepository;
             _sheetService = sheetService;
-            _logger = logger;            
+            _logger = logger;
         }
 
         public async Task StartAsync(CancellationToken stoppingToken)
@@ -92,7 +92,7 @@ namespace TelegramFootballBot.App.Workers
             {
                 var text = await _sheetService.BuildApprovedPlayersMessageAsync();
                 var playersWithOutdatedMessage = await _playerRepository.GetPlayersWithOutdatedMessage(text);
-                
+
                 var messagesToRefresh = GetMessagesToRefresh(playersWithOutdatedMessage);
                 var responses = await _messageService.EditMessagesAsync(text, messagesToRefresh);
 
@@ -157,21 +157,29 @@ namespace TelegramFootballBot.App.Workers
 
         private async Task SetPlayersReadyToPlayAccordingToSheet()
         {
-            var playersUpdate = new List<Player>();
-            var playersReadyFromSheet = await _sheetService.GetPlayersReadyToPlayAsync();
-            var playersRecievedMessages = await _playerRepository.GetRecievedMessageAsync();
-
-            foreach (var player in playersRecievedMessages)
+            try
             {
-                var isGoingToPlay = playersReadyFromSheet.Contains(player.Name);
-                if (player.IsGoingToPlay != isGoingToPlay)
-                {
-                    player.IsGoingToPlay = isGoingToPlay;
-                    playersUpdate.Add(player);
-                }
-            }
+                var playersUpdate = new List<Player>();
+                var playersReadyFromSheet = await _sheetService.GetPlayersReadyToPlayAsync();
+                var playersRecievedMessages = await _playerRepository.GetRecievedMessageAsync();
 
-            await _playerRepository.UpdateMultipleAsync(playersUpdate);
+                foreach (var player in playersRecievedMessages)
+                {
+                    var isGoingToPlay = playersReadyFromSheet.Contains(player.Name);
+                    if (player.IsGoingToPlay != isGoingToPlay)
+                    {
+                        player.IsGoingToPlay = isGoingToPlay;
+                        playersUpdate.Add(player);
+                    }
+                }
+
+                await _playerRepository.UpdateMultipleAsync(playersUpdate);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error on {nameof(SetPlayersReadyToPlayAccordingToSheet)}");
+                await _messageService.SendMessageToBotOwnerAsync($"An error occurred while setting players ready to play: {ex.Message}");
+            }
         }
 
         public void Dispose()

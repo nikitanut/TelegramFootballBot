@@ -13,7 +13,7 @@
         public string ApprovedPlayersMessage { get; set; }
 
         public bool IsGoingToPlay { get; set; }
-        
+
         private Player() { }
 
         public Player(string name)

@@ -34,7 +34,7 @@ namespace TelegramFootballBot.Core.Services
         }
 
         public async Task SetApproveCellAsync(string playerName, string cellValue)
-        {            
+        {
             var sheet = await GetSheetAsync();
             var playerRow = SheetHelper.GetPlayerRowNumber(sheet.Values, playerName);
 
@@ -44,7 +44,7 @@ namespace TelegramFootballBot.Core.Services
             var playerRange = SheetHelper.GetPlayerRange(playerRow);
             var request = _sheetsService.Spreadsheets.Values.Update(SheetHelper.ToValueRange(playerRange, cellValue), _googleDocSheetId, playerRange);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            
+
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
             await request.ExecuteAsync(cts.Token);
         }
@@ -56,10 +56,10 @@ namespace TelegramFootballBot.Core.Services
             if (!playerExists)
                 await CreateNewPlayerRowAsync(sheet.Values, sheet.Range, playerName);
         }
-        
+
         public async Task ClearGameCellsAsync()
         {
-            var sheet = await GetSheetAsync();            
+            var sheet = await GetSheetAsync();
             var players = SheetHelper.GetOrderedPlayers(sheet.Values);
 
             var dateOfNextGame = DateHelper.GetNearestGameDateMoscowTime(DateTime.Now).AddDays(7);
@@ -70,15 +70,15 @@ namespace TelegramFootballBot.Core.Services
 
             for (var i = 0; i < players.Count; i++)
                 newValues.Add(new List<object>() { string.Empty });
-            
+
             await UpdateSheetAsync(newValues, SheetHelper.GetApproveColumnRange(sheet.Values, players.Count));
         }
 
         public async Task<string> BuildApprovedPlayersMessageAsync()
         {
-            var sheet = await GetSheetAsync();            
+            var sheet = await GetSheetAsync();
             var players = SheetHelper.GetOrderedPlayers(sheet.Values);
-            return SheetHelper.BuildPlayersListMessage(players);            
+            return SheetHelper.BuildPlayersListMessage(players);
         }
 
         public async Task<List<string>> GetPlayersReadyToPlayAsync()
@@ -106,13 +106,13 @@ namespace TelegramFootballBot.Core.Services
             // Add empty rows to clear unnecessary data
             var endEmptyRows = 30;
             while (--endEmptyRows != 0)
-                newValues.Add(new List<object> { string.Empty, string.Empty});
-                        
+                newValues.Add(new List<object> { string.Empty, string.Empty });
+
             await UpdateSheetAsync(newValues, range);
             await UpdateLastRowStyle(values.IndexOf(SheetHelper.GetTotalsRow(values)), newValues.IndexOf(SheetHelper.GetTotalsRow(values)));
             return SheetHelper.GetPlayerRowNumber(newValues, playerName);
         }
-             
+
         private async Task UpdateLastRowStyle(int oldTotalsRowIndex, int newTotalsRowIndex)
         {
             if (oldTotalsRowIndex == newTotalsRowIndex)

@@ -19,7 +19,7 @@ namespace TelegramFootballBot.Core.Helpers
         private const string TOTAL_LABEL = "Всего";
         private const int DEFAULT_STYLE_ROW_INDEX = 5;
         private const int START_ROWS_COUNT = 2;
-        
+
         public static IEnumerable<IList<object>> GetHeaderRows(IList<IList<object>> values)
         {
             return values.Take(START_ROWS_COUNT);
@@ -90,7 +90,7 @@ namespace TelegramFootballBot.Core.Helpers
         }
 
         public static string BuildPlayersListMessage(IList<IList<object>> players)
-        {            
+        {
             var headerMessage = $"{DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow).ToRussianDayMonthString()}. Отметились: {CountPlayersReadyToGo(players)}.";
             var likelyToGoPlayers = FilterPlayersLikelyToGo(players);
 
@@ -109,7 +109,7 @@ namespace TelegramFootballBot.Core.Helpers
 
             return playersMessage.ToString();
         }
-        
+
         public static List<string> GetPlayersReadyToPlay(IList<IList<object>> values)
         {
             return GetOrderedPlayers(values).Where(p =>
@@ -171,7 +171,7 @@ namespace TelegramFootballBot.Core.Helpers
             if (playerName == null)
                 return -1;
 
-            var userRow = values.FirstOrDefault(v => v.Count > 0 
+            var userRow = values.FirstOrDefault(v => v.Count > 0
                 && playerName.Equals(v[(int)NAME_COLUMN]?.ToString().Trim(), StringComparison.InvariantCultureIgnoreCase));
 
             var userRowIndex = values.IndexOf(userRow);
@@ -190,7 +190,7 @@ namespace TelegramFootballBot.Core.Helpers
                 }
             };
         }
-        
+
         public static string GetApproveColumnRange(IList<IList<object>> values, int totalPlayers)
         {
             var startRowsToIgnore = GetHeaderRows(values).Count();
@@ -208,7 +208,7 @@ namespace TelegramFootballBot.Core.Helpers
         {
             return $"{SHEET_NAME}!{NAME_COLUMN}:{APPROVE_COLUMN}";
         }
-        
+
         private static bool AreEqual(IList<object> row, int columnIndex, string value)
         {
             return row.Count > columnIndex

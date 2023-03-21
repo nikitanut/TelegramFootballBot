@@ -20,25 +20,25 @@ namespace TelegramFootballBot.Core.Services
         public MessageService(IBotClient botClient, ILogger logger)
         {
             _botClient = botClient;
-            _logger = logger;            
+            _logger = logger;
         }
 
         public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
         {
-            var requests = chats.ToDictionary(chatId => SendMessageAsync(chatId, text, replyMarkup), chatId => chatId);
+            var requests = chats.ToDictionary(chatId =>
+                Task.Run(async () => await SendMessageAsync(chatId, text, replyMarkup)),
+                chatId => chatId);
+
             return await ExecuteRequests(requests);
         }
 
         public async Task<List<SendMessageResponse>> EditMessagesAsync(string text, IEnumerable<Message> messagesToEdit)
         {
-            var requests = messagesToEdit.ToDictionary(m => EditMessageAsync(m, text), m => (ChatId)m.Chat.Id);
-            return await ExecuteRequests(requests);
-        }
+            var requests = messagesToEdit.ToDictionary(message =>
+                Task.Run(async () => await EditMessageAsync(message, text)),
+                m => (ChatId)m.Chat.Id);
 
-        public async Task<Message> EditMessageAsync(ChatId chatId, int messageId, string text)
-        {
-            using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
-            return await _botClient.EditMessageTextAsync(chatId, messageId, text, cancellationToken: cts.Token);
+            return await ExecuteRequests(requests);
         }
 
         private async Task<Message> EditMessageAsync(Message message, string text)
@@ -82,7 +82,7 @@ namespace TelegramFootballBot.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error on deleting message");
+                _logger.Error(ex, "An error occurred while deleting message");
             }
         }
 
@@ -90,7 +90,7 @@ namespace TelegramFootballBot.Core.Services
         {
             try
             {
-                return await SendMessageAsync(chatId, $"Неизвестная ошибка");
+                return await SendMessageAsync(chatId, "Неизвестная ошибка");
             }
             catch (Exception ex)
             {
@@ -121,9 +121,9 @@ namespace TelegramFootballBot.Core.Services
                 });
             }
 
+            responses.Sort((a,b) => a.ChatId.Identifier.Value.CompareTo(b.ChatId.Identifier));
             return responses;
         }
-
 
         public async Task ClearReplyMarkupAsync(ChatId chatId, int messageId)
         {

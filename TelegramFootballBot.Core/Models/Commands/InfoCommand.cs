@@ -27,9 +27,9 @@ namespace TelegramFootballBot.Core.Models.Commands
             {
                 return $"/say - send text to all players{Environment.NewLine}" +
                        $"/status - get statistics{Environment.NewLine}" +
-                       $"/switch - turn on / turn off notifications";                
+                       $"/switch - turn on / turn off notifications";
             }
-            
+
             return $"/reg - зарегистрироваться{Environment.NewLine}" +
                    $"/unreg - отписаться от рассылки{Environment.NewLine}" +
                    $"/go - отметиться";
