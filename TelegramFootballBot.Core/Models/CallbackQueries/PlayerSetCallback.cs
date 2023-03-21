@@ -11,7 +11,7 @@ namespace TelegramFootballBot.Core.Models.CallbackQueries
         public DateTime GameDate { get; private set; }
 
         public PlayerSetCallback(string callbackData) : base(callbackData)
-        {            
+        {
             GameDate = ParseGameDate(callbackData);
         }
 

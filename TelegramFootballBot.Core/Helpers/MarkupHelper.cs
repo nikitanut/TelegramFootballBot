@@ -12,14 +12,14 @@ namespace TelegramFootballBot.Core.Helpers
             return GetKeyBoardMarkup(PlayerSetCallback.BuildCallbackPrefix(gameDate), labels, labels);
         }
 
-        private static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, string [] buttonsLabels, string [] buttonValues)
+        private static InlineKeyboardMarkup GetKeyBoardMarkup(string callbackPrefix, string[] buttonsLabels, string[] buttonValues)
         {
             var keyBoard = new[] { new InlineKeyboardButton[buttonsLabels.Length] };
 
             for (var i = 0; i < keyBoard[0].Length; i++)
             {
                 keyBoard[0][i] = new InlineKeyboardButton(buttonsLabels[i])
-                {                  
+                {
                     CallbackData = Callback.ToCallbackText(callbackPrefix, buttonValues[i])
                 };
             }

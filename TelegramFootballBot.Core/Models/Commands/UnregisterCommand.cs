@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Telegram.Bot.Types;
-using TelegramFootballBot.Core.Services;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
+using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.Core.Models.Commands
 {
@@ -23,9 +23,9 @@ namespace TelegramFootballBot.Core.Models.Commands
         {
             var playerName = await DeletePlayer(message.From.Id);
             var messageForUser = string.IsNullOrEmpty(playerName) ? "Вы не были зарегистрированы" : "Рассылка отменена";
-            
-            await Task.WhenAll(new[] 
-            { 
+
+            await Task.WhenAll(new[]
+            {
                 _messageService.SendMessageAsync(message.Chat.Id, messageForUser),
                 _messageService.SendMessageToBotOwnerAsync($"{playerName} отписался от рассылки")
             });

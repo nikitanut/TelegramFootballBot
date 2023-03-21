@@ -8,7 +8,7 @@ namespace TelegramFootballBot.Core.Models
 
         public SendStatus Status { get; set; }
 
-        public string Message { get; set; }        
+        public string Message { get; set; }
     }
 
     public enum SendStatus

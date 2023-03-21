@@ -144,7 +144,7 @@ namespace TelegramFootballBot.Core.Tests.Services
         {
             // Arrange
             AppSettings.NotifyOwner = true;
-            var text = "Hello";            
+            var text = "Hello";
             var messageId = 1;
             _botClientMock
                 .Setup(m => m.SendTextMessageAsync(AppSettings.BotOwnerChatId, text, null, It.IsAny<CancellationToken>()))
@@ -163,7 +163,7 @@ namespace TelegramFootballBot.Core.Tests.Services
         {
             // Arrange
             AppSettings.NotifyOwner = false;
-            var text = "Hello";            
+            var text = "Hello";
 
             // Act
             var response = await _messageService.SendMessageToBotOwnerAsync(text);

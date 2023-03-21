@@ -120,7 +120,7 @@ namespace TelegramFootballBot.Core.Services
                 return;
             }
 
-            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);            
+            var player = await _playerRepository.GetAsync(callbackQuery.From.Id);
             await _sheetService.SetApproveCellAsync(player.Name, GetApproveCellValue(playerSetCallback.UserAnswer));
 
             var approvedPlayersMessage = await _sheetService.BuildApprovedPlayersMessageAsync();

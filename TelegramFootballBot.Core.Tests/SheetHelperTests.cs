@@ -10,8 +10,8 @@ namespace TelegramFootballBot.Core.Tests
     [TestClass]
     public class SheetHelperTests
     {
-        readonly IList<IList<object>> _cells;
-        readonly IList<IList<object>> _playersCells;    
+        private readonly IList<IList<object>> _cells;
+        private readonly IList<IList<object>> _playersCells;
 
         public SheetHelperTests()
         {
@@ -41,7 +41,7 @@ namespace TelegramFootballBot.Core.Tests
             // Arrange
             // Act
             var range = SheetHelper.GetApproveColumnRange(_cells, _playersCells.Count);
-            
+
             // Assert
             Assert.AreEqual("B2:B22", range);
         }
@@ -71,15 +71,15 @@ namespace TelegramFootballBot.Core.Tests
             // Assert
             Assert.AreEqual(expectedString, approvedPlayersString);
         }
-        
+
         [TestMethod]
         public void GetOrderedPlayers_ReturnsCorrectCollection()
         {
             // Arrange
             // Act
-            var expectedPlayers = _playersCells.OrderBy(p => p[0]).ToList();            
+            var expectedPlayers = _playersCells.OrderBy(p => p[0]).ToList();
             var orderedPlayers = SheetHelper.GetOrderedPlayers(_cells);
-            
+
             // Assert
             Assert.AreEqual(expectedPlayers.Count, orderedPlayers.Count);
 
@@ -165,7 +165,7 @@ namespace TelegramFootballBot.Core.Tests
 
             // Act
             var newValues = SheetHelper.ApplyPlayers(_cells, newPlayers);
-            
+
             // Assert
             Assert.AreEqual(_cells.Count + 1, newValues.Count);
             Assert.AreEqual("Всего", newValues.LastOrDefault()?[0]);
