@@ -2,7 +2,7 @@ name: Test and deploy
 
 on:
   push:
-    branches: [ "master", "development" ]
+    branches: [ 'master', 'development/**' ]
 env:
   releasepath: 'TelegramFootballBot.App/bin/Release/net7.0/linux-x64/publish'
   dotnetversion: 7.0.x
