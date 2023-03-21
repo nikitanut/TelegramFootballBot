@@ -25,13 +25,19 @@ namespace TelegramFootballBot.Core.Services
 
         public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
         {
-            var requests = chats.ToDictionary(chatId => SendMessageAsync(chatId, text, replyMarkup), chatId => chatId);
+            var requests = chats.ToDictionary(chatId => 
+                Task.Run(async () => await SendMessageAsync(chatId, text, replyMarkup)), 
+                chatId => chatId);
+
             return await ExecuteRequests(requests);
         }
 
         public async Task<List<SendMessageResponse>> EditMessagesAsync(string text, IEnumerable<Message> messagesToEdit)
         {
-            var requests = messagesToEdit.ToDictionary(m => EditMessageAsync(m, text), m => (ChatId)m.Chat.Id);
+            var requests = messagesToEdit.ToDictionary(message => 
+                Task.Run(async () => await EditMessageAsync(message, text)),
+                m => (ChatId)m.Chat.Id);
+
             return await ExecuteRequests(requests);
         }
 
