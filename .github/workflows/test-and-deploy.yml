@@ -84,8 +84,3 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: ${{ vars.TARGET }}
-          SCRIPT_BEFORE: |
-            systemctl stop ${{ vars.SERVICE_FILE }}
-          SCRIPT_AFTER: |
-            systemctl daemon-reload
-            systemctl start ${{ vars.SERVICE_FILE }}
