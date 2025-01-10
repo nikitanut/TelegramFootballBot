@@ -4,8 +4,8 @@ on:
   push:
     branches: [ 'master', 'development/**' ]
 env:
-  releasepath: 'TelegramFootballBot.App/bin/Release/net7.0/linux-x64/publish'
-  dotnetversion: 7.0.x
+  releasepath: 'TelegramFootballBot.App/bin/Release/net9.0/linux-x64/publish'
+  dotnetversion: 9.0.x
 jobs:
   test:
     runs-on: ubuntu-latest
