@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Services;

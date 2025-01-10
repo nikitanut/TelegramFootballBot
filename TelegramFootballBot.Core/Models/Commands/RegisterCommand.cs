@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Services;
@@ -43,7 +41,7 @@ namespace TelegramFootballBot.Core.Models.Commands
 
         private string GetPlayerNameFrom(Message message)
         {
-            return message.Text.Length > Name.Length ? message.Text[Name.Length..].Trim() : string.Empty;
+            return message.Text!.Length > Name.Length ? message.Text[Name.Length..].Trim() : string.Empty;
         }
 
         private async Task<string> RegisterPlayer(Message message)
@@ -52,7 +50,7 @@ namespace TelegramFootballBot.Core.Models.Commands
 
             try
             {
-                var existingPlayer = await _playerRepository.GetAsync(message.From.Id);
+                var existingPlayer = await _playerRepository.GetAsync(message.From!.Id);
                 var messageForUser = existingPlayer.Name == playerName ? "Вы уже зарегистрированы" : "Вы уже были зарегистрированы. Имя обновлено.";
                 existingPlayer.Name = playerName;
                 await _playerRepository.UpdateAsync(existingPlayer);
@@ -60,7 +58,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             }
             catch (UserNotFoundException)
             {
-                var newPlayer = new Player(message.From.Id, playerName, message.Chat.Id);
+                var newPlayer = new Player(message.From!.Id, playerName, message.Chat.Id);
                 await _playerRepository.AddAsync(newPlayer);
                 return "Регистрация прошла успешно";
             }

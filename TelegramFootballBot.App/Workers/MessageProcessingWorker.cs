@@ -1,10 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using TelegramFootballBot.Core.Services;
+﻿using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.App.Workers
 {

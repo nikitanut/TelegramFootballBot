@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace TelegramFootballBot.Core.Helpers
+﻿namespace TelegramFootballBot.Core.Helpers
 {
     public static class DateHelper
     {

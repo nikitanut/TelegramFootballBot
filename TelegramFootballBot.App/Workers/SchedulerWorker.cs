@@ -1,11 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
@@ -21,7 +14,7 @@ namespace TelegramFootballBot.App.Workers
         private readonly IPlayerRepository _playerRepository;
         private readonly ISheetService _sheetService;
         private readonly ILogger _logger;
-        private Timer _timer = null;
+        private Timer? _timer = null;
 
         public SchedulerWorker(IMessageService messageService, IPlayerRepository playerRepository, ISheetService sheetService, ILogger logger)
         {

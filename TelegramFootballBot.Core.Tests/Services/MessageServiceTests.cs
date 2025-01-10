@@ -1,9 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Serilog;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Models;

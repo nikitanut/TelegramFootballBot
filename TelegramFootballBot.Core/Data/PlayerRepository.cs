@@ -1,8 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Models;
 
@@ -21,7 +17,7 @@ namespace TelegramFootballBot.Core.Data
 
         public async Task AddAsync(Player player)
         {
-            if (player == null)
+            if (player is null)
                 return;
 
             using var db = new FootballBotDbContext(_options);
@@ -63,7 +59,7 @@ namespace TelegramFootballBot.Core.Data
 
         public async Task UpdateAsync(Player player)
         {
-            if (player == null || player.Id == default)
+            if (player is null || player.Id == default)
                 return;
 
             using var db = new FootballBotDbContext(_options);

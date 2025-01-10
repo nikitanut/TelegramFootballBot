@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
@@ -26,7 +24,7 @@ namespace TelegramFootballBot.Core.Models.Commands
             Player player;
             try
             {
-                player = await _playerRepository.GetAsync(message.From.Id);
+                player = await _playerRepository.GetAsync(message.From!.Id);
             }
             catch (UserNotFoundException)
             {

@@ -1,8 +1,5 @@
 ﻿using Google.Apis.Sheets.v4.Data;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using TelegramFootballBot.Core.Exceptions;
 
@@ -52,18 +49,14 @@ namespace TelegramFootballBot.Core.Helpers
 
         public static IList<object> GetTotalsRow(IList<IList<object>> values)
         {
-            var totalsRow = values.FirstOrDefault(v => AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL));
-
-            if (totalsRow == null)
-                throw new TotalsRowNotFoundExeption();
-
+            var totalsRow = values.FirstOrDefault(v => AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL)) ?? throw new TotalsRowNotFoundExeption();
             if (totalsRow.Count < 2)
                 totalsRow.Add(string.Empty);
 
             return totalsRow;
         }
 
-        public static IList<IList<object>> GetOrderedPlayers(IList<IList<object>> values, string newPlayerName = null)
+        public static IList<IList<object>> GetOrderedPlayers(IList<IList<object>> values, string newPlayerName = "")
         {
             var rowsToIgnore = GetHeaderRows(values).Count();
 
@@ -73,10 +66,10 @@ namespace TelegramFootballBot.Core.Helpers
                 .TakeWhile(v => !AreEqual(v, (int)NAME_COLUMN, TOTAL_LABEL))
                 .ToList();
 
-            if (newPlayerName != null)
+            if (!string.IsNullOrEmpty(newPlayerName))
                 players.Add(new List<object> { newPlayerName, string.Empty });
 
-            var rowsWithEmptyApproveColumn = players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() == null);
+            var rowsWithEmptyApproveColumn = players.Where(v => v.Skip((int)NAME_COLUMN + 1).FirstOrDefault() is null);
             foreach (var playerRow in rowsWithEmptyApproveColumn)
             {
                 if (playerRow.Count <= (int)APPROVE_COLUMN)
@@ -85,7 +78,7 @@ namespace TelegramFootballBot.Core.Helpers
                     playerRow[(int)APPROVE_COLUMN] = string.Empty;
             }
 
-            players.Sort((a, b) => a[(int)NAME_COLUMN].ToString().CompareTo(b[(int)NAME_COLUMN].ToString()));
+            players.Sort((a, b) => a[(int)NAME_COLUMN].ToString()!.CompareTo(b[(int)NAME_COLUMN].ToString()));
             return players;
         }
 
@@ -118,7 +111,7 @@ namespace TelegramFootballBot.Core.Helpers
                 var approveValue = ToDouble(p[(int)APPROVE_COLUMN]);
                 return approveValue >= 1;
             })
-            .Select(p => p[(int)NAME_COLUMN].ToString().Trim())
+            .Select(p => p[(int)NAME_COLUMN].ToString()!.Trim())
             .ToList();
         }
 
@@ -134,8 +127,8 @@ namespace TelegramFootballBot.Core.Helpers
             {
                 var playerName = p[(int)NAME_COLUMN].ToString();
                 var countByPlayer = ToDouble(p[(int)APPROVE_COLUMN]);
-                if (countByPlayer == 1) return new KeyValuePair<string, char>(playerName, '+');
-                if (countByPlayer < 1) return new KeyValuePair<string, char>(playerName, '?');
+                if (countByPlayer == 1) return new KeyValuePair<string, char>(playerName!, '+');
+                if (countByPlayer < 1) return new KeyValuePair<string, char>(playerName!, '?');
                 return new KeyValuePair<string, char>($"{playerName} x{countByPlayer}", '+');
             });
         }
@@ -162,19 +155,19 @@ namespace TelegramFootballBot.Core.Helpers
 
         private static double ToDouble(object cell)
         {
-            double.TryParse(cell?.ToString().Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double value);
+            double.TryParse(cell?.ToString()!.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double value);
             return value;
         }
 
         public static int GetPlayerRowNumber(IList<IList<object>> values, string playerName)
         {
-            if (playerName == null)
+            if (playerName is null)
                 return -1;
 
             var userRow = values.FirstOrDefault(v => v.Count > 0
-                && playerName.Equals(v[(int)NAME_COLUMN]?.ToString().Trim(), StringComparison.InvariantCultureIgnoreCase));
+                && playerName.Equals(v[(int)NAME_COLUMN]?.ToString()!.Trim(), StringComparison.InvariantCultureIgnoreCase));
 
-            var userRowIndex = values.IndexOf(userRow);
+            var userRowIndex = userRow is not null ? values.IndexOf(userRow) : -1;
             return userRowIndex != -1 ? userRowIndex + 1 : -1;
         }
 
@@ -212,7 +205,7 @@ namespace TelegramFootballBot.Core.Helpers
         private static bool AreEqual(IList<object> row, int columnIndex, string value)
         {
             return row.Count > columnIndex
-                && row[columnIndex]?.ToString().Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
+                && row[columnIndex]?.ToString()!.Trim().Equals(value, StringComparison.InvariantCultureIgnoreCase) == true;
         }
 
         private static CopyPasteRequest GetCopyStyleRequest(int sourceRowIndex, int destinationRowIndex)

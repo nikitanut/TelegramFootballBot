@@ -1,10 +1,4 @@
-﻿using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Helpers;
@@ -23,7 +17,7 @@ namespace TelegramFootballBot.Core.Services
             _logger = logger;
         }
 
-        public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup replyMarkup = null)
+        public async Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, IReplyMarkup? replyMarkup = null)
         {
             var requests = chats.ToDictionary(chatId =>
                 Task.Run(async () => await SendMessageAsync(chatId, text, replyMarkup)),
@@ -50,7 +44,7 @@ namespace TelegramFootballBot.Core.Services
             return await _botClient.EditMessageTextAsync(message.Chat.Id, message.MessageId, text, cancellationToken: cts.Token);
         }
 
-        public async Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup replyMarkup = null)
+        public async Task<Message> SendMessageToBotOwnerAsync(string text, IReplyMarkup? replyMarkup = null)
         {
             if (AppSettings.NotifyOwner)
             {
@@ -67,7 +61,7 @@ namespace TelegramFootballBot.Core.Services
             return new Message();
         }
 
-        public async Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup replyMarkup = null)
+        public async Task<Message> SendMessageAsync(ChatId chatId, string text, IReplyMarkup? replyMarkup = null)
         {
             using var cts = new CancellationTokenSource(Constants.ASYNC_OPERATION_TIMEOUT);
             return await _botClient.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cts.Token);
@@ -111,7 +105,7 @@ namespace TelegramFootballBot.Core.Services
                 var errorMessage = string.Empty;
 
                 if (response.IsFaulted || response.IsCanceled)
-                    errorMessage = response.IsFaulted ? response.Exception.Message : $"Timeout {Constants.ASYNC_OPERATION_TIMEOUT} ms";
+                    errorMessage = response.IsFaulted ? response.Exception!.Message : $"Timeout {Constants.ASYNC_OPERATION_TIMEOUT} ms";
 
                 responses.Add(new SendMessageResponse
                 {
@@ -121,7 +115,7 @@ namespace TelegramFootballBot.Core.Services
                 });
             }
 
-            responses.Sort((a,b) => a.ChatId.Identifier.Value.CompareTo(b.ChatId.Identifier));
+            responses.Sort((a, b) => a.ChatId!.Identifier!.Value.CompareTo(b.ChatId!.Identifier));
             return responses;
         }
 

@@ -1,8 +1,4 @@
-﻿using Serilog;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Data;
@@ -45,18 +41,18 @@ namespace TelegramFootballBot.Core.Services
         private async Task BotOnMessageReceived(Message message)
         {
             var command = _commandFactory.Create(message);
-            if (command == null)
+            if (command is null)
                 return;
 
             try
             {
                 await command.ExecuteAsync(message);
-                var playerName = await GetPlayerNameAsync(message.From.Id);
+                var playerName = await GetPlayerNameAsync(message.From!.Id);
                 _logger.Information($"Command {message.Text} processed for user {playerName}");
             }
             catch (Exception ex)
             {
-                var playerName = await GetPlayerNameAsync(message.From.Id);
+                var playerName = await GetPlayerNameAsync(message.From!.Id);
                 _logger.Error(ex, $"Error on processing {message.Text} command for user {playerName}");
                 await _messageService.SendMessageToBotOwnerAsync($"Ошибка у пользователя {playerName}: {ex.Message}");
                 await _messageService.SendErrorMessageToUserAsync(message.Chat.Id, playerName);
@@ -102,8 +98,8 @@ namespace TelegramFootballBot.Core.Services
 
         private async Task DetermineIfPlayerIsReadyToPlayAsync(CallbackQuery callbackQuery)
         {
-            var playerSetCallback = new PlayerSetCallback(callbackQuery.Data);
-            await ClearInlineKeyboardAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+            var playerSetCallback = new PlayerSetCallback(callbackQuery.Data!);
+            await ClearInlineKeyboardAsync(callbackQuery.Message!.Chat.Id, callbackQuery.Message.MessageId);
 
             try
             {
@@ -192,19 +188,19 @@ namespace TelegramFootballBot.Core.Services
             {
                 _logger.Error("\"Всего\" row not found in excel-file");
                 messageForUser = "Не найдена строка \"Всего\" в excel-файле.";
-                messageForBotOwner = $"Не найдена строка \"Всего\" в excel-файле. Пользователь - {player.Name}";
+                messageForBotOwner = $"Не найдена строка \"Всего\" в excel-файле. Пользователь - {player!.Name}";
             }
 
             if (ex is OperationCanceledException)
             {
-                _logger.Error($"Operation {callbackQuery.Data} cancelled for user {player.Name}.");
+                _logger.Error($"Operation {callbackQuery.Data} cancelled for user {player!.Name}.");
                 messageForUser = "Не удалось обработать запрос.";
                 messageForBotOwner = $"Операция обработки ответа отменена для пользователя {player.Name}";
             }
 
             if (ex is ArgumentOutOfRangeException exception)
             {
-                _logger.Error($"Unexpected response for user {player.Name}: {exception.ParamName}");
+                _logger.Error($"Unexpected response for user {player!.Name}: {exception.ParamName}");
                 messageForUser = "Непредвиденный вариант ответа.";
                 messageForBotOwner = $"Непредвиденный вариант ответа для пользователя {player.Name}";
             }
@@ -213,10 +209,10 @@ namespace TelegramFootballBot.Core.Services
             {
                 _logger.Error(ex, "Unexpected error");
                 messageForUser = "Непредвиденная ошибка.";
-                messageForBotOwner = $"Ошибка у пользователя {player.Name}: {ex.Message}";
+                messageForBotOwner = $"Ошибка у пользователя {player!.Name}: {ex.Message}";
             }
 
-            await NotifyAboutError(callbackQuery.Message.Chat.Id, messageForUser, messageForBotOwner);
+            await NotifyAboutError(callbackQuery.Message!.Chat.Id, messageForUser, messageForBotOwner);
         }
 
         private async Task NotifyAboutError(ChatId chatId, string messageForUser, string messageForBotOwner)
