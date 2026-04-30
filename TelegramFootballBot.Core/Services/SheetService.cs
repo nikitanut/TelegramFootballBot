@@ -20,7 +20,10 @@ namespace TelegramFootballBot.Core.Services
 
         private static SheetsService CreateSheetsService(Stream credentialsFile)
         {
-            var credential = GoogleCredential.FromStream(credentialsFile).CreateScoped(SheetsService.Scope.Spreadsheets);
+            var serviceAccountCredential = ServiceAccountCredential.FromServiceAccountData(credentialsFile);
+
+            var credential = serviceAccountCredential.ToGoogleCredential();
+
             return new SheetsService(new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential,

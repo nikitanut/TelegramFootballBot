@@ -20,7 +20,7 @@ namespace TelegramFootballBot.Core.Services
             var receiverOptions = new ReceiverOptions
             {
                 AllowedUpdates = new[] { UpdateType.CallbackQuery, UpdateType.Message },
-                ThrowPendingUpdates = true,
+                DropPendingUpdates = true,
             };
 
             await _botClient.ReceiveAsync(_updateHandler, receiverOptions, stoppingToken);

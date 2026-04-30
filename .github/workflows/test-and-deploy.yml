@@ -4,8 +4,8 @@ on:
   push:
     branches: [ 'master', 'development/**' ]
 env:
-  releasepath: 'TelegramFootballBot.App/bin/Release/net9.0/linux-x64/publish'
-  dotnetversion: 9.0.x
+  releasepath: 'TelegramFootballBot.App/bin/Release/net10.0/linux-x64/publish'
+  dotnetversion: 10.0.x
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -85,7 +85,7 @@ jobs:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: ${{ vars.TARGET }}
           SCRIPT_BEFORE: |
-            systemctl stop ${{ vars.SERVICE_FILE }}
+            sudo systemctl stop ${{ vars.SERVICE_FILE }} || true
           SCRIPT_AFTER: |
             systemctl daemon-reload
             systemctl start ${{ vars.SERVICE_FILE }}

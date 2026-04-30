@@ -223,7 +223,7 @@ namespace TelegramFootballBot.Core.Services
                 await _messageService.SendMessageToBotOwnerAsync(messageForBotOwner);
         }
 
-        public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
         {
             _logger.Error("Polling failed with exception: {Exception}", exception);
             return Task.CompletedTask;
