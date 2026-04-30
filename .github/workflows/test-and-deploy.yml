@@ -87,5 +87,5 @@ jobs:
           SCRIPT_BEFORE: |
             sudo systemctl stop ${{ vars.SERVICE_FILE }} || true
           SCRIPT_AFTER: |
-            systemctl daemon-reload
-            systemctl start ${{ vars.SERVICE_FILE }}
+              sudo systemctl daemon-reload
+              sudo systemctl start ${{ vars.SERVICE_FILE }}
