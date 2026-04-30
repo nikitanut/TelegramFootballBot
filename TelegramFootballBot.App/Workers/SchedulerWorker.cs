@@ -114,7 +114,7 @@ namespace TelegramFootballBot.App.Workers
             return playersWithOldMessage.Select(p => new Message
             {
                 Text = p.ApprovedPlayersMessage,
-                MessageId = p.ApprovedPlayersMessageId,
+                Id = p.ApprovedPlayersMessageId,
                 Chat = new Chat { Id = p.ChatId }
             });
         }

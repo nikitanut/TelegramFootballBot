@@ -81,8 +81,8 @@ namespace TelegramFootballBot.Core.Tests.Services
             var text = "Hello";
             var messages = new[]
             {
-                new Message { MessageId = 1, Chat = new Chat { Id = 1 } },
-                new Message { MessageId = 1, Chat = new Chat { Id = 2 } }
+                new Message { Id = 1, Chat = new Chat { Id = 1 } },
+                new Message { Id = 1, Chat = new Chat { Id = 2 } }
             };
 
             _botClientMock
@@ -112,8 +112,8 @@ namespace TelegramFootballBot.Core.Tests.Services
             var errorMessage = "An error occurred";
             var messages = new[]
             {
-                new Message { MessageId = 1, Chat = new Chat { Id = 1 } },
-                new Message { MessageId = 1, Chat = new Chat { Id = 2 } }
+                new Message { Id = 1, Chat = new Chat { Id = 1 } },
+                new Message { Id = 1, Chat = new Chat { Id = 2 } }
             };
 
             _botClientMock
@@ -145,7 +145,7 @@ namespace TelegramFootballBot.Core.Tests.Services
             var messageId = 1;
             _botClientMock
                 .Setup(m => m.SendTextMessageAsync(AppSettings.BotOwnerChatId, text, null, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Message { MessageId = messageId, Chat = new Chat { Id = AppSettings.BotOwnerChatId } });
+                .ReturnsAsync(new Message { Id = messageId, Chat = new Chat { Id = AppSettings.BotOwnerChatId } });
 
             // Act
             var response = await _messageService.SendMessageToBotOwnerAsync(text);
@@ -179,7 +179,7 @@ namespace TelegramFootballBot.Core.Tests.Services
             var messageId = 1;
             _botClientMock
                 .Setup(m => m.SendTextMessageAsync(chatId, text, null, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Message { MessageId = messageId, Chat = new Chat { Id = chatId } });
+                .ReturnsAsync(new Message { Id = messageId, Chat = new Chat { Id = chatId } });
 
             // Act
             var response = await _messageService.SendMessageAsync(chatId, text, null);
@@ -216,7 +216,7 @@ namespace TelegramFootballBot.Core.Tests.Services
             var playerName = "John Smith";
             _botClientMock
                 .Setup(m => m.SendTextMessageAsync(chatId, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Message { MessageId = messageId, Chat = new Chat { Id = chatId } });
+                .ReturnsAsync(new Message { Id = messageId, Chat = new Chat { Id = chatId } });
 
             // Act
             var response = await _messageService.SendErrorMessageToUserAsync(chatId, playerName);
@@ -239,7 +239,7 @@ namespace TelegramFootballBot.Core.Tests.Services
 
             _botClientMock
                 .Setup(m => m.SendTextMessageAsync(AppSettings.BotOwnerChatId, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Message { MessageId = 1, Chat = new Chat { Id = AppSettings.BotOwnerChatId } });
+                .ReturnsAsync(new Message { Id = 1, Chat = new Chat { Id = AppSettings.BotOwnerChatId } });
 
             // Act
             var response = await _messageService.SendErrorMessageToUserAsync(chatId, playerName);

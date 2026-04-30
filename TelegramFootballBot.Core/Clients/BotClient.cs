@@ -17,24 +17,24 @@ namespace TelegramFootballBot.Core.Clients
             _telegramBotClient = telegramBotClient;
         }
 
-        public async Task<Message> SendTextMessageAsync(ChatId chatId, string text, IReplyMarkup? replyMarkup = null, CancellationToken cancellationToken = default)
+        public async Task<Message> SendTextMessageAsync(ChatId chatId, string text, ReplyMarkup? replyMarkup = null, CancellationToken cancellationToken = default)
         {
-            return await _telegramBotClient.SendTextMessageAsync(chatId, text, replyMarkup: replyMarkup, cancellationToken: cancellationToken);
+            return await _telegramBotClient.SendMessage(chatId, text, replyMarkup: replyMarkup, cancellationToken: cancellationToken);
         }
 
         public async Task<Message> EditMessageTextAsync(ChatId chatId, int messageId, string text, InlineKeyboardMarkup? replyMarkup = null, CancellationToken cancellationToken = default)
         {
-            return await _telegramBotClient.EditMessageTextAsync(chatId, messageId, text, replyMarkup: replyMarkup, cancellationToken: cancellationToken);
+            return await _telegramBotClient.EditMessageText(chatId, messageId, text, replyMarkup: replyMarkup, cancellationToken: cancellationToken);
         }
 
         public async Task<Message> EditMessageReplyMarkupAsync(ChatId chatId, int messageId, InlineKeyboardMarkup? replyMarkup = null, CancellationToken cancellationToken = default)
         {
-            return await _telegramBotClient.EditMessageReplyMarkupAsync(chatId, messageId, replyMarkup, cancellationToken);
+            return await _telegramBotClient.EditMessageReplyMarkup(chatId, messageId, replyMarkup, cancellationToken: cancellationToken);
         }
 
         public async Task DeleteMessageAsync(ChatId chatId, int messageId, CancellationToken cancellationToken = default)
         {
-            await _telegramBotClient.DeleteMessageAsync(chatId, messageId, cancellationToken);
+            await _telegramBotClient.DeleteMessage(chatId, messageId, cancellationToken);
         }
     }
 }

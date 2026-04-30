@@ -191,7 +191,7 @@ namespace TelegramFootballBot.Core.Tests
 
             // Act
             // Assert
-            Assert.ThrowsException<TotalsRowNotFoundExeption>(actual);
+            Assert.Throws<TotalsRowNotFoundExeption>(actual);
         }
 
         private static List<IList<object>> CreateCells()
