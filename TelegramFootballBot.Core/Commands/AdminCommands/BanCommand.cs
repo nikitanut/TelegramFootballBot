@@ -22,7 +22,7 @@ namespace TelegramFootballBot.Core.Commands.AdminCommands
             if (!IsBotOwner(message))
                 return;
 
-            long.TryParse(message.Text, out var playerId);
+            var playerId = GetPlayerId(message);
             var player = playerId > 0 ? await _playerRepository.GetAsync(playerId) : null;
 
             if (player is null)
@@ -34,6 +34,13 @@ namespace TelegramFootballBot.Core.Commands.AdminCommands
             player.IsBanned = true;
             await _playerRepository.UpdateAsync(player);
             await _messageService.SendMessageToBotOwnerAsync($"{player.Name} was banned");
+        }
+
+        private long GetPlayerId(Message message)
+        {
+            var playerIdString = message.Text!.Length > Name.Length ? message.Text[Name.Length..].Trim() : string.Empty;
+            long.TryParse(playerIdString, out var playerId);
+            return playerId;
         }
     }
 }
