@@ -12,7 +12,7 @@ namespace TelegramFootballBot.Core.Data
         {
             _options = options;
             using var db = new FootballBotDbContext(_options);
-            db.Database.EnsureCreated();
+            db.Database.Migrate();
         }
 
         public async Task AddAsync(Player player)
