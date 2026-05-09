@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TelegramFootballBot.Core.Exceptions;
+﻿using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
 
 namespace TelegramFootballBot.Core.Tests

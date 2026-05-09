@@ -2,9 +2,10 @@
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
 using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Core.Models.Commands
+namespace TelegramFootballBot.Core.Commands
 {
     public class GoCommand : Command
     {
@@ -31,6 +32,9 @@ namespace TelegramFootballBot.Core.Models.Commands
                 await _messageService.SendMessageAsync(message.Chat.Id, $"Вы не были зарегистрированы{Environment.NewLine}Введите /reg Фамилия Имя");
                 return;
             }
+
+            if (player.IsBanned)
+                return;
 
             var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";

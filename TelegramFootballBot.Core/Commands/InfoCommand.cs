@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Core.Models.Commands
+namespace TelegramFootballBot.Core.Commands
 {
     public class InfoCommand : Command
     {
@@ -23,13 +23,11 @@ namespace TelegramFootballBot.Core.Models.Commands
         {
             if (IsBotOwner(message))
             {
-                return $"/say - send text to all players{Environment.NewLine}" +
-                       $"/status - get statistics{Environment.NewLine}" +
+                return $"/status - get statistics{Environment.NewLine}" +
                        $"/switch - turn on / turn off notifications";
             }
 
             return $"/reg - зарегистрироваться{Environment.NewLine}" +
-                   $"/unreg - отписаться от рассылки{Environment.NewLine}" +
                    $"/go - отметиться";
         }
     }

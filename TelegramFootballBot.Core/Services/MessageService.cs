@@ -1,6 +1,5 @@
 ﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
-using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Models;
 

@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types;
+using TelegramFootballBot.Core.Commands;
+using TelegramFootballBot.Core.Commands.AdminCommands;
 using TelegramFootballBot.Core.Data;
-using TelegramFootballBot.Core.Models.Commands;
-using TelegramFootballBot.Core.Models.Commands.AdminCommands;
 using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.Core.Helpers
@@ -15,13 +15,12 @@ namespace TelegramFootballBot.Core.Helpers
             _commands = new List<Command>
             {
                 new RegisterCommand(messageService, playerRepository, sheetService),
-                new UnregisterCommand(messageService, playerRepository),
                 new GoCommand(messageService, playerRepository),
                 new SwitchNotifierCommand(messageService),
-                new SayCommand(messageService, playerRepository),
                 new StatusCommand(messageService, playerRepository),
                 new InfoCommand(messageService),
                 new StartCommand(messageService),
+                new BanCommand(messageService, playerRepository)
             };
         }
 
