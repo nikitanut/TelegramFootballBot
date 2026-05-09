@@ -31,7 +31,7 @@ namespace TelegramFootballBot.Core.Commands.AdminCommands
                        $"GameDate: {AppSettings.GameDay}{Environment.NewLine}" +
                        $"Nearest Distribution: {DateHelper.GetNearestDistributionDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
                        $"Nearest GameDate: {DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
-                       $"Players ({players.Count}): {playerNamesAndIds}{Environment.NewLine}" +
+                       $"Players ({players.Count}):{Environment.NewLine}{playerNamesAndIds}{Environment.NewLine}" +
                        $"Got message: {players.Count(p => p.ApprovedPlayersMessageId != 0)}";
 
             await _messageService.SendMessageAsync(message.Chat.Id, text);
