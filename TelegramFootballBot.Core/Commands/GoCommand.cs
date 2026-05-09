@@ -33,6 +33,9 @@ namespace TelegramFootballBot.Core.Commands
                 return;
             }
 
+            if (player.IsBanned)
+                return;
+
             var gameDate = DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow);
             var text = $"Идёшь на футбол {gameDate.ToRussianDayMonthString()}?";
 

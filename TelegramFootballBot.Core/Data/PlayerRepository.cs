@@ -28,13 +28,13 @@ namespace TelegramFootballBot.Core.Data
         public async Task<List<Player>> GetAllAsync()
         {
             using var db = new FootballBotDbContext(_options);
-            return await db.Players.ToListAsync();
+            return await db.Players.Where(p => !p.IsBanned).ToListAsync();
         }
 
         public async Task<List<Player>> GetAllAsync(Func<Player, bool> predicate)
         {
             using var db = new FootballBotDbContext(_options);
-            return await db.Players.Where(predicate).AsQueryable().ToListAsync();
+            return await db.Players.Where(predicate).Where(p => !p.IsBanned).AsQueryable().ToListAsync();
         }
 
         public async Task<Player> GetAsync(long id)

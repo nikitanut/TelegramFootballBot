@@ -14,6 +14,8 @@
 
         public bool IsGoingToPlay { get; set; }
 
+        public bool IsBanned { get; set; }
+
         private Player() { }
 
         public Player(string name)
