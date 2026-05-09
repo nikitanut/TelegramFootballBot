@@ -2,7 +2,7 @@
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace TelegramFootballBot.Core.Clients
+namespace TelegramFootballBot.Core.Services
 {
     public class BotClient : IBotClient
     {

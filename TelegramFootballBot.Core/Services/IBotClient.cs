@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace TelegramFootballBot.Core.Clients
+namespace TelegramFootballBot.Core.Services
 {
     /// <summary>
     /// Wrapper for ITelegramBotClient as its methods are extension and can't be tested

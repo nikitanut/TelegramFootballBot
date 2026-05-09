@@ -4,7 +4,6 @@ using Serilog.Core;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using TelegramFootballBot.App.Workers;
-using TelegramFootballBot.Core.Clients;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Services;

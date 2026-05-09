@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace TelegramFootballBot.Core.Models.Commands
+namespace TelegramFootballBot.Core.Commands
 {
     public abstract class Command
     {

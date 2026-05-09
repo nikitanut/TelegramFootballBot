@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types;
+using TelegramFootballBot.Core.Commands;
+using TelegramFootballBot.Core.Commands.AdminCommands;
 using TelegramFootballBot.Core.Data;
-using TelegramFootballBot.Core.Models.Commands;
-using TelegramFootballBot.Core.Models.Commands.AdminCommands;
 using TelegramFootballBot.Core.Services;
 
 namespace TelegramFootballBot.Core.Helpers

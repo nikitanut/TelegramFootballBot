@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Types;
 using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Core.Models.Commands
+namespace TelegramFootballBot.Core.Commands
 {
     public class InfoCommand : Command
     {

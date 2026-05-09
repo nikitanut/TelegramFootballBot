@@ -3,7 +3,7 @@ using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Core.Models.Commands
+namespace TelegramFootballBot.Core.Commands
 {
     public class UnregisterCommand : Command
     {

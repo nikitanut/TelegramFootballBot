@@ -2,9 +2,10 @@
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Exceptions;
 using TelegramFootballBot.Core.Helpers;
+using TelegramFootballBot.Core.Models;
 using TelegramFootballBot.Core.Services;
 
-namespace TelegramFootballBot.Core.Models.Commands
+namespace TelegramFootballBot.Core.Commands
 {
     public class GoCommand : Command
     {
