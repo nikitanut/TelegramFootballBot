@@ -24,7 +24,7 @@ namespace TelegramFootballBot.Core.Commands.AdminCommands
                 return;
 
             var players = await _playerRepository.GetAllAsync();
-            var playerNamesAndIds = string.Join(Environment.NewLine, players.Select(p => $"    {p.Name} ({p.Id}){(p.IsBanned ? " banned" : "")}"));
+            var playerNamesAndIds = string.Join(Environment.NewLine, players.Select(p => $"    {p.Name} ({p.Id})"));
 
             var text = $"Now: {DateTime.Now.ToMoscowTime()}{Environment.NewLine}" +
                        $"Distribution: {AppSettings.DistributionTime}{Environment.NewLine}" +
