@@ -1,5 +1,4 @@
 ﻿using Telegram.Bot.Types;
-using TelegramFootballBot.Core.Commands;
 using TelegramFootballBot.Core.Data;
 using TelegramFootballBot.Core.Helpers;
 using TelegramFootballBot.Core.Services;
@@ -25,12 +24,14 @@ namespace TelegramFootballBot.Core.Commands.AdminCommands
                 return;
 
             var players = await _playerRepository.GetAllAsync();
+            var playerNamesAndIds = string.Join(Environment.NewLine, players.Select(p => $"    {p.Name} ({p.Id}){(p.IsBanned ? " banned" : "")}"));
+
             var text = $"Now: {DateTime.Now.ToMoscowTime()}{Environment.NewLine}" +
                        $"Distribution: {AppSettings.DistributionTime}{Environment.NewLine}" +
                        $"GameDate: {AppSettings.GameDay}{Environment.NewLine}" +
                        $"Nearest Distribution: {DateHelper.GetNearestDistributionDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
                        $"Nearest GameDate: {DateHelper.GetNearestGameDateMoscowTime(DateTime.UtcNow)}{Environment.NewLine}" +
-                       $"Players: {players.Count}{Environment.NewLine}" +
+                       $"Players ({players.Count}): {playerNamesAndIds}{Environment.NewLine}" +
                        $"Got message: {players.Count(p => p.ApprovedPlayersMessageId != 0)}";
 
             await _messageService.SendMessageAsync(message.Chat.Id, text);

@@ -15,10 +15,8 @@ namespace TelegramFootballBot.Core.Helpers
             _commands = new List<Command>
             {
                 new RegisterCommand(messageService, playerRepository, sheetService),
-                new UnregisterCommand(messageService, playerRepository),
                 new GoCommand(messageService, playerRepository),
                 new SwitchNotifierCommand(messageService),
-                new SayCommand(messageService, playerRepository),
                 new StatusCommand(messageService, playerRepository),
                 new InfoCommand(messageService),
                 new StartCommand(messageService),
