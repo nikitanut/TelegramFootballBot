@@ -1,33 +1,23 @@
-﻿using TelegramFootballBot.Core.Services;
+﻿using TelegramFootballBot.App.Services;
 
-namespace TelegramFootballBot.App.Workers
+namespace TelegramFootballBot.App.Workers;
+
+public class MessageProcessingWorker(IServiceProvider serviceProvider, ILogger logger) : BackgroundService
 {
-    public class MessageProcessingWorker : BackgroundService
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger _logger;
-
-        public MessageProcessingWorker(IServiceProvider serviceProvider, ILogger logger)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
-                {
-                    using var scope = _serviceProvider.CreateScope();
-                    var receiver = scope.ServiceProvider.GetRequiredService<IReceiverService>();
-                    await receiver.ReceiveAsync(stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error("Polling failed with exception: {Exception}", ex);
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                }
+                using var scope = serviceProvider.CreateScope();
+                var receiver = scope.ServiceProvider.GetRequiredService<IReceiverService>();
+                await receiver.ReceiveAsync(stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Polling failed with exception: {Exception}", ex);
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
     }

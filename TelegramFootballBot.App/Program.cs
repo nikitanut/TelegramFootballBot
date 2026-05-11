@@ -4,49 +4,48 @@ using Serilog.Core;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using TelegramFootballBot.App.Workers;
-using TelegramFootballBot.Core.Data;
-using TelegramFootballBot.Core.Helpers;
-using TelegramFootballBot.Core.Services;
+using TelegramFootballBot.App.Data;
+using TelegramFootballBot.App.Helpers;
+using TelegramFootballBot.App.Services;
 
-namespace TelegramFootballBot.App
+namespace TelegramFootballBot.App;
+
+public class Program
 {
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static async Task Main(string[] args)
-        {
-            var host = Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
+        var host = Host.CreateDefaultBuilder(args)
+            .ConfigureServices((hostContext, services) =>
+            {
+                var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+
+                services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
+                    .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
+                    .CreateLogger());
+
+                services.AddSingleton<IPlayerRepository>(s =>
+                    new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options));
+
+                services.AddSingleton<ISheetService>(s =>
                 {
-                    var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-
-                    services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
-                        .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
-                        .CreateLogger());
-
-                    services.AddSingleton<IPlayerRepository>(s =>
-                        new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options));
-
-                    services.AddSingleton<ISheetService>(s =>
+                    using (var credentialsFile = new FileStream("sheetcredentials.json", FileMode.Open, FileAccess.Read))
                     {
-                        using (var credentialsFile = new FileStream("sheetcredentials.json", FileMode.Open, FileAccess.Read))
-                        {
-                            return new SheetService(credentialsFile, configuration["googleDocSheetId"] ?? throw new ApplicationException("googleDocSheetId is empty"));
-                        };
-                    });
+                        return new SheetService(credentialsFile, configuration["googleDocSheetId"] ?? throw new ApplicationException("googleDocSheetId is empty"));
+                    };
+                });
 
-                    services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"] ?? throw new ApplicationException("botToken is empty")));
-                    services.AddSingleton<IBotClient, BotClient>();
-                    services.AddSingleton<IMessageService, MessageService>();
-                    services.AddSingleton<CommandFactory>();
-                    services.AddScoped<IUpdateHandler, UpdateHandler>();
-                    services.AddScoped<IReceiverService, ReceiverService>();
+                services.AddSingleton<ITelegramBotClient>(s => new TelegramBotClient(configuration["botToken"] ?? throw new ApplicationException("botToken is empty")));
+                services.AddSingleton<IBotClient, BotClient>();
+                services.AddSingleton<IMessageService, MessageService>();
+                services.AddSingleton<CommandFactory>();
+                services.AddScoped<IUpdateHandler, UpdateHandler>();
+                services.AddScoped<IReceiverService, ReceiverService>();
 
-                    services.AddHostedService<SchedulerWorker>();
-                    services.AddHostedService<MessageProcessingWorker>();
-                })
-                .Build();
+                services.AddHostedService<SchedulerWorker>();
+                services.AddHostedService<MessageProcessingWorker>();
+            })
+            .Build();
 
-            await host.RunAsync();
-        }
+        await host.RunAsync();
     }
 }
