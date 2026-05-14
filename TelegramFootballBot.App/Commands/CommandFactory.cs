@@ -1,10 +1,9 @@
 ﻿using Telegram.Bot.Types;
-using TelegramFootballBot.App.Commands;
 using TelegramFootballBot.App.Commands.AdminCommands;
 using TelegramFootballBot.App.Data;
 using TelegramFootballBot.App.Services;
 
-namespace TelegramFootballBot.App.Helpers;
+namespace TelegramFootballBot.App.Commands;
 
 public class CommandFactory
 {

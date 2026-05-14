@@ -5,8 +5,8 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using TelegramFootballBot.App.Workers;
 using TelegramFootballBot.App.Data;
-using TelegramFootballBot.App.Helpers;
 using TelegramFootballBot.App.Services;
+using TelegramFootballBot.App.Commands;
 
 namespace TelegramFootballBot.App;
 

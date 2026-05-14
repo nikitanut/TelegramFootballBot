@@ -12,16 +12,6 @@ public static class DateHelper
             && currentDate.ToMoscowTime().TimeOfDay.Minutes == distributionDate.TimeOfDay.Minutes;
     }
 
-    public static bool IsTimeToGenerateTeams(DateTime currentDate)
-    {
-        var gameDate = GetNearestGameDateMoscowTime(currentDate);
-        return currentDate.ToMoscowTime().Year == gameDate.Year
-            && currentDate.ToMoscowTime().Month == gameDate.Month
-            && currentDate.ToMoscowTime().Day == gameDate.Day
-            && currentDate.ToMoscowTime().Hour == gameDate.Hour - 1 // 1 hour before game
-            && currentDate.ToMoscowTime().Minute == gameDate.Minute;
-    }
-
     public static bool GameStarted(DateTime currentDate)
     {
         var gameDate = GetNearestGameDateMoscowTime(currentDate);

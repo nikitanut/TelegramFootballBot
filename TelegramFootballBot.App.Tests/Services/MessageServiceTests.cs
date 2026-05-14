@@ -9,9 +9,9 @@ namespace TelegramFootballBot.App.Tests.Services
     [TestClass]
     public class MessageServiceTests
     {
-        private Mock<IBotClient> _botClientMock;
+        private Mock<IBotClient> _botClientMock = null!;
         private readonly Mock<ILogger> _loggerMock = new();
-        private MessageService _messageService;
+        private MessageService _messageService = null!;
 
         [TestInitialize]
         public void Setup()

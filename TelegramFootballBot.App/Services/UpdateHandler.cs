@@ -1,6 +1,7 @@
 ﻿using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using TelegramFootballBot.App.Commands;
 using TelegramFootballBot.App.Data;
 using TelegramFootballBot.App.Exceptions;
 using TelegramFootballBot.App.Helpers;
@@ -13,14 +14,21 @@ public class UpdateHandler(CommandFactory commandFactory, IMessageService messag
 {
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
     {
-        var handler = update switch
+        try
         {
-            { Message: { } message } => BotOnMessageReceived(message),
-            { CallbackQuery: { } callbackQuery } => BotOnCallbackQueryReceived(callbackQuery),
-            _ => UnknownUpdateHandlerAsync(update)
-        };
+            var handler = update switch
+            {
+                { Message: { } message } => BotOnMessageReceived(message),
+                { CallbackQuery: { } callbackQuery } => BotOnCallbackQueryReceived(callbackQuery),
+                _ => UnknownUpdateHandlerAsync(update)
+            };
 
-        await handler;
+            await handler;
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Error on handling update");
+        }
     }
 
     private async Task BotOnMessageReceived(Message message)
@@ -75,8 +83,9 @@ public class UpdateHandler(CommandFactory commandFactory, IMessageService messag
         {
             return (await playerRepository.GetAsync(userId)).Name;
         }
-        catch (UserNotFoundException)
+        catch (Exception ex)
         {
+            logger.Error(ex, $"Error on getting player name for userId {userId}");
             return string.Empty;
         }
     }

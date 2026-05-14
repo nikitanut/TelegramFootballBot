@@ -198,7 +198,7 @@ namespace TelegramFootballBot.App.Tests
             return new List<IList<object>>
             {
                 new List<object>(),
-                new List<object> { null, "5 февраля", null, "Поле:" }
+                new List<object> { null!, "5 февраля", null!, "Поле:" }
             };
         }
 
@@ -207,7 +207,7 @@ namespace TelegramFootballBot.App.Tests
             return new List<IList<object>>
             {
                 new List<object> { "User1", string.Empty, "https://User.com", "Every friday" },
-                new List<object> { "User2", null },
+                new List<object> { "User2", null! },
                 new List<object> { "User3", 1 },
                 new List<object> { "User4", "0" },
                 new List<object> { "User5" },
@@ -222,10 +222,10 @@ namespace TelegramFootballBot.App.Tests
                 new List<object> { "User14", "0.5" },
                 new List<object> { "User15", "0,5" },
                 new List<object> { "User16", 1 },
-                new List<object> { "User17", null },
-                new List<object> { "User18", null },
+                new List<object> { "User17", null! },
+                new List<object> { "User18", null! },
                 new List<object> { "User19", "1" },
-                new List<object> { "User20", null }
+                new List<object> { "User20", null! }
             };
         }
     }
