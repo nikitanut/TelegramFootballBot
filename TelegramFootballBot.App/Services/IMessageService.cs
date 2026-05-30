@@ -1,0 +1,22 @@
+﻿using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
+using TelegramFootballBot.App.Models;
+
+namespace TelegramFootballBot.App.Services;
+
+public interface IMessageService
+{
+    Task<List<SendMessageResponse>> SendMessagesAsync(string text, IEnumerable<ChatId> chats, ReplyMarkup? replyMarkup = null);
+
+    Task<List<SendMessageResponse>> EditMessagesAsync(string text, IEnumerable<Message> messagesToRefresh);
+
+    Task<Message> SendMessageToBotOwnerAsync(string text, ReplyMarkup? replyMarkup = null);
+
+    Task<Message> SendMessageAsync(ChatId chatId, string text, ReplyMarkup? replyMarkup = null);
+
+    Task DeleteMessageAsync(ChatId chatId, int messageId);
+
+    Task<Message> SendErrorMessageToUserAsync(ChatId chatId, string playerName);
+
+    Task ClearReplyMarkupAsync(ChatId chatId, int messageId);
+}
