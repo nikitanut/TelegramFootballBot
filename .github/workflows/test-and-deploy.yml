@@ -57,21 +57,26 @@ jobs:
     - name: Publish
       run: dotnet publish TelegramFootballBot.App --configuration Release --runtime linux-x64 --self-contained
 
-    - name: Apply variable substitutions to config files
+    - name: List publish output
+      run: ls -la ${{ github.workspace }}/${{ env.releasepath }}/
+
+    - name: Sheet credentials variable substitution
       uses: microsoft/variable-substitution@v1
       with:
-        files: |
-          ${{ github.workspace }}/${{ env.releasepath }}/sheetcredentials.json
-          ${{ github.workspace }}/${{ env.releasepath }}/appsettings.json
+        files: '${{ github.workspace }}/${{ env.releasepath }}/sheetcredentials.json'
       env:
-        # sheetcredentials.json
         project_id: ${{ secrets.SHEET_PROJECT_ID }}
         private_key_id: ${{ secrets.SHEET_PRIVATE_KEY_ID }}
         private_key: ${{ secrets.SHEET_PRIVATE_KEY }}
         client_email: ${{ secrets.SHEET_CLIENT_EMAIL }}
         client_id: ${{ secrets.SHEET_CLIENT_ID }}
         client_x509_cert_url: ${{ secrets.SHEET_CLIENT_CERT_URL }}
-        # appsettings.json
+
+    - name: App Settings Variable Substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: '${{ github.workspace }}/${{ env.releasepath }}/appsettings.json'
+      env:
         botToken: ${{ secrets.BOT_TOKEN }}
         googleDocSheetId: ${{ secrets.GOOGLE_DOC_SHEET_ID }}
         botOwnerChatId: ${{ secrets.BOT_OWNER_CHAT_ID }}
