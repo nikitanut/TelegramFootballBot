@@ -2,17 +2,19 @@ name: Test and deploy
 
 on:
   push:
-    branches: [ 'master', 'development/**' ]
+    branches: ['master', 'development/**']
+
 env:
   releasepath: 'TelegramFootballBot.App/bin/Release/net10.0/linux-x64/publish'
   dotnetversion: 10.0.x
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.dotnetversion }}
 
@@ -32,12 +34,12 @@ jobs:
     steps:
     - id: set-environment
       run: |
-          if [ ${{ github.ref }} == 'refs/heads/master' ]
-          then
-            echo "env=Production" >> $GITHUB_OUTPUT
-          else
-            echo "env=Development" >> $GITHUB_OUTPUT
-          fi
+        if [ ${{ github.ref }} == 'refs/heads/master' ]
+        then
+          echo "env=Production" >> $GITHUB_OUTPUT
+        else
+          echo "env=Development" >> $GITHUB_OUTPUT
+        fi
     - id: show-environment
       run: echo "${{ steps.set-environment.outputs.env }}"
 
@@ -46,32 +48,30 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ needs.set-environment.outputs.environment }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.dotnetversion }}
 
     - name: Publish
       run: dotnet publish TelegramFootballBot.App --configuration Release --runtime linux-x64 --self-contained
 
-    - name: Sheet credentials variable substitution
+    - name: Apply variable substitutions to config files
       uses: microsoft/variable-substitution@v1
       with:
-        files: '${{ github.workspace }}/${{ env.releasepath }}/sheetcredentials.json'
+        files: |
+          ${{ github.workspace }}/${{ env.releasepath }}/sheetcredentials.json
+          ${{ github.workspace }}/${{ env.releasepath }}/appsettings.json
       env:
+        # sheetcredentials.json
         project_id: ${{ secrets.SHEET_PROJECT_ID }}
         private_key_id: ${{ secrets.SHEET_PRIVATE_KEY_ID }}
         private_key: ${{ secrets.SHEET_PRIVATE_KEY }}
         client_email: ${{ secrets.SHEET_CLIENT_EMAIL }}
         client_id: ${{ secrets.SHEET_CLIENT_ID }}
         client_x509_cert_url: ${{ secrets.SHEET_CLIENT_CERT_URL }}
-
-    - name: App Settings Variable Substitution
-      uses: microsoft/variable-substitution@v1
-      with:
-        files: '${{ github.workspace }}/${{ env.releasepath }}/appsettings.json'
-      env:
+        # appsettings.json
         botToken: ${{ secrets.BOT_TOKEN }}
         googleDocSheetId: ${{ secrets.GOOGLE_DOC_SHEET_ID }}
         botOwnerChatId: ${{ secrets.BOT_OWNER_CHAT_ID }}
@@ -79,13 +79,13 @@ jobs:
     - name: Deploy to Server
       uses: easingthemes/ssh-deploy@main
       env:
-          SOURCE: "/${{ env.releasepath }}/"
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ vars.TARGET }}
-          SCRIPT_BEFORE: |
-            sudo systemctl stop ${{ vars.SERVICE_FILE }} || true
-          SCRIPT_AFTER: |
-              sudo systemctl daemon-reload
-              sudo systemctl start ${{ vars.SERVICE_FILE }}
+        SOURCE: "/${{ env.releasepath }}/"
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        TARGET: ${{ vars.TARGET }}
+        SCRIPT_BEFORE: |
+          sudo systemctl stop ${{ vars.SERVICE_FILE }} || true
+        SCRIPT_AFTER: |
+          sudo systemctl daemon-reload
+          sudo systemctl start ${{ vars.SERVICE_FILE }}
