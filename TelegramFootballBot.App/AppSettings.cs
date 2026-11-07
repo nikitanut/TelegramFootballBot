@@ -2,7 +2,7 @@
 
 public static class AppSettings
 {
-    private static readonly IConfiguration _configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", false, true).Build();
+    private static readonly IConfiguration _configuration = new ConfigurationBuilder().AddJsonFile(AppData.File("appsettings.json"), false, true).Build();
 
     public static TimeSpan DistributionTime => TimeSpan.Parse(_configuration["distributionTime"] ?? throw new ApplicationException("distributionTime is empty"));
 

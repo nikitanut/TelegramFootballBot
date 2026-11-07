@@ -17,18 +17,27 @@ public class Program
         var host = Host.CreateDefaultBuilder(args)
             .ConfigureServices((hostContext, services) =>
             {
-                var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+                var configuration = new ConfigurationBuilder().AddJsonFile(AppData.File("appsettings.json")).Build();
+                var logPath = AppData.File("logs.txt");
 
-                services.AddSingleton<ILogger, Logger>(s => new LoggerConfiguration()
-                    .WriteTo.File("logs.txt", outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
-                    .CreateLogger());
+                services.AddSingleton<ILogger, Logger>(_ =>
+                {
+                    var logger = new LoggerConfiguration()
+                        .WriteTo.Console(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
+                        .WriteTo.File(logPath, outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Level:u3} - {Message:lj}{NewLine}{Exception}")
+                        .CreateLogger();
+                    logger.Information("Data directory: {DataDirectory}", AppData.DataDirectory ?? Directory.GetCurrentDirectory());
+                    return logger;
+                });
 
-                services.AddSingleton<IPlayerRepository>(s =>
-                    new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite("Filename=./BotDb.db").Options));
+                var databasePath = AppData.DatabasePath();
+                services.AddSingleton<IPlayerRepository>(_ =>
+                    new PlayerRepository(new DbContextOptionsBuilder<FootballBotDbContext>().UseSqlite($"Data Source={databasePath}").Options));
 
+                var credentialsPath = AppData.File("sheetcredentials.json");
                 services.AddSingleton<ISheetService>(s =>
                 {
-                    using (var credentialsFile = new FileStream("sheetcredentials.json", FileMode.Open, FileAccess.Read))
+                    using (var credentialsFile = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read))
                     {
                         return new SheetService(credentialsFile, configuration["googleDocSheetId"] ?? throw new ApplicationException("googleDocSheetId is empty"));
                     };
