@@ -63,4 +63,4 @@ install_instance /opt/footballbot-dev dev
 echo "Docker is ready."
 echo "Production:  /opt/footballbot       (image tag latest)"
 echo "Development: /opt/footballbot-dev   (image tag dev)"
-echo "Copy BotDb.db into the data directory as $DEPLOY_USER. If the copy is owned by root, run this script again."
+echo "Copy BotDb.db into the data directory. The container gives those files to $DEPLOY_USER on startup."
