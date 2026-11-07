@@ -1,0 +1,11 @@
+**/.git
+**/.vs
+**/.idea
+**/.migration
+**/bin
+**/obj
+**/*.user
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/logs.txt

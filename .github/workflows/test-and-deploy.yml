@@ -3,16 +3,22 @@ name: Test and deploy
 on:
   push:
     branches: [ 'master', 'development/**' ]
+
+permissions:
+  contents: read
+  packages: write
+
 env:
-  releasepath: 'TelegramFootballBot.App/bin/Release/net10.0/linux-x64/publish'
   dotnetversion: 10.0.x
+  image: ghcr.io/nikitanut/telegramfootballbot
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: ${{ env.dotnetversion }}
 
@@ -21,7 +27,7 @@ jobs:
 
     - name: Build
       run: dotnet build --no-restore
-      
+
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
@@ -29,36 +35,48 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.set-environment.outputs.env }}
+      tag: ${{ steps.set-environment.outputs.tag }}
     steps:
     - id: set-environment
       run: |
-          if [ ${{ github.ref }} == 'refs/heads/master' ]
-          then
-            echo "env=Production" >> $GITHUB_OUTPUT
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "env=Production" >> "$GITHUB_OUTPUT"
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
           else
-            echo "env=Development" >> $GITHUB_OUTPUT
+            echo "env=Development" >> "$GITHUB_OUTPUT"
+            echo "tag=dev" >> "$GITHUB_OUTPUT"
           fi
-    - id: show-environment
-      run: echo "${{ steps.set-environment.outputs.env }}"
+
+  build:
+    needs: [test, set-environment]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: docker/setup-buildx-action@v4
+    - uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: docker/build-push-action@v7
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.image }}:${{ needs.set-environment.outputs.tag }}
+          ${{ env.image }}:${{ github.sha }}
 
   deploy:
-    needs: ['test', 'set-environment']
+    needs: [build, set-environment]
     runs-on: ubuntu-latest
     environment: ${{ needs.set-environment.outputs.environment }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: ${{ env.dotnetversion }}
-
-    - name: Publish
-      run: dotnet publish TelegramFootballBot.App --configuration Release --runtime linux-x64 --self-contained
+    - uses: actions/checkout@v7
 
     - name: Sheet credentials variable substitution
-      uses: microsoft/variable-substitution@v1
+      uses: devops-actions/variable-substitution@v2.0.0
       with:
-        files: '${{ github.workspace }}/${{ env.releasepath }}/sheetcredentials.json'
+        files: TelegramFootballBot.App/sheetcredentials.json
       env:
         project_id: ${{ secrets.SHEET_PROJECT_ID }}
         private_key_id: ${{ secrets.SHEET_PRIVATE_KEY_ID }}
@@ -67,25 +85,48 @@ jobs:
         client_id: ${{ secrets.SHEET_CLIENT_ID }}
         client_x509_cert_url: ${{ secrets.SHEET_CLIENT_CERT_URL }}
 
-    - name: App Settings Variable Substitution
-      uses: microsoft/variable-substitution@v1
+    - name: App settings variable substitution
+      uses: devops-actions/variable-substitution@v2.0.0
       with:
-        files: '${{ github.workspace }}/${{ env.releasepath }}/appsettings.json'
+        files: TelegramFootballBot.App/appsettings.json
       env:
         botToken: ${{ secrets.BOT_TOKEN }}
         googleDocSheetId: ${{ secrets.GOOGLE_DOC_SHEET_ID }}
         botOwnerChatId: ${{ secrets.BOT_OWNER_CHAT_ID }}
 
-    - name: Deploy to Server
-      uses: easingthemes/ssh-deploy@main
+    - name: Deploy
       env:
-          SOURCE: "/${{ env.releasepath }}/"
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ vars.TARGET }}
-          SCRIPT_BEFORE: |
-            sudo systemctl stop ${{ vars.SERVICE_FILE }} || true
-          SCRIPT_AFTER: |
-              sudo systemctl daemon-reload
-              sudo systemctl start ${{ vars.SERVICE_FILE }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        TARGET: ${{ vars.TARGET }}
+        IMAGE_TAG: ${{ needs.set-environment.outputs.tag }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_ACTOR: ${{ github.actor }}
+      run: |
+        set -euo pipefail
+        if [ -z "$TARGET" ] || [ -z "$REMOTE_HOST" ] || [ -z "$REMOTE_USER" ]; then
+          echo "Set REMOTE_HOST, REMOTE_USER, and TARGET for the ${{ needs.set-environment.outputs.environment }} environment."
+          exit 1
+        fi
+        install -d -m 700 ~/.ssh
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh_opts=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new)
+        ssh "${ssh_opts[@]}" "$REMOTE_USER@$REMOTE_HOST" "command -v docker >/dev/null || { echo 'Docker is not installed. Run deploy/bootstrap.sh on this server first.'; exit 1; }"
+        ssh "${ssh_opts[@]}" "$REMOTE_USER@$REMOTE_HOST" "mkdir -p '$TARGET/data'"
+        scp "${ssh_opts[@]}" \
+          TelegramFootballBot.App/appsettings.json \
+          TelegramFootballBot.App/sheetcredentials.json \
+          "$REMOTE_USER@$REMOTE_HOST:$TARGET/data/"
+        scp "${ssh_opts[@]}" docker-compose.yml "$REMOTE_USER@$REMOTE_HOST:$TARGET/docker-compose.yml"
+        ssh "${ssh_opts[@]}" "$REMOTE_USER@$REMOTE_HOST" "bash -s" <<EOF
+        set -euo pipefail
+        cd '$TARGET'
+        chmod 600 data/appsettings.json data/sheetcredentials.json
+        echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+        IMAGE_TAG='$IMAGE_TAG' docker compose pull
+        IMAGE_TAG='$IMAGE_TAG' docker compose up -d --no-build --remove-orphans
+        docker logout ghcr.io
+        docker image prune -f
+        EOF

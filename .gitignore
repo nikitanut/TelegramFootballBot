@@ -260,6 +260,10 @@ paket-files/
 __pycache__/
 *.pyc
 
+# Docker state and one-off server downloads
+/data/
+.migration/
+
 # App files
 /TelegramFootballBot/credentials.json
 /TelegramFootballBot/appsettings.json
